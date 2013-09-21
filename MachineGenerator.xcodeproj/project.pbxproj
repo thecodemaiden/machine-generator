@@ -7,17 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E2426EB517EB98BE00C071C1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EB417EB98BE00C071C1 /* Cocoa.framework */; };
 		E2426EBF17EB98BE00C071C1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2426EBD17EB98BE00C071C1 /* InfoPlist.strings */; };
-		E2426EC117EB98BE00C071C1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E2426EC017EB98BE00C071C1 /* main.m */; };
 		E2426EC517EB98BE00C071C1 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = E2426EC317EB98BE00C071C1 /* Credits.rtf */; };
-		E2426EC817EB98BE00C071C1 /* MGAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E2426EC717EB98BE00C071C1 /* MGAppDelegate.m */; };
-		E2426ECB17EB98BF00C071C1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E2426EC917EB98BF00C071C1 /* MainMenu.xib */; };
 		E2426ECD17EB98BF00C071C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2426ECC17EB98BF00C071C1 /* Images.xcassets */; };
-		E2426ED417EB98BF00C071C1 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426ED317EB98BF00C071C1 /* XCTest.framework */; };
-		E2426ED517EB98BF00C071C1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EB417EB98BE00C071C1 /* Cocoa.framework */; };
-		E2426EDD17EB98BF00C071C1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2426EDB17EB98BF00C071C1 /* InfoPlist.strings */; };
-		E2426EDF17EB98BF00C071C1 /* MachineGeneratorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E2426EDE17EB98BF00C071C1 /* MachineGeneratorTests.m */; };
+		E2426EEB17EB992600C071C1 /* libChipmunk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EEA17EB992600C071C1 /* libChipmunk.a */; };
+		E2426EED17EB9E3600C071C1 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = E2426EEC17EB9E3600C071C1 /* main.c */; };
+		E2426EEF17EB9FD100C071C1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EEE17EB9FD100C071C1 /* OpenGL.framework */; };
+		E2426EF817EBA0CD00C071C1 /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EF617EBA0CD00C071C1 /* libGLEW.a */; };
+		E2426EF917EBA0CD00C071C1 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E2426EF717EBA0CD00C071C1 /* LICENSE.txt */; };
+		E2426F0117EBA0D800C071C1 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = E2426EFB17EBA0D800C071C1 /* COPYING.txt */; };
+		E2426F0217EBA0D800C071C1 /* libglfw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0017EBA0D800C071C1 /* libglfw.a */; };
+		E2426F0417EBA17000C071C1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0317EBA17000C071C1 /* IOKit.framework */; };
+		E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */; };
+		E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */; };
+		E2C7FC4817EBB989000A10F6 /* Machine.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC4717EBB989000A10F6 /* Machine.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,24 +35,30 @@
 
 /* Begin PBXFileReference section */
 		E2426EB117EB98BE00C071C1 /* MachineGenerator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MachineGenerator.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2426EB417EB98BE00C071C1 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		E2426EB717EB98BE00C071C1 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		E2426EB817EB98BE00C071C1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		E2426EB917EB98BE00C071C1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E2426EBC17EB98BE00C071C1 /* MachineGenerator-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MachineGenerator-Info.plist"; sourceTree = "<group>"; };
 		E2426EBE17EB98BE00C071C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		E2426EC017EB98BE00C071C1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		E2426EC217EB98BE00C071C1 /* MachineGenerator-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MachineGenerator-Prefix.pch"; sourceTree = "<group>"; };
 		E2426EC417EB98BE00C071C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
-		E2426EC617EB98BE00C071C1 /* MGAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MGAppDelegate.h; sourceTree = "<group>"; };
-		E2426EC717EB98BE00C071C1 /* MGAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MGAppDelegate.m; sourceTree = "<group>"; };
-		E2426ECA17EB98BF00C071C1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		E2426ECC17EB98BF00C071C1 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		E2426ED217EB98BF00C071C1 /* MachineGeneratorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MachineGeneratorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2426ED317EB98BF00C071C1 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		E2426EDA17EB98BF00C071C1 /* MachineGeneratorTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MachineGeneratorTests-Info.plist"; sourceTree = "<group>"; };
-		E2426EDC17EB98BF00C071C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		E2426EDE17EB98BF00C071C1 /* MachineGeneratorTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MachineGeneratorTests.m; sourceTree = "<group>"; };
+		E2426EEA17EB992600C071C1 /* libChipmunk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libChipmunk.a; path = Frameworks/chipmunk/libChipmunk.a; sourceTree = "<group>"; };
+		E2426EEC17EB9E3600C071C1 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		E2426EEE17EB9FD100C071C1 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		E2426EF417EBA0CD00C071C1 /* glew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glew.h; sourceTree = "<group>"; };
+		E2426EF617EBA0CD00C071C1 /* libGLEW.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libGLEW.a; sourceTree = "<group>"; };
+		E2426EF717EBA0CD00C071C1 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		E2426EFB17EBA0D800C071C1 /* COPYING.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = COPYING.txt; sourceTree = "<group>"; };
+		E2426EFE17EBA0D800C071C1 /* glfw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glfw.h; sourceTree = "<group>"; };
+		E2426F0017EBA0D800C071C1 /* libglfw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libglfw.a; sourceTree = "<group>"; };
+		E2426F0317EBA17000C071C1 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ChipmunkDebugDraw.c; sourceTree = "<group>"; };
+		E2C7FC4217EBAFB8000A10F6 /* ChipmunkDebugDraw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChipmunkDebugDraw.h; sourceTree = "<group>"; };
+		E2C7FC4317EBAFB8000A10F6 /* ChipmunkDemoShaderSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChipmunkDemoShaderSupport.h; sourceTree = "<group>"; };
+		E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ChipmunkDemoShaderSupport.c; sourceTree = "<group>"; };
+		E2C7FC4717EBB989000A10F6 /* Machine.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Machine.c; sourceTree = "<group>"; };
+		E2C7FC4917EBB994000A10F6 /* Machine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Machine.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,7 +66,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2426EB517EB98BE00C071C1 /* Cocoa.framework in Frameworks */,
+				E2426F0417EBA17000C071C1 /* IOKit.framework in Frameworks */,
+				E2426EEB17EB992600C071C1 /* libChipmunk.a in Frameworks */,
+				E2426EEF17EB9FD100C071C1 /* OpenGL.framework in Frameworks */,
+				E2426F0217EBA0D800C071C1 /* libglfw.a in Frameworks */,
+				E2426EF817EBA0CD00C071C1 /* libGLEW.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,8 +78,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2426ED517EB98BF00C071C1 /* Cocoa.framework in Frameworks */,
-				E2426ED417EB98BF00C071C1 /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,7 +88,7 @@
 			isa = PBXGroup;
 			children = (
 				E2426EBA17EB98BE00C071C1 /* MachineGenerator */,
-				E2426ED817EB98BF00C071C1 /* MachineGeneratorTests */,
+				E2426EF017EBA0B700C071C1 /* Libraries */,
 				E2426EB317EB98BE00C071C1 /* Frameworks */,
 				E2426EB217EB98BE00C071C1 /* Products */,
 			);
@@ -95,8 +106,9 @@
 		E2426EB317EB98BE00C071C1 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				E2426EB417EB98BE00C071C1 /* Cocoa.framework */,
-				E2426ED317EB98BF00C071C1 /* XCTest.framework */,
+				E2426F0317EBA17000C071C1 /* IOKit.framework */,
+				E2426EEE17EB9FD100C071C1 /* OpenGL.framework */,
+				E2426EEA17EB992600C071C1 /* libChipmunk.a */,
 				E2426EB617EB98BE00C071C1 /* Other Frameworks */,
 			);
 			name = Frameworks;
@@ -115,11 +127,14 @@
 		E2426EBA17EB98BE00C071C1 /* MachineGenerator */ = {
 			isa = PBXGroup;
 			children = (
-				E2426EC617EB98BE00C071C1 /* MGAppDelegate.h */,
-				E2426EC717EB98BE00C071C1 /* MGAppDelegate.m */,
-				E2426EC917EB98BF00C071C1 /* MainMenu.xib */,
+				E2C7FC4617EBB78F000A10F6 /* Display */,
+				E2C7FC4217EBAFB8000A10F6 /* ChipmunkDebugDraw.h */,
+				E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */,
+				E2C7FC4317EBAFB8000A10F6 /* ChipmunkDemoShaderSupport.h */,
+				E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */,
 				E2426ECC17EB98BF00C071C1 /* Images.xcassets */,
 				E2426EBB17EB98BE00C071C1 /* Supporting Files */,
+				E2426EEC17EB9E3600C071C1 /* main.c */,
 			);
 			path = MachineGenerator;
 			sourceTree = "<group>";
@@ -129,29 +144,97 @@
 			children = (
 				E2426EBC17EB98BE00C071C1 /* MachineGenerator-Info.plist */,
 				E2426EBD17EB98BE00C071C1 /* InfoPlist.strings */,
-				E2426EC017EB98BE00C071C1 /* main.m */,
-				E2426EC217EB98BE00C071C1 /* MachineGenerator-Prefix.pch */,
 				E2426EC317EB98BE00C071C1 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		E2426ED817EB98BF00C071C1 /* MachineGeneratorTests */ = {
+		E2426EF017EBA0B700C071C1 /* Libraries */ = {
 			isa = PBXGroup;
 			children = (
-				E2426EDE17EB98BF00C071C1 /* MachineGeneratorTests.m */,
-				E2426ED917EB98BF00C071C1 /* Supporting Files */,
+				E2426EFA17EBA0D800C071C1 /* libglfw */,
+				E2426EF117EBA0CD00C071C1 /* libGLEW */,
 			);
-			path = MachineGeneratorTests;
+			name = Libraries;
 			sourceTree = "<group>";
 		};
-		E2426ED917EB98BF00C071C1 /* Supporting Files */ = {
+		E2426EF117EBA0CD00C071C1 /* libGLEW */ = {
 			isa = PBXGroup;
 			children = (
-				E2426EDA17EB98BF00C071C1 /* MachineGeneratorTests-Info.plist */,
-				E2426EDB17EB98BF00C071C1 /* InfoPlist.strings */,
+				E2426EF217EBA0CD00C071C1 /* include */,
+				E2426EF517EBA0CD00C071C1 /* lib */,
+				E2426EF717EBA0CD00C071C1 /* LICENSE.txt */,
 			);
-			name = "Supporting Files";
+			name = libGLEW;
+			path = Frameworks/libGLEW;
+			sourceTree = "<group>";
+		};
+		E2426EF217EBA0CD00C071C1 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EF317EBA0CD00C071C1 /* GL */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		E2426EF317EBA0CD00C071C1 /* GL */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EF417EBA0CD00C071C1 /* glew.h */,
+			);
+			path = GL;
+			sourceTree = "<group>";
+		};
+		E2426EF517EBA0CD00C071C1 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EF617EBA0CD00C071C1 /* libGLEW.a */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		E2426EFA17EBA0D800C071C1 /* libglfw */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EFB17EBA0D800C071C1 /* COPYING.txt */,
+				E2426EFC17EBA0D800C071C1 /* include */,
+				E2426EFF17EBA0D800C071C1 /* lib */,
+			);
+			name = libglfw;
+			path = Frameworks/libglfw;
+			sourceTree = "<group>";
+		};
+		E2426EFC17EBA0D800C071C1 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EFD17EBA0D800C071C1 /* GL */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		E2426EFD17EBA0D800C071C1 /* GL */ = {
+			isa = PBXGroup;
+			children = (
+				E2426EFE17EBA0D800C071C1 /* glfw.h */,
+			);
+			path = GL;
+			sourceTree = "<group>";
+		};
+		E2426EFF17EBA0D800C071C1 /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				E2426F0017EBA0D800C071C1 /* libglfw.a */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		E2C7FC4617EBB78F000A10F6 /* Display */ = {
+			isa = PBXGroup;
+			children = (
+				E2C7FC4917EBB994000A10F6 /* Machine.h */,
+				E2C7FC4717EBB989000A10F6 /* Machine.c */,
+			);
+			name = Display;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -231,10 +314,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2426EF917EBA0CD00C071C1 /* LICENSE.txt in Resources */,
 				E2426EBF17EB98BE00C071C1 /* InfoPlist.strings in Resources */,
+				E2426F0117EBA0D800C071C1 /* COPYING.txt in Resources */,
 				E2426ECD17EB98BF00C071C1 /* Images.xcassets in Resources */,
 				E2426EC517EB98BE00C071C1 /* Credits.rtf in Resources */,
-				E2426ECB17EB98BF00C071C1 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,7 +326,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2426EDD17EB98BF00C071C1 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -253,8 +336,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2426EC817EB98BE00C071C1 /* MGAppDelegate.m in Sources */,
-				E2426EC117EB98BE00C071C1 /* main.m in Sources */,
+				E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */,
+				E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */,
+				E2426EED17EB9E3600C071C1 /* main.c in Sources */,
+				E2C7FC4817EBB989000A10F6 /* Machine.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -262,7 +347,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2426EDF17EB98BF00C071C1 /* MachineGeneratorTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,22 +375,6 @@
 				E2426EC417EB98BE00C071C1 /* en */,
 			);
 			name = Credits.rtf;
-			sourceTree = "<group>";
-		};
-		E2426EC917EB98BF00C071C1 /* MainMenu.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E2426ECA17EB98BF00C071C1 /* Base */,
-			);
-			name = MainMenu.xib;
-			sourceTree = "<group>";
-		};
-		E2426EDB17EB98BF00C071C1 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E2426EDC17EB98BF00C071C1 /* en */,
-			);
-			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -385,11 +453,33 @@
 		E2426EE317EB98BF00C071C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "MachineGenerator/MachineGenerator-Prefix.pch";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/Frameworks/chipmunk\"",
+					"\"$(SRCROOT)/Frameworks/libGLEW/include\"",
+					"\"$(SRCROOT)/Frameworks/libglfw/include\"",
+				);
 				INFOPLIST_FILE = "MachineGenerator/MachineGenerator-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks/libGLEW/lib",
+					"$(SRCROOT)/Frameworks/libglfw/lib",
+					"$(SRCROOT)/Frameworks/chipmunk",
+				);
+				OTHER_CFLAGS = (
+					"-DDEBUG",
+					"-ffast-math",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -398,11 +488,29 @@
 		E2426EE417EB98BF00C071C1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "MachineGenerator/MachineGenerator-Prefix.pch";
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/Frameworks/chipmunk\"",
+					"\"$(SRCROOT)/Frameworks/libGLEW/include\"",
+					"\"$(SRCROOT)/Frameworks/libglfw/include\"",
+				);
 				INFOPLIST_FILE = "MachineGenerator/MachineGenerator-Info.plist";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks/libGLEW/lib",
+					"$(SRCROOT)/Frameworks/libglfw/lib",
+					"$(SRCROOT)/Frameworks/chipmunk",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -467,6 +575,7 @@
 				E2426EE417EB98BF00C071C1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E2426EE517EB98BF00C071C1 /* Build configuration list for PBXNativeTarget "MachineGeneratorTests" */ = {
 			isa = XCConfigurationList;
@@ -475,6 +584,7 @@
 				E2426EE717EB98BF00C071C1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
