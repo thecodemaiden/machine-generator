@@ -29,36 +29,19 @@ static double LastTime = 0.0;
 
 cpSpace *setupSpace()
 {
-    const int nVerts = 5;
-    
     cpSpace *space = cpSpaceNew();
 	cpSpaceSetIterations(space, 5);
 	cpSpaceSetGravity(space, cpv(0, -1));
-
-    // Create vertexes for a pentagon shape.
-	cpVect verts[nVerts];
-	for(int i=0; i<nVerts; i++){
-		cpFloat angle = -2*M_PI*i/((cpFloat) nVerts);
-		verts[i] = cpv(10*cos(angle), 10*sin(angle));
-	}
     
-    cpFloat pentagon_mass = 1.0;
-	cpFloat pentagon_moment = cpMomentForPoly(1.0f, nVerts, verts, cpvzero);
-	cpBody *body;
-    cpShape *shape;
-	// Add lots of pentagons.
     
- 
+    MachineDescription basicMachine;
+    basicMachine.length = 50.0;
+    basicMachine.height = 35.0;
+    basicMachine.machineType = MACHINE_WHEEL;
     
-	for(int i=0; i<300; i++){
-		body = cpSpaceAddBody(space, cpBodyNew(pentagon_mass, pentagon_moment));
-		cpFloat x = rand()/(cpFloat)RAND_MAX*640 - 320;
-		cpBodySetPos(body, cpv(x, 350));
-		
-		shape = cpSpaceAddShape(space, cpPolyShapeNew(body, nVerts, verts, cpvzero));
-		cpShapeSetElasticity(shape, 0.0f);
-		cpShapeSetFriction(shape, 0.4f);
-	}
+    cpBody *machineBody = bodyFromDescription(&basicMachine, space);
+//    cpSpaceAddBody(space, machineBody);
+    
     return space;
 }
 

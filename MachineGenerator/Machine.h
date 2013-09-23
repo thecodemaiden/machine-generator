@@ -11,16 +11,17 @@
 #define MAX_ATTACHMENT 3 // up to 3 attachments for now
 
 enum {
-    MACHINE_LEVER,
+    MACHINE_BASE, // not attached to anything
     MACHINE_GEAR,
     MACHINE_SPRING,
     MACHINE_WELD,
 };
 
 enum {
-    MACHINE_BODY_CIRCLE,
-    MACHINE_BODY_RECT,
+    MACHINE_BOX,
+    MACHINE_WHEEL,
 };
+
 
 // a recursive structure
 struct MachineDescription;
@@ -28,16 +29,19 @@ struct MachineDescription;
 typedef struct Attachment
 {
     cpVect parentAttachPoint;
+    cpVect attachPoint;
     int attachmentType;
-    struct MachineDescription *bodyDesc;
+    cpFloat length; // how far apart are parent and child
+    struct MachineDescription *machine;
 } Attachment;
 
 typedef struct MachineDescription {
-    cpFloat size;
-    int bodyType;
+    cpFloat length;
+    cpFloat height; // only relevant to the bar
+    int machineType;
     Attachment children[MAX_ATTACHMENT];
 } MachineDescription;
 
-cpBody *bodyFromDescription(MachineDescription *md);
+cpBody *bodyFromDescription(MachineDescription *md, cpSpace *space);
 
 
