@@ -33,7 +33,6 @@ cpSpace *setupSpace()
 	cpSpaceSetIterations(space, 5);
 	cpSpaceSetGravity(space, cpv(0, -10));
     
-    
     MachineDescription *basicMachine = mgMachineNew();
     basicMachine->length = 100.0;
     basicMachine->height = 35.0;
@@ -44,26 +43,87 @@ cpSpace *setupSpace()
     wheel1->machineType = MACHINE_WHEEL;
     
     MachineDescription *bar1 = mgMachineNew();
-    bar1->length = 40.0;
+    bar1->length = 60.0;
     bar1->height = 10.0;
     bar1->machineType = MACHINE_BOX;
     
+    MachineDescription *bar2 = mgMachineNew();
+    bar2->length = 70.0;
+    bar2->height = 5.0;
+    bar2->machineType = MACHINE_BOX;
+    
+    MachineDescription *bar3 = mgMachineNew();
+    bar3->length = 70.0;
+    bar3->height = 5.0;
+    bar3->machineType = MACHINE_BOX;
+    
+    MachineDescription *wheel2 = mgMachineNew();
+    wheel2->length = 20.0;
+    wheel2->machineType = MACHINE_WHEEL;
+    
+    MachineDescription *wheel3 = mgMachineNew();
+    wheel3->length = 20.0;
+    wheel3->machineType = MACHINE_WHEEL;
+    
     Attachment *a = mgAttachmentNew();
-    a->parentAttachPoint = cpv(30, -15);
+    a->parentAttachPoint = cpv(30, -16);
     a->attachPoint = cpv(0, 0);
-    a->attachmentType = MACHINE_ROLL;
-    a->offset = cpv(20, -20);
+    a->attachmentType = MACHINE_PIVOT;
+    a->offset = cpv(25, -16);
     a->machine = wheel1;
     
     Attachment *b = mgAttachmentNew();
     b->parentAttachPoint = cpv(-30, -15);
-    b->attachPoint = cpv(-20, 0);
+    b->attachPoint = cpv(-30, 0);
     b->attachmentType = MACHINE_PIVOT;
     b->offset = cpv(-20, -20);
     b->machine = bar1;
     
+    Attachment *c = mgAttachmentNew();
+    c->parentAttachPoint = cpv(30, 0);
+    c->attachPoint = cpv(0, 0);
+    c->attachmentType = MACHINE_SPRING;
+    c->offset = cpv(40, 20);
+    c->machine = wheel2;
+    
+    Attachment *d = mgAttachmentNew();
+    d->parentAttachPoint = cpv(0, 0);
+    d->attachPoint = cpv(0, 0);
+    d->attachmentType = MACHINE_GEAR;
+    d->offset = cpv(wheel1->length+wheel3->length, 0);
+    d->machine = wheel3;
+    
+    Attachment *e = mgAttachmentNew();
+    e->parentAttachPoint = cpv(wheel3->length, 0);
+    e->attachPoint = cpv(0, 0);
+    e->attachmentType = MACHINE_PIVOT;
+    e->offset = cpv(wheel3->length, 0);
+    e->machine = bar2;
+    
+    Attachment *f = mgAttachmentNew();
+    f->parentAttachPoint = cpv(wheel3->length, 0);
+    f->attachPoint = cpv(bar3->length/2, 0);
+    f->attachmentType = MACHINE_PIVOT;
+    f->offset = cpv(wheel3->length, 0);
+    f->machine = bar3;
+    
+    
+    
+    
     basicMachine->children[0] = a;
     basicMachine->children[1] = b;
+    bar1->children[0] = c;
+    wheel1->children[0] = d;
+    wheel1->children[1] = f;
+    wheel3->children[0] = e;
+    
+    // machine structure:   basicMachine->pivot(wheel1), pivot(bar1)
+    //                      bar1->spring(wheel2)
+    //                      wheel1->gear(wheel3), pivot(bar3)
+    //                      wheel3->pivot(bar2)
+    //                      wheel2->
+    //                      bar2->
+    //                      bar3->
     
     cpBody *machineBody = bodyFromDescription(basicMachine, space);
     
@@ -77,11 +137,13 @@ cpSpace *setupSpace()
     //bottom
     cpBody *groundBody = cpBodyNewStatic();
     cpShape *groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(ww/2, -wh/3), 0.01f);
+        cpShapeSetFriction(groundShape, 0.5);
     cpSpaceAddStaticShape(space, groundShape);
     
     //left
     groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(-ww/2, wh/2), 0.01f);
     cpShapeSetElasticity(groundShape, 1.0);
+
     cpSpaceAddStaticShape(space, groundShape);
     
     //right
