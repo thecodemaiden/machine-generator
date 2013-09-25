@@ -9,10 +9,12 @@
 #import "chipmunk.h"
 
 #define MAX_ATTACHMENT 3 // up to 3 attachments for now
-#define MASS_MULTIPLIER 0.3 // in case we want to make things more or less massive
+#define MASS_MULTIPLIER 0.5 // in case we want to make things more or less massive
 
-#define SPRING_STIFFNESS 3.0
+#define SPRING_STIFFNESS 5.0
 #define SPRING_DAMPING 8.0
+
+#define GEAR_RATIO 1.0
 typedef enum {
     MACHINE_BASE, // not attached to anything
     MACHINE_GEAR, // this is kinda hard to imagine :|
@@ -48,11 +50,11 @@ typedef struct MachineDescription {
 } MachineDescription;
 
 MachineDescription *mgMachineNew();
-void mgMachineFree(MachineDescription *md);
+void mgMachineFree(MachineDescription *md); // recursive - no need to manually free attachments
 
 Attachment *mgAttachmentNew();
-void mgAttachmentFree(Attachment * at);
+void mgAttachmentFree(Attachment * at); // recursive - no need to manually free attached machines
 
-cpBody *bodyFromDescription(MachineDescription *md, cpSpace *space);
+cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space);
 
 

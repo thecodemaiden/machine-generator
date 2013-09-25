@@ -8,6 +8,9 @@
 
 #include <Machine.h>
 
+    // bodies don't collide with objects in the same group
+static cpGroup availableGroup = 1;
+
 MachineDescription *mgMachineNew()
 {
     
@@ -58,9 +61,8 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
     cpBody *machineBody = NULL;
     cpShape *machineShape = NULL;
     MachineDescription *md = at->machine;
-    cpGroup attachmentGroup = parentGroup;
     
-    cpVect parentPos = parentBody ? cpBodyGetPos(parentBody) : cpv(0, 0);
+    cpVect parentPos = parentBody ? cpBodyGetPos(parentBody) : at->parentAttachPoint;
     
     if (md->height == 0)
         md->height = 1;
@@ -83,7 +85,7 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
     cpBodySetPos(machineBody, truePos);
     
     if (md->machineType == MACHINE_WHEEL) {
-        const int numSegments = 20;
+        const int numSegments = 12;
         cpVect circleVerts[numSegments];
         float theta = 2 * 3.1415926 /numSegments;
         float tangetial_factor = tanf(theta);//calculate the tangential factor
@@ -116,21 +118,17 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
             y *= radial_factor; 
         } 
         
-       // machineShape = cpCircleShapeNew(machineBody, md->length, cpv(0, 0));
+       // there is no rolling friction, so I approximate circles.
         machineShape = cpPolyShapeNew(machineBody, numSegments, circleVerts, cpv(0, 0));
         bodyMoment = cpMomentForPoly(bodyMass, numSegments, circleVerts, cpv(0, 0));
     } else if (md->machineType == MACHINE_BOX) {
-        cpVect boxVerts[4] = {cpv(-md->length/2.0, -md->height/2.0),
-            cpv(-md->length/2.0, md->height/2.0),
-            cpv(md->length/2.0, md->height/2.0),
-            cpv(md->length/2.0, -md->height/2.0)};
-        machineShape = cpPolyShapeNew(machineBody, 4, boxVerts, cpv(0, 0));
+        machineShape = cpBoxShapeNew(machineBody, md->length, md->height);
         bodyMoment = cpMomentForBox(bodyMass, md->length, md->height);
     }
     cpBodySetMoment(machineBody, bodyMoment);
     cpSpaceAddShape(s, machineShape);
-    cpShapeSetElasticity(machineShape, 0.5);
-    cpShapeSetFriction(machineShape, 0.5);
+    cpShapeSetElasticity(machineShape, 1.0);
+ //   cpShapeSetFriction(machineShape, 0.5);
     
     //attach to parent - if we have one
     if (parentBody) {
@@ -149,7 +147,7 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
         if (attachmentType == MACHINE_SPRING) {
             cpConstraint *spring = cpDampedSpringNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint, attachmentLength, SPRING_STIFFNESS, SPRING_DAMPING);
             cpSpaceAddConstraint(s, spring);
-          //  attachmentGroup++; // this child will collide with parent
+            parentGroup++; // this child will collide with parent
         }
         
         if (attachmentType == MACHINE_FIXED) {
@@ -160,6 +158,7 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
             } else {
                 cpConstraint *joint = cpPinJointNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint);
                 cpSpaceAddConstraint(s, joint);
+                parentGroup++; // this child will collide with parent
             }
         }
         
@@ -171,10 +170,9 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
         }
         
         if (attachmentType == MACHINE_GEAR) {
-            cpConstraint *gear = cpGearJointNew(parentBody, machineBody, 0.0, 1.0);
+            cpConstraint *gear = cpGearJointNew(parentBody, machineBody, 0.0, -GEAR_RATIO);
             cpSpaceAddConstraint(s, gear);
             
-          //  cpBodyApplyImpulse(parentBody, cpv(4000, 0), cpv(0, -10));
             // lash them together as well
             cpConstraint  *weldJoint = cpPinJointNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint);
             cpSpaceAddConstraint(s, weldJoint);
@@ -182,7 +180,6 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
             cpFloat jointLength = cpvdist(parentAttachLocal, at->attachPoint);
             cpPinJointSetDist(weldJoint, jointLength);
             
-           // attachmentGroup++;
         }
     }
     
@@ -196,24 +193,24 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
         childIdx++;
     }
     
+    // we increase the availableGroup so that new machines will collide with this one
+    availableGroup = MAX(availableGroup, parentGroup+1);
     
     return machineBody;
 }
 
-cpBody *bodyFromDescription(MachineDescription *md, cpSpace *space)
+cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space)
 {
     cpBody *machineBody = NULL;
     
-    cpGroup currentGroup = 1; // necessary to stop objects joined at a pivot from colliding
-    // bodies don't collide with objects in the same group
-    
     Attachment baseAttachment;
-    baseAttachment.parentAttachPoint = cpv(0, 0);
+    baseAttachment.parentAttachPoint = position;
     baseAttachment.attachPoint = cpv(0,0);
     baseAttachment.attachmentType = MACHINE_BASE;
     baseAttachment.machine = md;
     
-    machineBody = bodyBuildingHelper(&baseAttachment, NULL, currentGroup, space);
+
+    machineBody = bodyBuildingHelper(&baseAttachment, NULL, availableGroup++, space);
     
     return machineBody;
 }

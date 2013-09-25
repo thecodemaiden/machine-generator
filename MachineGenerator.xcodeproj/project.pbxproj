@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		E2426EBF17EB98BE00C071C1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2426EBD17EB98BE00C071C1 /* InfoPlist.strings */; };
-		E2426EC517EB98BE00C071C1 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = E2426EC317EB98BE00C071C1 /* Credits.rtf */; };
 		E2426ECD17EB98BF00C071C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2426ECC17EB98BF00C071C1 /* Images.xcassets */; };
 		E2426EEB17EB992600C071C1 /* libChipmunk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EEA17EB992600C071C1 /* libChipmunk.a */; };
 		E2426EED17EB9E3600C071C1 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = E2426EEC17EB9E3600C071C1 /* main.c */; };
@@ -40,7 +39,6 @@
 		E2426EB917EB98BE00C071C1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E2426EBC17EB98BE00C071C1 /* MachineGenerator-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MachineGenerator-Info.plist"; sourceTree = "<group>"; };
 		E2426EBE17EB98BE00C071C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		E2426EC417EB98BE00C071C1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = en; path = en.lproj/Credits.rtf; sourceTree = "<group>"; };
 		E2426ECC17EB98BF00C071C1 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		E2426ED217EB98BF00C071C1 /* MachineGeneratorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MachineGeneratorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2426EEA17EB992600C071C1 /* libChipmunk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libChipmunk.a; path = Frameworks/chipmunk/libChipmunk.a; sourceTree = "<group>"; };
@@ -144,7 +142,6 @@
 			children = (
 				E2426EBC17EB98BE00C071C1 /* MachineGenerator-Info.plist */,
 				E2426EBD17EB98BE00C071C1 /* InfoPlist.strings */,
-				E2426EC317EB98BE00C071C1 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -318,7 +315,6 @@
 				E2426EBF17EB98BE00C071C1 /* InfoPlist.strings in Resources */,
 				E2426F0117EBA0D800C071C1 /* COPYING.txt in Resources */,
 				E2426ECD17EB98BF00C071C1 /* Images.xcassets in Resources */,
-				E2426EC517EB98BE00C071C1 /* Credits.rtf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,14 +363,6 @@
 				E2426EBE17EB98BE00C071C1 /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		E2426EC317EB98BE00C071C1 /* Credits.rtf */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E2426EC417EB98BE00C071C1 /* en */,
-			);
-			name = Credits.rtf;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

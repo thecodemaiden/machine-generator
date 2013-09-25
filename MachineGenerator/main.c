@@ -33,6 +33,15 @@ cpSpace *setupSpace()
 	cpSpaceSetIterations(space, 5);
 	cpSpaceSetGravity(space, cpv(0, -10));
     
+    // making a complicated but not very pretty/functional machine
+    // machine structure:   basicMachine->pivot(wheel1), pivot(bar1)
+    //                      bar1->spring(wheel2)
+    //                      wheel1->gear(wheel3), pivot(bar3)
+    //                      wheel3->pivot(bar2)
+    //                      wheel2->
+    //                      bar2->
+    //                      bar3->
+    
     MachineDescription *basicMachine = mgMachineNew();
     basicMachine->length = 100.0;
     basicMachine->height = 35.0;
@@ -108,8 +117,6 @@ cpSpace *setupSpace()
     f->machine = bar3;
     
     
-    
-    
     basicMachine->children[0] = a;
     basicMachine->children[1] = b;
     bar1->children[0] = c;
@@ -117,44 +124,94 @@ cpSpace *setupSpace()
     wheel1->children[1] = f;
     wheel3->children[0] = e;
     
-    // machine structure:   basicMachine->pivot(wheel1), pivot(bar1)
-    //                      bar1->spring(wheel2)
-    //                      wheel1->gear(wheel3), pivot(bar3)
-    //                      wheel3->pivot(bar2)
-    //                      wheel2->
-    //                      bar2->
-    //                      bar3->
+   
+    cpBody *machineBody = bodyFromDescription(basicMachine, cpv(-200, 0), space);
     
-    cpBody *machineBody = bodyFromDescription(basicMachine, space);
+    mgMachineFree(basicMachine); // is recursive - don't need to free everything else
     
-    mgMachineFree(basicMachine);
+    // give the body a push!
+    cpBodyApplyImpulse(machineBody, cpv(2000,0), cpv(0, 0));
     
-    // place the world edges
+    // another machine: two bars connected by spring, and on the other ends some circles
+    
+    // previous values are already freed
+    bar1 = mgMachineNew();
+    bar1->machineType = MACHINE_BOX;
+    bar1->height = 15.0;
+    bar1->length = 70.0;
+    
+    bar2 = mgMachineNew();
+    bar2->machineType = MACHINE_BOX;
+    bar2->height = 15.0;
+    bar2->length = 70.0;
+    
+    wheel1 = mgMachineNew();
+    wheel1->machineType = MACHINE_WHEEL;
+    wheel1->length = 15.0;
+    
+    wheel2 = mgMachineNew();
+    wheel2->machineType = MACHINE_WHEEL;
+    wheel2->length = 15.0;
+    
+    a = mgAttachmentNew();
+    a->attachmentType = MACHINE_SPRING;
+    a->parentAttachPoint = cpv(-bar1->length/2, 0);
+    a->attachPoint = cpv(bar2->length/2, 0);
+    a->offset = cpv(-bar1->length/2,0);
+    a->machine = bar2;
+
+    
+    b = mgAttachmentNew();
+    b->attachmentType = MACHINE_PIVOT;
+    b->machine = wheel1;
+    b->attachPoint = cpv(0, 0);
+    b->parentAttachPoint = cpv(bar1->length/2, 0);
+    
+    c = mgAttachmentNew();
+    c->attachmentType = MACHINE_PIVOT;
+    c->machine = wheel2;
+    c->parentAttachPoint = cpv(-bar2->length/2, 0);
+    b->attachPoint = cpv(0, 0);
+    
+    bar1->children[0] = a;
+    bar1->children[1] = b;
+    
+    bar2->children[0] = c;
+    
+    machineBody = bodyFromDescription(bar1, cpv(0, 0), space);
+    
+    mgMachineFree(bar1);
+ 
+    // place the world edges - i put a hill in the middle
     
     int ww, wh;
 	glfwGetWindowSize(&ww, &wh);
     
-    //bottom
+    //bottom1
     cpBody *groundBody = cpBodyNewStatic();
-    cpShape *groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(ww/2, -wh/3), 0.01f);
-        cpShapeSetFriction(groundShape, 0.5);
+    cpShape *groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/2), cpv(0, -wh/3), 0.01f);
+     //   cpShapeSetFriction(groundShape, 0.3);
+    cpSpaceAddStaticShape(space, groundShape);
+    
+    //bottom2
+    groundShape = cpSegmentShapeNew(groundBody, cpv(ww/2, -wh/2), cpv(0, -wh/3), 0.01f);
+   // cpShapeSetFriction(groundShape, 0.3);
     cpSpaceAddStaticShape(space, groundShape);
     
     //left
-    groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(-ww/2, wh/2), 0.01f);
+    groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/2), cpv(-ww/2, wh/2), 0.01f);
     cpShapeSetElasticity(groundShape, 1.0);
+    cpShapeSetFriction(groundShape, 0.0);
 
     cpSpaceAddStaticShape(space, groundShape);
     
     //right
-    groundShape = cpSegmentShapeNew(groundBody, cpv(ww/2, -wh/3), cpv(ww/2, wh/2), 0.01f);
+    groundShape = cpSegmentShapeNew(groundBody, cpv(ww/2, -wh/2), cpv(ww/2, wh/2), 0.01f);
     cpShapeSetElasticity(groundShape, 1.0);
     cpSpaceAddStaticShape(space, groundShape);
     
     
-    // give the body a push!
-    cpBodyApplyImpulse(machineBody, cpv(3000, 0), cpv(0, -10));
-    
+  
     return space;
 }
 
@@ -307,6 +364,7 @@ void setupGLFW()
         
         glfwSetWindowSizeCallback(Reshape);
         glfwSetWindowCloseCallback(WindowClose);
+    
         
         glfwSetCharCallback(Keyboard);
    //     glfwSetKeyCallback(SpecialKeyboard);
