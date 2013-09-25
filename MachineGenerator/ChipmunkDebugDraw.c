@@ -42,7 +42,7 @@
 */
 
 const Color LINE_COLOR = {200.0f/255.0f, 210.0f/255.0f, 230.0f/255.0f, 1.0f};
-const Color CONSTRAINT_COLOR = {0.0f, 0.75f, 0.0f, 1.0f};
+const Color CONSTRAINT_COLOR = {0.75f, 0.0f, 0.75f, 1.0f};
 const float SHAPE_ALPHA = 1.0f;
 
 float ChipmunkDebugDrawPointLineScale = 1.0f;

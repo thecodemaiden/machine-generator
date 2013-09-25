@@ -31,16 +31,67 @@ cpSpace *setupSpace()
 {
     cpSpace *space = cpSpaceNew();
 	cpSpaceSetIterations(space, 5);
-	cpSpaceSetGravity(space, cpv(0, -1));
+	cpSpaceSetGravity(space, cpv(0, -10));
     
     
-    MachineDescription basicMachine;
-    basicMachine.length = 50.0;
-    basicMachine.height = 35.0;
-    basicMachine.machineType = MACHINE_WHEEL;
+    MachineDescription *basicMachine = mgMachineNew();
+    basicMachine->length = 100.0;
+    basicMachine->height = 35.0;
+    basicMachine->machineType = MACHINE_BOX;
     
-    cpBody *machineBody = bodyFromDescription(&basicMachine, space);
-//    cpSpaceAddBody(space, machineBody);
+    MachineDescription *wheel1 = mgMachineNew();
+    wheel1->length = 20.0;
+    wheel1->machineType = MACHINE_WHEEL;
+    
+    MachineDescription *bar1 = mgMachineNew();
+    bar1->length = 40.0;
+    bar1->height = 10.0;
+    bar1->machineType = MACHINE_BOX;
+    
+    Attachment *a = mgAttachmentNew();
+    a->parentAttachPoint = cpv(30, -15);
+    a->attachPoint = cpv(0, 0);
+    a->attachmentType = MACHINE_ROLL;
+    a->offset = cpv(20, -20);
+    a->machine = wheel1;
+    
+    Attachment *b = mgAttachmentNew();
+    b->parentAttachPoint = cpv(-30, -15);
+    b->attachPoint = cpv(-20, 0);
+    b->attachmentType = MACHINE_PIVOT;
+    b->offset = cpv(-20, -20);
+    b->machine = bar1;
+    
+    basicMachine->children[0] = a;
+    basicMachine->children[1] = b;
+    
+    cpBody *machineBody = bodyFromDescription(basicMachine, space);
+    
+    mgMachineFree(basicMachine);
+    
+    // place the world edges
+    
+    int ww, wh;
+	glfwGetWindowSize(&ww, &wh);
+    
+    //bottom
+    cpBody *groundBody = cpBodyNewStatic();
+    cpShape *groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(ww/2, -wh/3), 0.01f);
+    cpSpaceAddStaticShape(space, groundShape);
+    
+    //left
+    groundShape = cpSegmentShapeNew(groundBody, cpv(-ww/2, -wh/3), cpv(-ww/2, wh/2), 0.01f);
+    cpShapeSetElasticity(groundShape, 1.0);
+    cpSpaceAddStaticShape(space, groundShape);
+    
+    //right
+    groundShape = cpSegmentShapeNew(groundBody, cpv(ww/2, -wh/3), cpv(ww/2, wh/2), 0.01f);
+    cpShapeSetElasticity(groundShape, 1.0);
+    cpSpaceAddStaticShape(space, groundShape);
+    
+    
+    // give the body a push!
+    cpBodyApplyImpulse(machineBody, cpv(3000, 0), cpv(0, -10));
     
     return space;
 }
@@ -206,9 +257,13 @@ static void
 eachBody(cpBody *body, void *unused)
 {
 	cpVect pos = cpBodyGetPos(body);
-	if(pos.y < -260 || cpfabs(pos.x) > 340){
-		cpFloat x = rand()/(cpFloat)RAND_MAX*640 - 320;
-		cpBodySetPos(body, cpv(x, 260));
+    int ww, wh;
+	glfwGetWindowSize(&ww, &wh);
+    
+
+	if(cpfabs(pos.x) > wh/2 + 200){
+        cpFloat otherSide = pos.x < -wh/2 ? wh/2 : -wh/2;
+		cpBodySetPos(body, cpv(otherSide, pos.y));
 	}
 }
 
@@ -227,7 +282,7 @@ Tick(double dt)
 		
 		// update bodies
 		cpSpaceStep(worldSpace, dt);
-        cpSpaceEachBody(worldSpace, &eachBody, NULL);
+  //      cpSpaceEachBody(worldSpace, &eachBody, NULL);
         
 //		ChipmunkDemoTicks++;
 //		ChipmunkDemoTime += dt;
@@ -256,6 +311,7 @@ Update(void)
 static void Display(void)
 {
     ChipmunkDebugDrawShapes(worldSpace);
+    ChipmunkDebugDrawConstraints(worldSpace);
 }
 
 void runSimulation()
@@ -285,8 +341,9 @@ void runSimulation()
 
 int main(int argc, char **argv)
 {
-    worldSpace = setupSpace();
     setupGLFW();
+    worldSpace = setupSpace();
+
     mouse_body = cpBodyNew(INFINITY, INFINITY);
 
     while(1) {
