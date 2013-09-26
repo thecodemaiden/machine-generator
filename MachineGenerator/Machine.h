@@ -9,7 +9,7 @@
 #import "chipmunk.h"
 
 #define MAX_ATTACHMENT 3 // up to 3 attachments for now
-#define MASS_MULTIPLIER 0.8 // in case we want to make things more or less massive
+#define MASS_MULTIPLIER 0.5 // in case we want to make things more or less massive
 
 #define SPRING_STIFFNESS 500.0
 #define SPRING_DAMPING 800.0

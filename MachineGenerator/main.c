@@ -350,14 +350,14 @@ Click(int button, int state)
 {
 	if(button == GLFW_MOUSE_BUTTON_1){
 		if(state == GLFW_PRESS){
-		/*	cpShape *shape = cpSpacePointQueryFirst(space, ChipmunkDemoMouse, GRABABLE_MASK_BIT, CP_NO_GROUP);
+			cpShape *shape = cpSpacePointQueryFirst(worldSpace, ChipmunkDemoMouse, CP_ALL_LAYERS, CP_NO_GROUP);
 			if(shape){
 				cpBody *body = shape->body;
 				mouse_joint = cpPivotJointNew2(mouse_body, body, cpvzero, cpBodyWorld2Local(body, ChipmunkDemoMouse));
 				mouse_joint->maxForce = 50000.0f;
 				mouse_joint->errorBias = cpfpow(1.0f - 0.15f, 60.0f);
-				cpSpaceAddConstraint(space, mouse_joint);
-			}*/
+				cpSpaceAddConstraint(worldSpace, mouse_joint);
+			}
 		} else if(mouse_joint){
 			cpSpaceRemoveConstraint(worldSpace, mouse_joint);
 			cpConstraintFree(mouse_joint);
