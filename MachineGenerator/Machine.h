@@ -11,8 +11,8 @@
 #define MAX_ATTACHMENT 3 // up to 3 attachments for now
 #define MASS_MULTIPLIER 0.8 // in case we want to make things more or less massive
 
-#define SPRING_STIFFNESS 5.0
-#define SPRING_DAMPING 8.0
+#define SPRING_STIFFNESS 500.0
+#define SPRING_DAMPING 800.0
 
 #define GEAR_RATIO 1.0
 
@@ -43,7 +43,6 @@ typedef struct Attachment
     AttachmentType attachmentType;
     cpVect offset; // offset from parent center to child center
     struct MachineDescription *machine;
-    struct MachineDescription *parent;
 } Attachment;
 
 typedef struct MachineDescription {
@@ -55,18 +54,19 @@ typedef struct MachineDescription {
 } MachineDescription;
 
 MachineDescription *mgMachineNew();
-void mgMachineFree(MachineDescription *md); // recursive - no need to manually free attachments
+void mgMachineDestroy(MachineDescription *md); // you need to free attachments yourself
+void mgMachineFree(MachineDescription *md);
 
 
 Attachment *mgAttachmentNew(); // a blank attachment
-void mgAttachmentFree(Attachment * at); // recursive - no need to manually free attached machines
+void mgAttachmentFree(Attachment * at); // the attached machine is not freed
 
 // returns true if there was space to attach the child
 boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment);
 
 void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space);
 
-void mgMachineRemoveAttachmentFromSpace(cpBody *attachmentBody, cpSpace *space);
+void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace *space);
 
 cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space);
 

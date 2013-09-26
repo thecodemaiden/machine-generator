@@ -507,39 +507,60 @@ int main(int argc, char **argv)
 	glfwGetWindowSize(&ww, &wh);
     
     
-    MachineWall *m = mgMachineWallNew(ww-20, wh-20, worldSpace);
+    MachineWall *m = mgMachineWallNew(200, 200, 10, 10, cpv((-200)/2, (-200)/2), worldSpace);
+    
+    MachineDescription *bar1 = mgMachineNew();
+    bar1->machineType = MACHINE_BOX;
+    bar1->height = 15.0;
+    bar1->length = 50.0;
     
     MachineDescription *bar2 = mgMachineNew();
     bar2->machineType = MACHINE_BOX;
     bar2->height = 15.0;
     bar2->length = 70.0;
     
+    MachineDescription *wheel1 = mgMachineNew();
+    wheel1->machineType = MACHINE_WHEEL;
+    wheel1->length = 20.0;
+    
     Attachment *a = mgAttachmentNew();
     a->attachmentType = MACHINE_SPRING;
     a->parentAttachPoint = cpv(-1, 0);
     a->attachPoint = cpv(1, 0);
     a->offset = cpv(5,5);
-    a->machine = bar2;
+    a->machine = bar1;
     
     Attachment *b = mgAttachmentNew();
-    b->attachmentType = MACHINE_FIXED;
+    b->attachmentType = MACHINE_SPRING;
+    b->parentAttachPoint = cpv(-1, 0);
+    b->attachPoint = cpv(1, 0);
+    b->offset = cpv(5,5);
+    b->machine = bar2;
     
-    mgMachineWallAddMachine(m, a, cpv(10, 10));
-    mgMachineWallAddMachine(m, a, cpv(10, 8));
+    Attachment *c = mgAttachmentNew();
+    c->attachmentType = MACHINE_SPRING;
+    c->parentAttachPoint = cpv(-1, 0);
+    c->attachPoint = cpv(1, 0);
+    c->offset = cpv(5,5);
+    c->machine = wheel1;
     
-    mgMachineWallRemoveMachine(m, cpv(10, 8));
+    mgMachineWallAddMachine(m, a, cpv(5, 5));
+    mgMachineWallAddMachine(m, c, cpv(5, 4));
     
-    mgMachineWallAddMachine(m, a, cpv(10, 8));
-    mgMachineWallAddMachine(m, a, cpv(8, 8));
+    mgMachineWallRemoveMachine(m, cpv(5, 4));
+    
+    mgMachineWallAddMachine(m, b, cpv(5, 4));
+    mgMachineWallAddMachine(m, b, cpv(1, 1));
 
     
-    mgMachineFree(bar2);
-    mgAttachmentFree(a);
     
 
     while(1) {
         runSimulation();
     }
+    
+    // should technically free al
+
     
     return 0;
 }

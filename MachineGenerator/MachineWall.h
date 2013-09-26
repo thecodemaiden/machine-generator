@@ -9,33 +9,28 @@
 #import "chipmunk.h"
 #import "Machine.h"
 
-#define MAX_WIDTH 20
-#define MAX_HEIGHT 20
 
 #define WALL_LAYER 1>>1 // to avoid colliding with machines
 #define PEG_LAYER 1>>2 // so i can search for pegs easily when attaching machines
 
 typedef struct  {
-    Attachment *attachedMachines[MAX_HEIGHT][MAX_WIDTH]; // I feel no need to maintain a linked list - yet
+    Attachment **attachedMachines; // I feel no need to maintain a linked list - yet
     cpVect gridSpacing;
     cpVect inputMachinePosition;
     cpVect outputMachinePosition;
     cpBody *body;
-    cpBody *inputMachineBody;
-    cpBody *outputMachineBody;
     cpSpace *space;
-    cpVect size;
+    cpVect size; // n of pegs horizont
 } MachineWall;
 
-MachineWall *mgMachineWallNew(int width, int height, cpSpace *space);
+MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space);
 void mgMachineWallAddMachine(MachineWall *wall, Attachment *newMachine, cpVect gridPosition);
 void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition);
 
-void mgMachineWallSetInputMachine(MachineWall *wall, Attachment *machine, cpVect gridPosition);
-void mgMachineWallSetOutputMachine(MachineWall *wall, Attachment *machine, cpVect gridPosition);
+void mgMachineWallSetInputMachinePosition(MachineWall *wall, cpVect gridPosition);
+void mgMachineWallSetOutputMachinePosition(MachineWall *wall, cpVect gridPosition);
 
-cpBody *mgMachineWallGetInputMachineBody(MachineWall *wall);
-cpBody *mgMachineWallGetOutputMachineBody(MachineWall *wall);
+Attachment *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition);
 
 void mgMachineWallFree(MachineWall *wall);
 

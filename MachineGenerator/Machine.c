@@ -11,6 +11,25 @@
     // bodies don't collide with objects in the same group
 static cpGroup availableGroup = 1;
 
+
+static void removeShapes(cpBody *body, cpShape *s, void *data)
+{
+    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
+}
+
+static void removeAttachments(cpBody *body, cpConstraint *constraint, void *data)
+{
+    cpBody *childBody = cpConstraintGetB(constraint);
+    cpSpace *s = cpBodyGetSpace(body);
+    
+    if (childBody != body) {
+        cpBodyEachConstraint(childBody, removeAttachments, data);
+        cpBodyEachShape(childBody, removeShapes, NULL);
+        cpSpaceRemoveBody(s, childBody);
+    }
+    cpSpaceRemoveConstraint(s, constraint);
+}
+
 MachineDescription *mgMachineNew()
 {
     
@@ -24,13 +43,18 @@ MachineDescription *mgMachineNew()
     return m;
 }
 
+void mgMachineDestroy(MachineDescription *md){
+    cpSpace *space = cpBodyGetSpace(md->body);
+    cpBodyEachConstraint(md->body, removeAttachments, NULL);
+    cpSpaceRemoveBody(space, md->body);
+    cpBodyEachShape(md->body, removeShapes, NULL);
+    cpBodyFree(md->body);
+    md->body = NULL;
+}
+
 void mgMachineFree(MachineDescription *md)
 {
-//    for (int i=0; i<MAX_ATTACHMENT; i++) {
-//        if (md->children[i]) {
-//            mgAttachmentFree(md->children[i]);
-//        }
-//    }
+    mgMachineDestroy(md);
     free(md);
 }
 
@@ -42,7 +66,6 @@ Attachment *mgAttachmentNew()
     a->parentAttachPoint = cpv(0, 0);
     a->offset = cpv(0,0);
     a->machine = NULL;
-    a->parent = NULL;
     return a;
 }
 
@@ -61,11 +84,16 @@ boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment)
     while (parent->children[i])
         i++;
     if (i<MAX_ATTACHMENT) {
-        attachment->parent = parent;
         parent->children[i] = attachment;
         return true;
     }
     return false;
+}
+
+static void getShapeForBody(cpBody *body, cpShape *currentShape, void *data) {
+    // assumes only one shape attached to this body
+    if (data)
+        *(cpShape **)data = currentShape;
 }
 
 static void attachmentHelper(cpBody *machineBody, cpBody *parentBody, AttachmentType attachmentType, cpVect localAttachPoint, cpVect parentAttachPoint, cpSpace *s)
@@ -143,9 +171,9 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
     
     if (md->machineType == MACHINE_WHEEL) {
         md->height = md->length;
-        bodyMass = sqrt(M_PI*md->length*md->length)*MASS_MULTIPLIER;
+        bodyMass = (M_PI*md->length*md->length)*MASS_MULTIPLIER;
     } else if (md->machineType == MACHINE_BOX) {
-        bodyMass = sqrt(md->length*md->height)*MASS_MULTIPLIER;
+        bodyMass = (md->length*md->height)*MASS_MULTIPLIER;
     }
     
     machineBody = cpBodyNew(bodyMass, 1.0); // going to set moment later
@@ -153,18 +181,19 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
     
     if (parentBody) {
         parentPos =  cpBodyGetPos(parentBody);
-
+        cpShape *parentShape = NULL;
+        cpBodyEachShape(parentBody, getShapeForBody, &parentShape);
+        if (parentShape) {
+            cpBB boundingBox = cpShapeGetBB(parentShape);
+            cpFloat length = boundingBox.r - boundingBox.l;
+            cpFloat height = boundingBox.t - boundingBox.b;
+            parentAttachPoint = cpv(length*at->parentAttachPoint.x/2, height*at->parentAttachPoint.y/2);
+        }
     } else {
         parentPos = at->parentAttachPoint;
- 
     }
 
     localAttachPoint = cpv(md->length*at->attachPoint.x/2, md->height*at->attachPoint.y/2);
-
-    if (at->parent) {
-        parentAttachPoint = cpv(at->parent->length*at->parentAttachPoint.x/2, at->parent->height*at->parentAttachPoint.y/2);
-    }
-    
     
     cpVect truePos = cpvadd(parentPos, at->offset);
     cpBodySetPos(machineBody, truePos);
@@ -244,35 +273,23 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
 
 void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space)
 {
-    attachment->parent = NULL;
     bodyBuildingHelper(attachment, body, availableGroup, space);
+}
+
+
+void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace *space)
+{
+    __block cpConstraint *constraintToDelete;
     
-}
-
-static void removeShapes(cpBody *body, cpShape *s, void *data)
-{
-    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
-}
-
-static void removeAttachments(cpBody *body, cpConstraint *constraint, void *data)
-{
-    cpBody *childBody = cpConstraintGetB(constraint);
-    cpSpace *s = cpBodyGetSpace(body);
-
-    if (childBody != body) {
-        mgMachineRemoveAttachmentFromSpace(body, s);
-        cpBodyEachShape(childBody, removeShapes, NULL);
-        cpSpaceRemoveBody(s, childBody);
+    cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *constraint) {
+        if (cpConstraintGetA(constraint) == parentBody && cpConstraintGetB(constraint) == attachmentBody)
+            constraintToDelete = constraint;
+    });
+    
+    if (constraintToDelete) {
+        cpSpaceRemoveConstraint(space, constraintToDelete);
     }
-    cpSpaceRemoveConstraint(s, constraint);
-}
-
-void mgMachineRemoveAttachmentFromSpace(cpBody *attachmentBody, cpSpace *space)
-{
-    cpBodyEachConstraint(attachmentBody, removeAttachments, NULL);
-    cpSpaceRemoveBody(space, attachmentBody);
-    cpBodyEachShape(attachmentBody, removeShapes, NULL);
-
+    
 }
 
 cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space)
@@ -284,7 +301,6 @@ cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *sp
     baseAttachment.attachPoint = cpv(0,0);
     baseAttachment.attachmentType = MACHINE_BASE;
     baseAttachment.machine = md;
-    baseAttachment.parent = NULL;
 
     bodyBuildingHelper(&baseAttachment, NULL, availableGroup, space);
     
