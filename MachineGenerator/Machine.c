@@ -8,7 +8,7 @@
 
 #include <Machine.h>
 
-    // bodies don't collide with objects in the same group
+// bodies don't collide with objects in the same group
 static cpGroup availableGroup = 1;
 
 
@@ -71,24 +71,13 @@ Attachment *mgAttachmentNew()
 
 void mgAttachmentFree(Attachment * at)
 {
-//    if (at->machine)
-//        mgMachineFree(at->machine);
-//    
+    //    if (at->machine)
+    //        mgMachineFree(at->machine);
+    //
     free(at);
 }
 
 
-boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment)
-{
-    int i = 0;
-    while (parent->children[i])
-        i++;
-    if (i<MAX_ATTACHMENT) {
-        parent->children[i] = attachment;
-        return true;
-    }
-    return false;
-}
 
 static void getShapeForBody(cpBody *body, cpShape *currentShape, void *data) {
     // assumes only one shape attached to this body
@@ -151,33 +140,12 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
 {
     // the location of the parent shape in space has to be added to the attachPoint
     
-    cpBody *machineBody = NULL;
+    cpBody *machineBody = at->machine->body;
     cpShape *machineShape = NULL;
     MachineDescription *md = at->machine;
     cpVect parentAttachPoint = cpv(0,0);
     cpVect localAttachPoint = cpv(0,0);
     cpVect parentPos;
-    
- 
-    
-    // the attachpoints have components in the range -1 to 1, signifying the edges (left to right, top to bottom)
-    // body coords go from -length/2 to length/2 and -height/2 to height/2
-   
-    if (md->height == 0)
-        md->height = 1;
-    
-    cpFloat bodyMass = 0.0;
-    cpFloat bodyMoment = 0.0;
-    
-    if (md->machineType == MACHINE_WHEEL) {
-        md->height = md->length;
-        bodyMass = (M_PI*md->length*md->length)*MASS_MULTIPLIER;
-    } else if (md->machineType == MACHINE_BOX) {
-        bodyMass = (md->length*md->height)*MASS_MULTIPLIER;
-    }
-    
-    machineBody = cpBodyNew(bodyMass, 1.0); // going to set moment later
-    cpSpaceAddBody(s, machineBody);
     
     if (parentBody) {
         parentPos =  cpBodyGetPos(parentBody);
@@ -192,60 +160,85 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
     } else {
         parentPos = at->parentAttachPoint;
     }
-
-    localAttachPoint = cpv(md->length*at->attachPoint.x/2, md->height*at->attachPoint.y/2);
     
+    localAttachPoint = cpv(md->length*at->attachPoint.x/2, md->height*at->attachPoint.y/2);
+
+    
+    // the attachpoints have components in the range -1 to 1, signifying the edges (left to right, top to bottom)
+    // body coords go from -length/2 to length/2 and -height/2 to height/2
+    if (!machineBody) {
+        if (md->height == 0)
+            md->height = 1;
+        
+        cpFloat bodyMass = 0.0;
+        cpFloat bodyMoment = 0.0;
+        
+        if (md->machineType == MACHINE_WHEEL) {
+            md->height = md->length;
+            bodyMass = (M_PI*md->length*md->length)*MASS_MULTIPLIER;
+        } else if (md->machineType == MACHINE_BOX) {
+            bodyMass = (md->length*md->height)*MASS_MULTIPLIER;
+        }
+        
+        machineBody = cpBodyNew(bodyMass, 1.0); // going to set moment later
+        cpSpaceAddBody(s, machineBody);
+    
+        if (md->machineType == MACHINE_WHEEL) {
+            const int numSegments = 12;
+            cpVect circleVerts[numSegments];
+            float theta = 2 * 3.1415926 /numSegments;
+            float tangetial_factor = tanf(theta);//calculate the tangential factor
+            
+            float radial_factor = cosf(theta);//calculate the radial factor
+            
+            float x = md->length/2;//we start at angle = 0
+            
+            float y = 0;
+            
+            for(int ii = 0; ii < numSegments; ii++)
+            {
+                circleVerts[ii] = cpv(x, y);
+                
+                //calculate the tangential vector
+                //remember, the radial vector is (x, y)
+                //to get the tangential vector we flip those coordinates and negate one of them
+                
+                float tx = -y;
+                float ty = x;
+                
+                //add the tangential vector
+                
+                x -= tx * tangetial_factor;
+                y -= ty * tangetial_factor;
+                
+                //correct using the radial factor
+                
+                x *= radial_factor;
+                y *= radial_factor;
+            }
+            
+            // there is no rolling friction, so I approximate circles.
+            machineShape = cpPolyShapeNew(machineBody, numSegments, circleVerts, cpv(0, 0));
+            bodyMoment = cpMomentForPoly(bodyMass, numSegments, circleVerts, cpv(0, 0));
+        } else if (md->machineType == MACHINE_BOX) {
+            machineShape = cpBoxShapeNew(machineBody, md->length, md->height);
+            bodyMoment = cpMomentForBox(bodyMass, md->length, md->height);
+        }
+        cpBodySetMoment(machineBody, bodyMoment);
+        cpSpaceAddShape(s, machineShape);
+        cpShapeSetElasticity(machineShape, 1.0);
+        cpShapeSetLayers(machineShape, MACHINE_LAYER);
+        //   cpShapeSetFriction(machineShape, 0.5);
+        
+        cpShapeSetGroup(machineShape, parentGroup);
+        md->body = machineBody;
+    } else {
+        
+    }
+
     cpVect truePos = cpvadd(parentPos, at->offset);
     cpBodySetPos(machineBody, truePos);
 
-    
-    if (md->machineType == MACHINE_WHEEL) {
-        const int numSegments = 12;
-        cpVect circleVerts[numSegments];
-        float theta = 2 * 3.1415926 /numSegments;
-        float tangetial_factor = tanf(theta);//calculate the tangential factor
-        
-        float radial_factor = cosf(theta);//calculate the radial factor
-        
-        float x = md->length/2;//we start at angle = 0
-        
-        float y = 0;
-        
-        for(int ii = 0; ii < numSegments; ii++)
-        {
-            circleVerts[ii] = cpv(x, y);
-            
-            //calculate the tangential vector
-            //remember, the radial vector is (x, y)
-            //to get the tangential vector we flip those coordinates and negate one of them
-            
-            float tx = -y;
-            float ty = x;
-            
-            //add the tangential vector
-            
-            x -= tx * tangetial_factor;
-            y -= ty * tangetial_factor;
-            
-            //correct using the radial factor 
-            
-            x *= radial_factor; 
-            y *= radial_factor; 
-        } 
-        
-       // there is no rolling friction, so I approximate circles.
-        machineShape = cpPolyShapeNew(machineBody, numSegments, circleVerts, cpv(0, 0));
-        bodyMoment = cpMomentForPoly(bodyMass, numSegments, circleVerts, cpv(0, 0));
-    } else if (md->machineType == MACHINE_BOX) {
-        machineShape = cpBoxShapeNew(machineBody, md->length, md->height);
-        bodyMoment = cpMomentForBox(bodyMass, md->length, md->height);
-    }
-    cpBodySetMoment(machineBody, bodyMoment);
-    cpSpaceAddShape(s, machineShape);
-    cpShapeSetElasticity(machineShape, 1.0);
-    cpShapeSetLayers(machineShape, MACHINE_LAYER);
- //   cpShapeSetFriction(machineShape, 0.5);
-    
     //attach to parent - if we have one
     if (parentBody) {
         AttachmentType attachmentType = at->attachmentType;
@@ -254,9 +247,6 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
         }
         attachmentHelper(machineBody, parentBody, attachmentType, localAttachPoint, parentAttachPoint, s);
     }
-    
-    cpShapeSetGroup(machineShape, parentGroup);
-    md->body = machineBody;
     
     int childIdx = 0;
     while (md->children[childIdx] != NULL) {
@@ -270,6 +260,19 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
     
 }
 
+
+boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment)
+{
+    int i = 0;
+    while (parent->children[i])
+        i++;
+    if (i<MAX_ATTACHMENT) {
+        parent->children[i] = attachment;
+        bodyBuildingHelper(attachment, parent->body, 0, cpBodyGetSpace(parent->body));
+        return true;
+    }
+    return false;
+}
 
 void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space)
 {
@@ -301,7 +304,7 @@ cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *sp
     baseAttachment.attachPoint = cpv(0,0);
     baseAttachment.attachmentType = MACHINE_BASE;
     baseAttachment.machine = md;
-
+    
     bodyBuildingHelper(&baseAttachment, NULL, availableGroup, space);
     
     return machineBody;

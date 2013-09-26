@@ -550,10 +550,16 @@ int main(int argc, char **argv)
     mgMachineWallRemoveMachine(m, cpv(5, 4));
     
     mgMachineWallAddMachine(m, b, cpv(5, 4));
-    mgMachineWallAddMachine(m, b, cpv(1, 1));
+    mgMachineWallAddMachine(m, c, cpv(1, 1));
 
+    // attach machines together?
+    Attachment *d = mgAttachmentNew();
+    d->attachmentType = MACHINE_FIXED;
+    d->attachPoint = cpv(-1,0);
+    d->parentAttachPoint = cpv(-1,0);
+    d->machine = bar2;
     
-    
+    mgMachineAttach(wheel1, d);
 
     while(1) {
         runSimulation();
