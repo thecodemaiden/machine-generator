@@ -9,15 +9,17 @@
 #import "chipmunk.h"
 
 #define MAX_ATTACHMENT 3 // up to 3 attachments for now
-#define MASS_MULTIPLIER 0.5 // in case we want to make things more or less massive
+#define MASS_MULTIPLIER 0.8 // in case we want to make things more or less massive
 
 #define SPRING_STIFFNESS 5.0
 #define SPRING_DAMPING 8.0
 
 #define GEAR_RATIO 1.0
+
+#define MACHINE_LAYER 1 // we do not want to collide with the wall we attach machines too
 typedef enum {
     MACHINE_BASE, // not attached to anything
-    MACHINE_GEAR, // this is kinda hard to imagine :|
+    MACHINE_GEAR,
     MACHINE_SPRING,
     MACHINE_FIXED, // the attachment points maintain their distance
     MACHINE_PIVOT, // the attachment can rotate round a point on the parent
@@ -37,9 +39,11 @@ typedef struct Attachment
     cpVect parentAttachPoint;
     cpVect attachPoint;
     // length of springs/struts will be the distance between attach points
+    
     AttachmentType attachmentType;
     cpVect offset; // offset from parent center to child center
     struct MachineDescription *machine;
+    struct MachineDescription *parent;
 } Attachment;
 
 typedef struct MachineDescription {
@@ -47,14 +51,22 @@ typedef struct MachineDescription {
     cpFloat height; // only relevant to the bar
     BodyType machineType;
     Attachment *children[MAX_ATTACHMENT]; // we could change this to a linked list of attachments
+    cpBody *body; // NULL until it is built or attached
 } MachineDescription;
 
 MachineDescription *mgMachineNew();
 void mgMachineFree(MachineDescription *md); // recursive - no need to manually free attachments
 
-Attachment *mgAttachmentNew();
+
+Attachment *mgAttachmentNew(); // a blank attachment
 void mgAttachmentFree(Attachment * at); // recursive - no need to manually free attached machines
 
-cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space);
+// returns true if there was space to attach the child
+boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment);
 
+void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space);
+
+void mgMachineRemoveAttachmentFromSpace(cpBody *attachmentBody, cpSpace *space);
+
+cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space);
 

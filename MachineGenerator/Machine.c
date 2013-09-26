@@ -26,11 +26,11 @@ MachineDescription *mgMachineNew()
 
 void mgMachineFree(MachineDescription *md)
 {
-    for (int i=0; i<MAX_ATTACHMENT; i++) {
-        if (md->children[i]) {
-            mgAttachmentFree(md->children[i]);
-        }
-    }
+//    for (int i=0; i<MAX_ATTACHMENT; i++) {
+//        if (md->children[i]) {
+//            mgAttachmentFree(md->children[i]);
+//        }
+//    }
     free(md);
 }
 
@@ -42,28 +42,99 @@ Attachment *mgAttachmentNew()
     a->parentAttachPoint = cpv(0, 0);
     a->offset = cpv(0,0);
     a->machine = NULL;
+    a->parent = NULL;
     return a;
 }
 
 void mgAttachmentFree(Attachment * at)
 {
-    if (at->machine)
-        mgMachineFree(at->machine);
-    
+//    if (at->machine)
+//        mgMachineFree(at->machine);
+//    
     free(at);
 }
 
 
-cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGroup, cpSpace *s)
+boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment)
+{
+    int i = 0;
+    while (parent->children[i])
+        i++;
+    if (i<MAX_ATTACHMENT) {
+        attachment->parent = parent;
+        parent->children[i] = attachment;
+        return true;
+    }
+    return false;
+}
+
+static void attachmentHelper(cpBody *machineBody, cpBody *parentBody, AttachmentType attachmentType, cpVect localAttachPoint, cpVect parentAttachPoint, cpSpace *s)
+{
+    // find parent attach points in local coordinates
+    cpVect parentAttachLocal = cpBodyLocal2World(parentBody, parentAttachPoint);
+    parentAttachLocal = cpBodyWorld2Local(machineBody, parentAttachLocal);
+    
+    cpFloat attachmentLength = cpvdist(parentAttachLocal, localAttachPoint);
+    
+    if (attachmentType == MACHINE_BASE) {
+        // nothing to do - this should be an error....
+    }
+    
+    if (attachmentType == MACHINE_SPRING) {
+        cpConstraint *spring = cpDampedSpringNew(parentBody, machineBody, parentAttachPoint, localAttachPoint, attachmentLength, SPRING_STIFFNESS, SPRING_DAMPING);
+        cpSpaceAddConstraint(s, spring);
+    }
+    
+    if (attachmentType == MACHINE_FIXED) {
+        //same attachment group - will not collide with parent
+        if (cpfabs(attachmentLength) < 1.0) {
+            // zero length pin joints are bad for simulation
+            attachmentType = MACHINE_PIVOT;
+        } else {
+            cpConstraint *joint = cpPinJointNew(parentBody, machineBody, parentAttachPoint, localAttachPoint);
+            cpSpaceAddConstraint(s, joint);
+        }
+    }
+    
+    if (attachmentType == MACHINE_PIVOT) {
+        // length is irrelevant
+        //same attachment group - will not collide with parent
+        cpConstraint *pivot = cpPivotJointNew2(parentBody, machineBody, parentAttachPoint, localAttachPoint);
+        cpSpaceAddConstraint(s, pivot);
+    }
+    
+    if (attachmentType == MACHINE_GEAR) {
+        cpConstraint *gear = cpGearJointNew(parentBody, machineBody, 0.0, -GEAR_RATIO);
+        cpSpaceAddConstraint(s, gear);
+        
+        // lash them together as well
+        cpConstraint  *weldJoint = cpPinJointNew(parentBody, machineBody, parentAttachPoint, localAttachPoint);
+        cpSpaceAddConstraint(s, weldJoint);
+        
+        cpFloat jointLength = cpvdist(parentAttachLocal, localAttachPoint);
+        cpPinJointSetDist(weldJoint, jointLength);
+        
+    }
+    
+}
+
+
+static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGroup, cpSpace *s)
 {
     // the location of the parent shape in space has to be added to the attachPoint
     
     cpBody *machineBody = NULL;
     cpShape *machineShape = NULL;
     MachineDescription *md = at->machine;
+    cpVect parentAttachPoint = cpv(0,0);
+    cpVect localAttachPoint = cpv(0,0);
+    cpVect parentPos;
     
-    cpVect parentPos = parentBody ? cpBodyGetPos(parentBody) : at->parentAttachPoint;
+ 
     
+    // the attachpoints have components in the range -1 to 1, signifying the edges (left to right, top to bottom)
+    // body coords go from -length/2 to length/2 and -height/2 to height/2
+   
     if (md->height == 0)
         md->height = 1;
     
@@ -71,18 +142,33 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
     cpFloat bodyMoment = 0.0;
     
     if (md->machineType == MACHINE_WHEEL) {
-        //  md->length = MAX(md->length, md->height);
+        md->height = md->length;
         bodyMass = sqrt(M_PI*md->length*md->length)*MASS_MULTIPLIER;
     } else if (md->machineType == MACHINE_BOX) {
         bodyMass = sqrt(md->length*md->height)*MASS_MULTIPLIER;
     }
     
-    
     machineBody = cpBodyNew(bodyMass, 1.0); // going to set moment later
     cpSpaceAddBody(s, machineBody);
     
+    if (parentBody) {
+        parentPos =  cpBodyGetPos(parentBody);
+
+    } else {
+        parentPos = at->parentAttachPoint;
+ 
+    }
+
+    localAttachPoint = cpv(md->length*at->attachPoint.x/2, md->height*at->attachPoint.y/2);
+
+    if (at->parent) {
+        parentAttachPoint = cpv(at->parent->length*at->parentAttachPoint.x/2, at->parent->height*at->parentAttachPoint.y/2);
+    }
+    
+    
     cpVect truePos = cpvadd(parentPos, at->offset);
     cpBodySetPos(machineBody, truePos);
+
     
     if (md->machineType == MACHINE_WHEEL) {
         const int numSegments = 12;
@@ -92,7 +178,7 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
         
         float radial_factor = cosf(theta);//calculate the radial factor
         
-        float x = md->length;//we start at angle = 0
+        float x = md->length/2;//we start at angle = 0
         
         float y = 0;
         
@@ -128,63 +214,20 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
     cpBodySetMoment(machineBody, bodyMoment);
     cpSpaceAddShape(s, machineShape);
     cpShapeSetElasticity(machineShape, 1.0);
+    cpShapeSetLayers(machineShape, MACHINE_LAYER);
  //   cpShapeSetFriction(machineShape, 0.5);
     
     //attach to parent - if we have one
     if (parentBody) {
-        // find parent attach points in local coordinates
-        cpVect parentAttachLocal = cpBodyLocal2World(parentBody, at->parentAttachPoint);
-        parentAttachLocal = cpBodyWorld2Local(machineBody, parentAttachLocal);
-        
-        cpFloat attachmentLength = cpvdist(parentAttachLocal, at->attachPoint);
-        
         AttachmentType attachmentType = at->attachmentType;
-        
-        if (attachmentType == MACHINE_BASE) {
-            // nothing to do - this should be an error....
-        }
-        
-        if (attachmentType == MACHINE_SPRING) {
-            cpConstraint *spring = cpDampedSpringNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint, attachmentLength, SPRING_STIFFNESS, SPRING_DAMPING);
-            cpSpaceAddConstraint(s, spring);
+        if (attachmentType == MACHINE_SPRING || attachmentType == MACHINE_FIXED) {
             parentGroup++; // this child will collide with parent
         }
-        
-        if (attachmentType == MACHINE_FIXED) {
-            //same attachment group - will not collide with parent
-            if (cpfabs(attachmentLength) < 1.0) {
-                // zero length pin joints are bad for simulation
-                attachmentType = MACHINE_PIVOT;
-            } else {
-                cpConstraint *joint = cpPinJointNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint);
-                cpSpaceAddConstraint(s, joint);
-                parentGroup++; // this child will collide with parent
-            }
-        }
-        
-        if (attachmentType == MACHINE_PIVOT) {
-            // length is irrelevant
-            //same attachment group - will not collide with parent
-            cpConstraint *pivot = cpPivotJointNew2(parentBody, machineBody, at->parentAttachPoint, at->attachPoint);
-            cpSpaceAddConstraint(s, pivot);
-        }
-        
-        if (attachmentType == MACHINE_GEAR) {
-            cpConstraint *gear = cpGearJointNew(parentBody, machineBody, 0.0, -GEAR_RATIO);
-            cpSpaceAddConstraint(s, gear);
-            
-            // lash them together as well
-            cpConstraint  *weldJoint = cpPinJointNew(parentBody, machineBody, at->parentAttachPoint, at->attachPoint);
-            cpSpaceAddConstraint(s, weldJoint);
-            
-            cpFloat jointLength = cpvdist(parentAttachLocal, at->attachPoint);
-            cpPinJointSetDist(weldJoint, jointLength);
-            
-        }
+        attachmentHelper(machineBody, parentBody, attachmentType, localAttachPoint, parentAttachPoint, s);
     }
     
     cpShapeSetGroup(machineShape, parentGroup);
-    
+    md->body = machineBody;
     
     int childIdx = 0;
     while (md->children[childIdx] != NULL) {
@@ -196,7 +239,40 @@ cpBody *bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGro
     // we increase the availableGroup so that new machines will collide with this one
     availableGroup = MAX(availableGroup, parentGroup+1);
     
-    return machineBody;
+}
+
+
+void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space)
+{
+    attachment->parent = NULL;
+    bodyBuildingHelper(attachment, body, availableGroup, space);
+    
+}
+
+static void removeShapes(cpBody *body, cpShape *s, void *data)
+{
+    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
+}
+
+static void removeAttachments(cpBody *body, cpConstraint *constraint, void *data)
+{
+    cpBody *childBody = cpConstraintGetB(constraint);
+    cpSpace *s = cpBodyGetSpace(body);
+
+    if (childBody != body) {
+        mgMachineRemoveAttachmentFromSpace(body, s);
+        cpBodyEachShape(childBody, removeShapes, NULL);
+        cpSpaceRemoveBody(s, childBody);
+    }
+    cpSpaceRemoveConstraint(s, constraint);
+}
+
+void mgMachineRemoveAttachmentFromSpace(cpBody *attachmentBody, cpSpace *space)
+{
+    cpBodyEachConstraint(attachmentBody, removeAttachments, NULL);
+    cpSpaceRemoveBody(space, attachmentBody);
+    cpBodyEachShape(attachmentBody, removeShapes, NULL);
+
 }
 
 cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space)
@@ -208,9 +284,9 @@ cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *sp
     baseAttachment.attachPoint = cpv(0,0);
     baseAttachment.attachmentType = MACHINE_BASE;
     baseAttachment.machine = md;
-    
+    baseAttachment.parent = NULL;
 
-    machineBody = bodyBuildingHelper(&baseAttachment, NULL, availableGroup++, space);
+    bodyBuildingHelper(&baseAttachment, NULL, availableGroup, space);
     
     return machineBody;
 }

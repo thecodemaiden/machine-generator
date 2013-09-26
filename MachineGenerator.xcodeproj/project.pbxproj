@@ -17,6 +17,7 @@
 		E2426F0117EBA0D800C071C1 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = E2426EFB17EBA0D800C071C1 /* COPYING.txt */; };
 		E2426F0217EBA0D800C071C1 /* libglfw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0017EBA0D800C071C1 /* libglfw.a */; };
 		E2426F0417EBA17000C071C1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0317EBA17000C071C1 /* IOKit.framework */; };
+		E2A46AC317F3CB9000950A45 /* MachineWall.c in Sources */ = {isa = PBXBuildFile; fileRef = E2A46AC217F3CB9000950A45 /* MachineWall.c */; };
 		E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */; };
 		E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */; };
 		E2C7FC4817EBB989000A10F6 /* Machine.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC4717EBB989000A10F6 /* Machine.c */; };
@@ -51,6 +52,8 @@
 		E2426EFE17EBA0D800C071C1 /* glfw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glfw.h; sourceTree = "<group>"; };
 		E2426F0017EBA0D800C071C1 /* libglfw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libglfw.a; sourceTree = "<group>"; };
 		E2426F0317EBA17000C071C1 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		E2A46AC217F3CB9000950A45 /* MachineWall.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = MachineWall.c; sourceTree = "<group>"; };
+		E2A46AC417F3CB9C00950A45 /* MachineWall.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MachineWall.h; sourceTree = "<group>"; };
 		E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ChipmunkDebugDraw.c; sourceTree = "<group>"; };
 		E2C7FC4217EBAFB8000A10F6 /* ChipmunkDebugDraw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChipmunkDebugDraw.h; sourceTree = "<group>"; };
 		E2C7FC4317EBAFB8000A10F6 /* ChipmunkDemoShaderSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChipmunkDemoShaderSupport.h; sourceTree = "<group>"; };
@@ -230,6 +233,8 @@
 			children = (
 				E2C7FC4917EBB994000A10F6 /* Machine.h */,
 				E2C7FC4717EBB989000A10F6 /* Machine.c */,
+				E2A46AC417F3CB9C00950A45 /* MachineWall.h */,
+				E2A46AC217F3CB9000950A45 /* MachineWall.c */,
 			);
 			name = Display;
 			sourceTree = "<group>";
@@ -335,6 +340,7 @@
 				E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */,
 				E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */,
 				E2426EED17EB9E3600C071C1 /* main.c in Sources */,
+				E2A46AC317F3CB9000950A45 /* MachineWall.c in Sources */,
 				E2C7FC4817EBB989000A10F6 /* Machine.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
