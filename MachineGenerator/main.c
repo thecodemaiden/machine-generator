@@ -507,7 +507,8 @@ int main(int argc, char **argv)
 	glfwGetWindowSize(&ww, &wh);
     
     
-    MachineWall *m = mgMachineWallNew(200, 200, 10, 10, cpv((-200)/2, (-200)/2), worldSpace);
+    MachineWall *m = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
+    MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
     
     MachineDescription *bar1 = mgMachineNew();
     bar1->machineType = MACHINE_BOX;
@@ -547,10 +548,13 @@ int main(int argc, char **argv)
     mgMachineWallAddMachine(m, a, cpv(5, 5));
     mgMachineWallAddMachine(m, c, cpv(5, 4));
     
-    mgMachineWallRemoveMachine(m, cpv(5, 4));
+    mgMachineWallRemoveMachine(m, cpv(5, 5));
     
-    mgMachineWallAddMachine(m, b, cpv(5, 4));
-    mgMachineWallAddMachine(m, c, cpv(1, 1));
+    mgMachineWallAddMachine(m, b, cpv(5, 2));
+   
+    mgMachineWallAddMachine(m2, a, cpv(3, 6));
+    
+    
 
     // attach machines together?
     Attachment *d = mgAttachmentNew();
