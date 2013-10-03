@@ -42,14 +42,13 @@ typedef struct Attachment
     
     AttachmentType attachmentType;
     cpVect offset; // offset from parent center to child center
-    struct MachineDescription *machine;
+
 } Attachment;
 
 typedef struct MachineDescription {
     cpFloat length;
     cpFloat height; // only relevant to the bar
     BodyType machineType;
-    Attachment *children[MAX_ATTACHMENT]; // we could change this to a linked list of attachments
     cpBody *body; // NULL until it is built or attached
 } MachineDescription;
 
@@ -57,16 +56,9 @@ MachineDescription *mgMachineNew();
 void mgMachineDestroy(MachineDescription *md); // you need to free attachments yourself
 void mgMachineFree(MachineDescription *md);
 
+void mgMachineAttachToBody(Attachment *attachment, cpBody *machineBody, cpBody *body, cpSpace *space);
 
-Attachment *mgAttachmentNew(); // a blank attachment
-void mgAttachmentFree(Attachment * at); // the attached machine is not freed
+void mgMachineDetachFromBody(cpBody *machineBody, cpBody *parentBody, cpSpace *space);
 
-// returns true if there was space to attach the child
-boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment);
-
-void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space);
-
-void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace *space);
-
-cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space);
+void constructBodyForDescription(MachineDescription *md, cpVect position, cpSpace *space);
 
