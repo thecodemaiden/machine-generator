@@ -36,6 +36,7 @@ void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, 
 void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition);
 
 MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition);
+Attachment *mgMachineWallGetAttachmentBetween(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos);
 
 boolean_t mgMachineWallAttachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
 boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos);

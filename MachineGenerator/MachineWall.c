@@ -50,7 +50,7 @@ static cpVect gridPositionToWorld(MachineWall *wall, cpVect gridPosition) {
     cpVect pegPosition = cpv(wall->gridSpacing.x*(x+1), wall->gridSpacing.y*(y+1));
     pegPosition = cpvadd(pegPosition, cpv(-wallWidth/2, -wallHeight/2));
     pegPosition = cpvadd(pegPosition, cpBodyGetPos(wall->body));
-
+    
     return pegPosition;
 }
 
@@ -65,7 +65,7 @@ static void freeShapes(cpBody *body, cpShape *shape, void *data)
 MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space)
 {
     MachineWall *wall = (MachineWall *)calloc(1, sizeof(MachineWall));
-
+    
     int nPegs = hPegs *vPegs;
     
     wall->machines = (MachineDescription **)calloc(nPegs, sizeof (MachineDescription *));
@@ -83,14 +83,14 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
     cpShape *wallShape = cpBoxShapeNew(wall->body, width, height);
     cpShapeSetLayers(wallShape, WALL_LAYER);
     cpSpaceAddShape(space, wallShape);
-
+    
     return wall;
 }
 
 void mgMachineWallFree(MachineWall *wall)
 {
     free(wall->machines);
-
+    
     int nPegs = wall->size.x * wall->size.y;
     
     for (int i=0; i<=nPegs; i++) {
@@ -99,28 +99,22 @@ void mgMachineWallFree(MachineWall *wall)
     free(wall->attachments);
     
     cpBodyEachShape(wall->body, freeShapes, NULL);
-
+    
     cpBodyFree(wall->body);
     free(wall);
 }
 
 #pragma mark - Machine methods
 
-MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition)
-{
-    int machineNumber = machinePositionToNumber(wall->size, gridPosition);
-    
-    return wall->machines[machineNumber];
-}
 
 void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, Attachment *attachment, cpVect gridPosition)
 {
     int machineNumber = machinePositionToNumber(wall->size, gridPosition);
-
+    
     
     MachineDescription *alreadyAttached = wall->machines[machineNumber];
     if (!alreadyAttached) {
-
+        
         cpVect pegPosition = gridPositionToWorld(wall, gridPosition);
         cpBody *pegBody = cpBodyNew(INFINITY, INFINITY);
         cpBodySetPos(pegBody, pegPosition);
@@ -196,5 +190,20 @@ boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpV
         }
     }
     return detached;
+}
+
+MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition)
+{
+    int machineNumber = machinePositionToNumber(wall->size, gridPosition);
+    
+    return wall->machines[machineNumber];
+}
+
+Attachment *mgMachineWallGetAttachmentBetween(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos)
+{
+    int machine1Num = machinePositionToNumber(wall->size, machine1Pos);
+    int machine2Num = machinePositionToNumber(wall->size, machine2Pos);
+    
+    return wall->attachments[machine1Num][machine2Num];
 }
 

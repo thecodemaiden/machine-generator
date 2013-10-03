@@ -360,6 +360,9 @@ void createTestWalls()
     rigid.attachmentType = MACHINE_FIXED;
     
     mgMachineWallAttachMachines(wall1, cpv(5,5), cpv(3,7), &rigid);
+    
+    // uncomment to test removal
+   // mgMachineWallDetachMachines(wall1, cpv(3,7), cpv(5,5));
 }
 
 int main(int argc, char **argv)
