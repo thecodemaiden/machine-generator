@@ -17,10 +17,12 @@
 // I will use an adjacency matrix: VxV array of Attachments, where matrix[B][A] exists if there is
 // an attachment from B->A.
 
+// Since machines cannot be attached to themselves, I use the diagonal for the attachment to the wall
+
 
 typedef struct  {
     MachineDescription **machines;
-    MachineDescription ***attachments;
+    Attachment ***attachments;
     cpVect gridSpacing;
     cpVect inputMachinePosition;
     cpVect outputMachinePosition;
@@ -30,12 +32,13 @@ typedef struct  {
 } MachineWall;
 
 MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space);
-void mgMachineWallAddMachine(MachineWall *wall, Attachment *newMachine, cpVect gridPosition);
+void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, Attachment *attachment, cpVect gridPosition);
 void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition);
 
 MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition);
 
-boolean_t mgMachineWallAttachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
+boolean_t mgMachineWallAttachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
+boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos);
 
 void mgMachineWallFree(MachineWall *wall);
 

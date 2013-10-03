@@ -36,12 +36,12 @@ struct MachineDescription;
 
 typedef struct Attachment
 {
-    cpVect parentAttachPoint;
-    cpVect attachPoint;
+    cpVect firstAttachPoint;
+    cpVect secondAttachPoint;
     // length of springs/struts will be the distance between attach points
     
     AttachmentType attachmentType;
-    cpVect offset; // offset from parent center to child center
+    float attachmentLength; // distance between parent and child attachment points
 
 } Attachment;
 
@@ -55,6 +55,10 @@ typedef struct MachineDescription {
 MachineDescription *mgMachineNew();
 void mgMachineDestroy(MachineDescription *md); // you need to free attachments yourself
 void mgMachineFree(MachineDescription *md);
+
+Attachment *mgAttachmentNew();
+void mgAttachmentFree(Attachment * at);
+
 
 void mgMachineAttachToBody(Attachment *attachment, cpBody *machineBody, cpBody *body, cpSpace *space);
 

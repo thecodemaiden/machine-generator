@@ -59,9 +59,9 @@ Attachment *mgAttachmentNew()
 {
     Attachment *a = (Attachment *)calloc(1, sizeof(Attachment));
     a->attachmentType = MACHINE_BASE;
-    a->attachPoint = cpv(0, 0);
-    a->parentAttachPoint = cpv(0, 0);
-    a->offset = cpv(0,0);
+    a->secondAttachPoint = cpv(0, 0);
+    a->firstAttachPoint = cpv(0, 0);
+    a->attachmentLength = 0;
     return a;
 }
 
@@ -227,7 +227,7 @@ void mgMachineAttachToBody(Attachment *at, cpBody *machineBody, cpBody *parentBo
     cpBB boundingBox = cpShapeGetBB(bodyShape);
     cpFloat length = boundingBox.r - boundingBox.l;
     cpFloat height = boundingBox.t - boundingBox.b;
-        localAttachPoint = cpv(length*at->attachPoint.x/2, height*at->attachPoint.y/2);
+        localAttachPoint = cpv(length*at->secondAttachPoint.x/2, height*at->secondAttachPoint.y/2);
 
     }
     
@@ -239,12 +239,11 @@ void mgMachineAttachToBody(Attachment *at, cpBody *machineBody, cpBody *parentBo
             cpBB boundingBox = cpShapeGetBB(parentShape);
             cpFloat length = boundingBox.r - boundingBox.l;
             cpFloat height = boundingBox.t - boundingBox.b;
-            parentAttachPoint = cpv(length*at->parentAttachPoint.x/2, height*at->parentAttachPoint.y/2);
+            parentAttachPoint = cpv(length*at->firstAttachPoint.x/2, height*at->firstAttachPoint.y/2);
         }
-    } else {
     }
     
-    attachmentHelper(machineBody, parentBody, at->attachmentType, localAttachPoint, parentAttachPoint, cpBodyGetSpace(parentBody));
+    attachmentHelper(machineBody, parentBody, at->attachmentType, localAttachPoint, parentAttachPoint, cpBodyGetSpace(machineBody));
 
     cpShapeSetGroup(bodyShape, availableGroup);
 
@@ -260,7 +259,8 @@ void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace
     __block cpConstraint *constraintToDelete;
     
     cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *constraint) {
-        if (cpConstraintGetA(constraint) == parentBody && cpConstraintGetB(constraint) == attachmentBody)
+        if ((cpConstraintGetA(constraint) == parentBody && cpConstraintGetB(constraint) == attachmentBody) ||
+            (cpConstraintGetA(constraint) == attachmentBody && cpConstraintGetB(constraint) == parentBody))
             constraintToDelete = constraint;
     });
     

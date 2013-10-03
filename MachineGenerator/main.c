@@ -323,12 +323,46 @@ void runSimulation()
 
 void createTestWalls()
 {
-    MachineWall *m = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
-    MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
+    MachineWall *wall1 = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
+ //   MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
     
+    MachineDescription bar1;
+    bar1.machineType = MACHINE_BOX;
+    bar1.length = 70;
+    bar1.height = 15.0;
+    bar1.body = NULL;
+    
+    Attachment spring;
+    spring.attachmentLength = 10.0;
+    spring.firstAttachPoint = cpvzero;
+    spring.secondAttachPoint = cpv(-1,0);
+    spring.attachmentType = MACHINE_SPRING;
+    
+    mgMachineWallAddMachine(wall1, &bar1, &spring, cpv(5,5));
+    
+    MachineDescription wheel1;
+    wheel1.machineType = MACHINE_WHEEL;
+    wheel1.length = 25;
+    wheel1.body = NULL;
+    
+    Attachment pivot;
+    pivot.attachmentLength = 0.0; // ignored for pivots any way
+    pivot.firstAttachPoint = cpvzero;
+    pivot.secondAttachPoint = cpvzero;
+    pivot.attachmentType = MACHINE_PIVOT;
+    
+    mgMachineWallAddMachine(wall1, &wheel1, &pivot, cpv(3,7));
+    
+    Attachment rigid;
+    rigid.attachmentLength = 20; //cpvdist(<#const cpVect v1#>, <#const cpVect v2#>)
+    rigid.firstAttachPoint = cpv(1,0);
+    rigid.secondAttachPoint = cpv(1,0);
+    rigid.attachmentType = MACHINE_FIXED;
+    
+    mgMachineWallAttachMachines(wall1, cpv(5,5), cpv(3,7), &rigid);
 }
 
-int mai(int argc, char **argv)
+int main(int argc, char **argv)
 {
     setupGLFW();
     worldSpace = setupSpace();
