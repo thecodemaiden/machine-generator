@@ -36,9 +36,6 @@ MachineDescription *mgMachineNew()
     MachineDescription *m = (MachineDescription *)calloc(1, sizeof(MachineDescription));
     m->length = m->height = 0;
     m->machineType = MACHINE_BOX;
-    for (int i=0; i<MAX_ATTACHMENT; i++) {
-        *(m->children + i) = NULL;
-    }
     
     return m;
 }
@@ -62,10 +59,9 @@ Attachment *mgAttachmentNew()
 {
     Attachment *a = (Attachment *)calloc(1, sizeof(Attachment));
     a->attachmentType = MACHINE_BASE;
-    a->attachPoint = cpv(0, 0);
-    a->parentAttachPoint = cpv(0, 0);
-    a->offset = cpv(0,0);
-    a->machine = NULL;
+    a->secondAttachPoint = cpv(0, 0);
+    a->firstAttachPoint = cpv(0, 0);
+    a->attachmentLength = 0;
     return a;
 }
 
@@ -136,37 +132,17 @@ static void attachmentHelper(cpBody *machineBody, cpBody *parentBody, Attachment
 }
 
 
-static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup parentGroup, cpSpace *s)
+ void constructBodyForDescription(MachineDescription *md, cpVect worldPosition, cpSpace *s)
 {
     // the location of the parent shape in space has to be added to the attachPoint
     
-    cpBody *machineBody = at->machine->body;
+    cpBody *machineBody = NULL;
     cpShape *machineShape = NULL;
-    MachineDescription *md = at->machine;
-    cpVect parentAttachPoint = cpv(0,0);
-    cpVect localAttachPoint = cpv(0,0);
-    cpVect parentPos;
     
-    if (parentBody) {
-        parentPos =  cpBodyGetPos(parentBody);
-        cpShape *parentShape = NULL;
-        cpBodyEachShape(parentBody, getShapeForBody, &parentShape);
-        if (parentShape) {
-            cpBB boundingBox = cpShapeGetBB(parentShape);
-            cpFloat length = boundingBox.r - boundingBox.l;
-            cpFloat height = boundingBox.t - boundingBox.b;
-            parentAttachPoint = cpv(length*at->parentAttachPoint.x/2, height*at->parentAttachPoint.y/2);
-        }
-    } else {
-        parentPos = at->parentAttachPoint;
+    if (md->body) {
+        mgMachineDestroy(md); // we will rebuild it
     }
     
-    localAttachPoint = cpv(md->length*at->attachPoint.x/2, md->height*at->attachPoint.y/2);
-
-    
-    // the attachpoints have components in the range -1 to 1, signifying the edges (left to right, top to bottom)
-    // body coords go from -length/2 to length/2 and -height/2 to height/2
-    if (!machineBody) {
         if (md->height == 0)
             md->height = 1;
         
@@ -230,53 +206,51 @@ static void bodyBuildingHelper(Attachment *at, cpBody *parentBody, cpGroup paren
         cpShapeSetLayers(machineShape, MACHINE_LAYER);
         //   cpShapeSetFriction(machineShape, 0.5);
         
-        cpShapeSetGroup(machineShape, parentGroup);
+    
         md->body = machineBody;
-    } else {
-        
+    
+    cpBodySetPos(machineBody, worldPosition);
+}
+
+
+void mgMachineAttachToBody(Attachment *at, cpBody *machineBody, cpBody *parentBody, cpSpace *space)
+{
+    cpVect parentAttachPoint = cpv(0,0);
+    cpVect localAttachPoint = cpv(0,0);
+    
+    // the attachpoints have components in the range -1 to 1, signifying the edges (left to right, top to bottom)
+    // body coords go from -length/2 to length/2 and -height/2 to height/2
+    
+    cpShape *bodyShape = NULL;
+    cpBodyEachShape(machineBody, getShapeForBody, &bodyShape);
+    if (bodyShape) {
+    cpBB boundingBox = cpShapeGetBB(bodyShape);
+    cpFloat length = boundingBox.r - boundingBox.l;
+    cpFloat height = boundingBox.t - boundingBox.b;
+        localAttachPoint = cpv(length*at->secondAttachPoint.x/2, height*at->secondAttachPoint.y/2);
+
     }
-
-    cpVect truePos = cpvadd(parentPos, at->offset);
-    cpBodySetPos(machineBody, truePos);
-
-    //attach to parent - if we have one
+    
+    
     if (parentBody) {
-        AttachmentType attachmentType = at->attachmentType;
-        if (attachmentType == MACHINE_SPRING || attachmentType == MACHINE_FIXED) {
-            parentGroup++; // this child will collide with parent
+        cpShape *parentShape = NULL;
+        cpBodyEachShape(parentBody, getShapeForBody, &parentShape);
+        if (parentShape) {
+            cpBB boundingBox = cpShapeGetBB(parentShape);
+            cpFloat length = boundingBox.r - boundingBox.l;
+            cpFloat height = boundingBox.t - boundingBox.b;
+            parentAttachPoint = cpv(length*at->firstAttachPoint.x/2, height*at->firstAttachPoint.y/2);
         }
-        attachmentHelper(machineBody, parentBody, attachmentType, localAttachPoint, parentAttachPoint, s);
     }
     
-    int childIdx = 0;
-    while (md->children[childIdx] != NULL) {
-        Attachment childAttachment = *md->children[childIdx];
-        bodyBuildingHelper(&childAttachment, machineBody, parentGroup, s);
-        childIdx++;
-    }
-    
-    // we increase the availableGroup so that new machines will collide with this one
-    availableGroup = MAX(availableGroup, parentGroup+1);
-    
-}
+    attachmentHelper(machineBody, parentBody, at->attachmentType, localAttachPoint, parentAttachPoint, cpBodyGetSpace(machineBody));
 
+    cpShapeSetGroup(bodyShape, availableGroup);
 
-boolean_t mgMachineAttach(MachineDescription *parent, Attachment *attachment)
-{
-    int i = 0;
-    while (parent->children[i])
-        i++;
-    if (i<MAX_ATTACHMENT) {
-        parent->children[i] = attachment;
-        bodyBuildingHelper(attachment, parent->body, 0, cpBodyGetSpace(parent->body));
-        return true;
-    }
-    return false;
-}
-
-void mgMachineAttachToBody(Attachment *attachment, cpBody *body, cpSpace *space)
-{
-    bodyBuildingHelper(attachment, body, availableGroup, space);
+    /*
+     // we increase the availableGroup so that new machines will collide with this one
+     availableGroup = MAX(availableGroup, parentGroup+1);
+     */
 }
 
 
@@ -285,7 +259,8 @@ void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace
     __block cpConstraint *constraintToDelete;
     
     cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *constraint) {
-        if (cpConstraintGetA(constraint) == parentBody && cpConstraintGetB(constraint) == attachmentBody)
+        if ((cpConstraintGetA(constraint) == parentBody && cpConstraintGetB(constraint) == attachmentBody) ||
+            (cpConstraintGetA(constraint) == attachmentBody && cpConstraintGetB(constraint) == parentBody))
             constraintToDelete = constraint;
     });
     
@@ -293,19 +268,4 @@ void mgMachineDetachFromBody(cpBody *attachmentBody, cpBody *parentBody, cpSpace
         cpSpaceRemoveConstraint(space, constraintToDelete);
     }
     
-}
-
-cpBody *bodyFromDescription(MachineDescription *md, cpVect position, cpSpace *space)
-{
-    cpBody *machineBody = NULL;
-    
-    Attachment baseAttachment;
-    baseAttachment.parentAttachPoint = position;
-    baseAttachment.attachPoint = cpv(0,0);
-    baseAttachment.attachmentType = MACHINE_BASE;
-    baseAttachment.machine = md;
-    
-    bodyBuildingHelper(&baseAttachment, NULL, availableGroup, space);
-    
-    return machineBody;
 }

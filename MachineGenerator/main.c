@@ -29,180 +29,6 @@ static double Accumulator = 0.0;
 static double LastTime = 0.0;
 
 
-void insertTestMachines(cpSpace *space)
-{
-    
-    // making a complicated but not very pretty/functional machine
-    // machine structure:   basicMachine->pivot(wheel1), pivot(bar1)
-    //                      bar1->spring(wheel2)
-    //                      wheel1->gear(wheel3), pivot(bar3)
-    //                      wheel3->pivot(bar2)
-    //                      wheel2->
-    //                      bar2->
-    //                      bar3->
-    
-    MachineDescription *basicMachine = mgMachineNew();
-    basicMachine->length = 100.0;
-    basicMachine->height = 35.0;
-    basicMachine->machineType = MACHINE_BOX;
-    
-    MachineDescription *wheel1 = mgMachineNew();
-    wheel1->length = 30.0;
-    wheel1->machineType = MACHINE_WHEEL;
-    
-    MachineDescription *bar1 = mgMachineNew();
-    bar1->length = 60.0;
-    bar1->height = 10.0;
-    bar1->machineType = MACHINE_BOX;
-    
-    MachineDescription *bar2 = mgMachineNew();
-    bar2->length = 70.0;
-    bar2->height = 5.0;
-    bar2->machineType = MACHINE_BOX;
-    
-    MachineDescription *bar3 = mgMachineNew();
-    bar3->length = 70.0;
-    bar3->height = 5.0;
-    bar3->machineType = MACHINE_BOX;
-    
-    MachineDescription *wheel2 = mgMachineNew();
-    wheel2->length = 30.0;
-    wheel2->machineType = MACHINE_WHEEL;
-    
-    MachineDescription *wheel3 = mgMachineNew();
-    wheel3->length = 30.0;
-    wheel3->machineType = MACHINE_WHEEL;
-    
-    Attachment *a = mgAttachmentNew();
-    a->parentAttachPoint = cpv(0.5, -0.5);
-    a->attachPoint = cpv(0, 0);
-    a->attachmentType = MACHINE_PIVOT;
-    a->offset = cpv(25, -16);
-    a->machine = wheel1;
-    
-    Attachment *b = mgAttachmentNew();
-    b->parentAttachPoint = cpv(-0.5, -0.5);
-    b->attachPoint = cpv(-1, 0);
-    b->attachmentType = MACHINE_PIVOT;
-    b->offset = cpv(-20, -20);
-    b->machine = bar1;
-    
-    Attachment *c = mgAttachmentNew();
-    c->parentAttachPoint = cpv(1, 0);
-    c->attachPoint = cpv(0, 0);
-    c->attachmentType = MACHINE_SPRING;
-    c->offset = cpv(40, 20);
-    c->machine = wheel2;
-    
-    Attachment *d = mgAttachmentNew();
-    d->parentAttachPoint = cpv(0, 0);
-    d->attachPoint = cpv(0, 0);
-    d->attachmentType = MACHINE_GEAR;
-    d->offset = cpv((wheel1->length+wheel3->length)/2, 0);
-    d->machine = wheel3;
-    
-    Attachment *e = mgAttachmentNew();
-    e->parentAttachPoint = cpv(1, 0);
-    e->attachPoint = cpv(0, 0);
-    e->attachmentType = MACHINE_PIVOT;
-    e->offset = cpv(wheel3->length, 0);
-    e->machine = bar2;
-    
-    Attachment *f = mgAttachmentNew();
-    f->parentAttachPoint = cpv(1, 0);
-    f->attachPoint = cpv(-1, 0);
-    f->attachmentType = MACHINE_PIVOT;
-    f->offset = cpv(wheel3->length, 0);
-    f->machine = bar3;
-    
-    mgMachineAttach(basicMachine, a);
-    mgMachineAttach(basicMachine, b);
-    
-    mgMachineAttach(bar1, c);
-    
-    mgMachineAttach(wheel1, d);
-    mgMachineAttach(wheel1, f);
-    
-    //  mgMachineAttach(wheel3, e);
-    
-    cpBody *machineBody = bodyFromDescription(basicMachine, cpv(-200, 0), space);
-    
-    mgMachineFree(basicMachine); // is recursive - don't need to free everything else
-    
-    mgMachineFree(bar1);
-    mgMachineFree(bar2);
-    mgMachineFree(bar3);
-    mgMachineFree(wheel1);
-    mgMachineFree(wheel2);
-    mgMachineFree(wheel3);
-    
-    mgAttachmentFree(a);
-    mgAttachmentFree(b);
-    mgAttachmentFree(c);
-    mgAttachmentFree(d);
-    mgAttachmentFree(e);
-    mgAttachmentFree(f);
-    
-    // give the body a push!
-    cpBodyApplyImpulse(machineBody, cpv(2000,0), cpv(0, 0));
-    
-    // another machine: two bars connected by spring, and on the other ends some circles
-    
-    // previous values are already freed
-    bar1 = mgMachineNew();
-    bar1->machineType = MACHINE_BOX;
-    bar1->height = 15.0;
-    bar1->length = 70.0;
-    
-    bar2 = mgMachineNew();
-    bar2->machineType = MACHINE_BOX;
-    bar2->height = 15.0;
-    bar2->length = 70.0;
-    
-    wheel1 = mgMachineNew();
-    wheel1->machineType = MACHINE_WHEEL;
-    wheel1->length = 25.0;
-    
-    wheel2 = mgMachineNew();
-    wheel2->machineType = MACHINE_WHEEL;
-    wheel2->length = 25.0;
-    
-    a = mgAttachmentNew();
-    a->attachmentType = MACHINE_SPRING;
-    a->parentAttachPoint = cpv(-1, 0);
-    a->attachPoint = cpv(1, 0);
-    a->offset = cpv(-bar1->length/2,0);
-    a->machine = bar2;
-    
-    b = mgAttachmentNew();
-    b->attachmentType = MACHINE_PIVOT;
-    b->machine = wheel1;
-    b->attachPoint = cpv(0, 0);
-    b->parentAttachPoint = cpv(1, 0);
-    
-    c = mgAttachmentNew();
-    c->attachmentType = MACHINE_PIVOT;
-    c->machine = wheel2;
-    c->parentAttachPoint = cpv(-1, 0);
-    b->attachPoint = cpv(0, 0);
-    
-    mgMachineAttach(bar1, a);
-    mgMachineAttach(bar1, b);
-    
-    mgMachineAttach(bar2, c);
-    
-    machineBody = bodyFromDescription(bar1, cpv(0, 0), space);
-    
-    mgMachineFree(bar1);
-    mgMachineFree(bar2);
-    mgMachineFree(wheel1);
-    mgMachineFree(wheel2);
-    
-    mgAttachmentFree(a);
-    mgAttachmentFree(b);
-    mgAttachmentFree(c);
-    
-}
 
 void createGroundBox(cpSpace *space)
 {
@@ -495,6 +321,50 @@ void runSimulation()
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
+void createTestWalls()
+{
+    MachineWall *wall1 = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
+ //   MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
+    
+    MachineDescription bar1;
+    bar1.machineType = MACHINE_BOX;
+    bar1.length = 70;
+    bar1.height = 15.0;
+    bar1.body = NULL;
+    
+    Attachment spring;
+    spring.attachmentLength = 10.0;
+    spring.firstAttachPoint = cpvzero;
+    spring.secondAttachPoint = cpv(-1,0);
+    spring.attachmentType = MACHINE_SPRING;
+    
+    mgMachineWallAddMachine(wall1, &bar1, &spring, cpv(5,5));
+    
+    MachineDescription wheel1;
+    wheel1.machineType = MACHINE_WHEEL;
+    wheel1.length = 25;
+    wheel1.body = NULL;
+    
+    Attachment pivot;
+    pivot.attachmentLength = 0.0; // ignored for pivots any way
+    pivot.firstAttachPoint = cpvzero;
+    pivot.secondAttachPoint = cpvzero;
+    pivot.attachmentType = MACHINE_PIVOT;
+    
+    mgMachineWallAddMachine(wall1, &wheel1, &pivot, cpv(3,7));
+    
+    Attachment rigid;
+    rigid.attachmentLength = 20; //cpvdist(<#const cpVect v1#>, <#const cpVect v2#>)
+    rigid.firstAttachPoint = cpv(1,0);
+    rigid.secondAttachPoint = cpv(1,0);
+    rigid.attachmentType = MACHINE_FIXED;
+    
+    mgMachineWallAttachMachines(wall1, cpv(5,5), cpv(3,7), &rigid);
+    
+    // uncomment to test removal
+   // mgMachineWallDetachMachines(wall1, cpv(3,7), cpv(5,5));
+}
+
 int main(int argc, char **argv)
 {
     setupGLFW();
@@ -502,68 +372,9 @@ int main(int argc, char **argv)
 
     mouse_body = cpBodyNew(INFINITY, INFINITY);
     
+    createTestWalls();
     
-    int ww, wh;
-	glfwGetWindowSize(&ww, &wh);
-    
-    
-    MachineWall *m = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
-    MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
-    
-    MachineDescription *bar1 = mgMachineNew();
-    bar1->machineType = MACHINE_BOX;
-    bar1->height = 15.0;
-    bar1->length = 50.0;
-    
-    MachineDescription *bar2 = mgMachineNew();
-    bar2->machineType = MACHINE_BOX;
-    bar2->height = 15.0;
-    bar2->length = 70.0;
-    
-    MachineDescription *wheel1 = mgMachineNew();
-    wheel1->machineType = MACHINE_WHEEL;
-    wheel1->length = 20.0;
-    
-    Attachment *a = mgAttachmentNew();
-    a->attachmentType = MACHINE_SPRING;
-    a->parentAttachPoint = cpv(-1, 0);
-    a->attachPoint = cpv(1, 0);
-    a->offset = cpv(5,5);
-    a->machine = bar1;
-    
-    Attachment *b = mgAttachmentNew();
-    b->attachmentType = MACHINE_SPRING;
-    b->parentAttachPoint = cpv(-1, 0);
-    b->attachPoint = cpv(1, 0);
-    b->offset = cpv(5,5);
-    b->machine = bar2;
-    
-    Attachment *c = mgAttachmentNew();
-    c->attachmentType = MACHINE_SPRING;
-    c->parentAttachPoint = cpv(-1, 0);
-    c->attachPoint = cpv(1, 0);
-    c->offset = cpv(5,5);
-    c->machine = wheel1;
-    
-    mgMachineWallAddMachine(m, a, cpv(5, 5));
-    mgMachineWallAddMachine(m, c, cpv(5, 4));
-    
-    mgMachineWallRemoveMachine(m, cpv(5, 5));
-    
-    mgMachineWallAddMachine(m, b, cpv(5, 2));
    
-    mgMachineWallAddMachine(m2, a, cpv(3, 6));
-    
-    
-
-    // attach machines together?
-    Attachment *d = mgAttachmentNew();
-    d->attachmentType = MACHINE_FIXED;
-    d->attachPoint = cpv(-1,0);
-    d->parentAttachPoint = cpv(-1,0);
-    d->machine = bar2;
-    
-    mgMachineAttach(wheel1, d);
 
     while(1) {
         runSimulation();

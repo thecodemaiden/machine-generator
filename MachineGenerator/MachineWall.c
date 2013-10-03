@@ -8,11 +8,73 @@
 
 #import "MachineWall.h"
 
+#pragma mark - Helper Functions
+
+static void getPegFromAttachment(cpBody *body, cpConstraint *c, void *data){
+    
+    if (cpConstraintGetB(c) == body) {
+        cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
+        if (cpBodyIsStatic(otherBody))
+            *(cpBody **)data = otherBody;
+    }
+}
+
+static void removeShapes(cpBody *body, cpShape *s, void *data)
+{
+    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
+}
+
+
+// to help us find edges in the adjacency matrix, we must convert (gx, gy) to an int and vice versa
+static int machinePositionToNumber(cpVect wallSize, cpVect gridPosition)
+{
+    int x = gridPosition.x;
+    int y = gridPosition.y;
+    return x + y*(int)wallSize.y;
+}
+
+static cpVect machineNumberToPosition(cpVect wallSize, int machineNumber)
+{
+    return cpv((machineNumber % (int)wallSize.y), (machineNumber / (int)wallSize.y));
+}
+
+// find the actual location of the peg for this attachment
+static cpVect gridPositionToWorld(MachineWall *wall, cpVect gridPosition) {
+    int x = gridPosition.x;
+    int y = gridPosition.y;
+    
+    cpFloat wallWidth = (wall->size.x+1)*wall->gridSpacing.x;
+    cpFloat wallHeight = (wall->size.y+1)*wall->gridSpacing.y;
+    
+    
+    cpVect pegPosition = cpv(wall->gridSpacing.x*(x+1), wall->gridSpacing.y*(y+1));
+    pegPosition = cpvadd(pegPosition, cpv(-wallWidth/2, -wallHeight/2));
+    pegPosition = cpvadd(pegPosition, cpBodyGetPos(wall->body));
+    
+    return pegPosition;
+}
+
+static void freeShapes(cpBody *body, cpShape *shape, void *data)
+{
+    //  cpSpaceRemoveShape(cpShapeGetSpace(shape), shape);
+    cpShapeFree(shape);
+}
+
+#pragma  mark - Allocation and Destruction
+
 MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space)
 {
     MachineWall *wall = (MachineWall *)calloc(1, sizeof(MachineWall));
     
-    wall->attachedMachines = (Attachment **)calloc(hPegs*vPegs, sizeof(Attachment *));
+    int nPegs = hPegs *vPegs;
+    
+    wall->machines = (MachineDescription **)calloc(nPegs, sizeof (MachineDescription *));
+    
+    wall->attachments = (Attachment ***)calloc(nPegs, sizeof(Attachment ***));
+    for (int i=0; i<=nPegs; i++) {
+        wall->attachments[i] = (Attachment **)calloc(nPegs, sizeof(Attachment **));
+    }
+    
     wall->gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
     wall->space = space;
     wall->size = cpv(hPegs, vPegs);
@@ -21,102 +83,127 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
     cpShape *wallShape = cpBoxShapeNew(wall->body, width, height);
     cpShapeSetLayers(wallShape, WALL_LAYER);
     cpSpaceAddShape(space, wallShape);
-
+    
     return wall;
 }
 
-void mgMachineWallSetInputMachinePosition(MachineWall *wall, cpVect gridPosition)
+void mgMachineWallFree(MachineWall *wall)
 {
-    wall->inputMachinePosition = gridPosition;
-}
-
-void mgMachineWallSetOutputMachinePosition(MachineWall *wall, cpVect gridPosition)
-{
-    wall->outputMachinePosition = gridPosition;
-}
-
-Attachment *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition)
-{
-    long x = lrintf(gridPosition.x);
-    long y = lrintf(gridPosition.y);
+    free(wall->machines);
     
-   return wall->attachedMachines[x + y*(int)wall->size.y];
+    int nPegs = wall->size.x * wall->size.y;
+    
+    for (int i=0; i<=nPegs; i++) {
+        free (wall->attachments[i]);
+    }
+    free(wall->attachments);
+    
+    cpBodyEachShape(wall->body, freeShapes, NULL);
+    
+    cpBodyFree(wall->body);
+    free(wall);
 }
 
-void mgMachineWallAddMachine(MachineWall *wall, Attachment *newMachine, cpVect gridPosition)
+#pragma mark - Machine methods
+
+
+void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, Attachment *attachment, cpVect gridPosition)
 {
-    long x = lrintf(gridPosition.x);
-    long y = lrintf(gridPosition.y);
+    int machineNumber = machinePositionToNumber(wall->size, gridPosition);
     
-    Attachment *alreadyAttached = wall->attachedMachines[x + y*(int)wall->size.y];
+    
+    MachineDescription *alreadyAttached = wall->machines[machineNumber];
     if (!alreadyAttached) {
-        cpFloat wallWidth = (wall->size.x+1)*wall->gridSpacing.x;
-        cpFloat wallHeight = (wall->size.y+1)*wall->gridSpacing.y;
         
-        cpVect pegPosition = cpv(wall->gridSpacing.x*(x+1), wall->gridSpacing.y*(y+1));
-        pegPosition = cpvadd(pegPosition, cpv(-wallWidth/2, -wallHeight/2));
-        pegPosition = cpvadd(pegPosition, cpBodyGetPos(wall->body));
-        
+        cpVect pegPosition = gridPositionToWorld(wall, gridPosition);
         cpBody *pegBody = cpBodyNew(INFINITY, INFINITY);
         cpBodySetPos(pegBody, pegPosition);
         cpShape *pegShape = cpCircleShapeNew(pegBody, 5.0, cpv(0,0));
         cpShapeSetLayers(pegShape, PEG_LAYER);
         cpSpaceAddShape(wall->space, pegShape);
         
-        wall->attachedMachines[x + y*(int)wall->size.y] = newMachine;
-        mgMachineAttachToBody(newMachine, pegBody, wall->space);
+        wall->machines[machineNumber] = newMachine;
+        
+        if (!newMachine->body)
+            constructBodyForDescription(newMachine, pegPosition, wall->space);
+        
+        mgMachineAttachToBody(attachment, newMachine->body, pegBody, wall->space);
+        wall->attachments[machineNumber][machineNumber] = attachment;
         
     }
 }
 
-static void getPegFromAttachment(cpBody *body, cpConstraint *c, void *data){
-    
-    if (cpConstraintGetB(c) == body)
-        *(cpBody **)data = cpConstraintGetA(c); // the attachment is always body B of the joint
-}
-
-static void removeShapes(cpBody *body, cpShape *s, void *data)
-{
-    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
-}
-
 void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition)
 {
-    long x = lrintf(gridPosition.x);
-    long y = lrintf(gridPosition.y);
+    int machineNum = machinePositionToNumber(wall->size, gridPosition);
     
-    Attachment *machine = wall->attachedMachines[x + y*(int)wall->size.y];
+    MachineDescription *machine = wall->machines[machineNum];
     if (machine) {
-        cpBody *attachmentBody = machine->machine->body;
+        cpBody *attachmentBody = machine->body;
         cpBody *pegBody = NULL;
         cpBodyEachConstraint(attachmentBody, getPegFromAttachment, &pegBody);
         mgMachineDetachFromBody(attachmentBody, pegBody, wall->space);
         cpBodyEachShape(pegBody, removeShapes, NULL);
         cpBodyFree(pegBody);
-        wall->attachedMachines[x + y*(int)wall->size.y] = NULL;
+        wall->machines[machineNum] = NULL;
         
-        // if the machine is not attached to any other, let's just get rid of it
-        __block cpConstraint *otherConstraint = NULL;
-        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *constraint) {
-           if (cpConstraintGetB(constraint) == attachmentBody)
-               otherConstraint = constraint;
-        });
-        if (!otherConstraint)
-            mgMachineDestroy(machine->machine);
+        // no longer allowing 'dangling' machines - everything is nailed to the wall for now
+        mgMachineDestroy(machine);
     }
 }
 
-static void freeShapes(cpBody *body, cpShape *shape, void *data)
+boolean_t mgMachineWallAttachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment)
 {
-  //  cpSpaceRemoveShape(cpShapeGetSpace(shape), shape);
-    cpShapeFree(shape);
+    boolean_t added = false;
+    if (!cpveql(machine1Pos, machine2Pos)) {
+        MachineDescription *machine1 = mgMachineWallGetMachineAtPosition(wall, machine1Pos);
+        MachineDescription *machine2 = mgMachineWallGetMachineAtPosition(wall, machine2Pos);
+        if (machine1 && machine2) {
+            int machine1Num = machinePositionToNumber(wall->size, machine1Pos);
+            int machine2Num = machinePositionToNumber(wall->size, machine2Pos);
+            Attachment *existingAttachment = wall->attachments[machine1Num][machine2Num];
+            if (!existingAttachment) {
+                mgMachineAttachToBody(attachment, machine1->body, machine2->body, wall->space);
+                wall->attachments[machine1Num][machine2Num] = wall->attachments[machine2Num][machine1Num] = attachment;
+                added = true;
+            }
+        }
+    }
+    return added;
 }
 
-void mgMachineWallFree(MachineWall *wall)
+boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos)
 {
-    free(wall->attachedMachines);
-    cpBodyEachShape(wall->body, freeShapes, NULL);
-   // cpSpaceRemoveBody(cpBodyGetSpace(wall->wallBody), wall->wallBody);
-    cpBodyFree(wall->body);
-    free(wall);
+    boolean_t detached = false;
+    if (!cpveql(machine1Pos, machine2Pos)) {
+        MachineDescription *machine1 = mgMachineWallGetMachineAtPosition(wall, machine1Pos);
+        MachineDescription *machine2 = mgMachineWallGetMachineAtPosition(wall, machine2Pos);
+        if (machine1 && machine2) {
+            int machine1Num = machinePositionToNumber(wall->size, machine1Pos);
+            int machine2Num = machinePositionToNumber(wall->size, machine2Pos);
+            Attachment *existingAttachment = wall->attachments[machine1Num][machine2Num];
+            if (existingAttachment) {
+                mgMachineDetachFromBody(machine1->body, machine2->body, wall->space);
+                wall->attachments[machine1Num][machine2Num] = wall->attachments[machine2Num][machine1Num] = NULL;
+                detached = true;
+            }
+        }
+    }
+    return detached;
 }
+
+MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition)
+{
+    int machineNumber = machinePositionToNumber(wall->size, gridPosition);
+    
+    return wall->machines[machineNumber];
+}
+
+Attachment *mgMachineWallGetAttachmentBetween(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos)
+{
+    int machine1Num = machinePositionToNumber(wall->size, machine1Pos);
+    int machine2Num = machinePositionToNumber(wall->size, machine2Pos);
+    
+    return wall->attachments[machine1Num][machine2Num];
+}
+
