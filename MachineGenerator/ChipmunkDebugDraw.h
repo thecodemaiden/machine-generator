@@ -19,6 +19,9 @@
  * SOFTWARE.
  */
 
+#ifndef __CHIPMUNK_DEBUG__
+#define __CHIPMUNK_DEBUG__
+
 typedef struct Color {
 	float r, g, b, a;
 } Color;
@@ -61,3 +64,5 @@ void ChipmunkDebugDrawClearRenderer(void);
 void ChipmunkDebugDrawPushRenderer(void);
 // Reset the renderer back to it's last pushed state.
 void ChipmunkDebugDrawPopRenderer(void);
+
+#endif

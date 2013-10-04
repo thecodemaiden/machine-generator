@@ -8,26 +8,28 @@
 
 #import "chipmunk.h"
 
-#define MAX_ATTACHMENT 3 // up to 3 attachments for now
-#define MASS_MULTIPLIER 0.5 // in case we want to make things more or less massive
+#define MASS_MULTIPLIER 0.2 // in case we want to make things more or less massive
 
-#define SPRING_STIFFNESS 500.0
-#define SPRING_DAMPING 800.0
+#define SPRING_STIFFNESS 10.0
+#define SPRING_DAMPING 1.0
 
 #define GEAR_RATIO 1.0
 
 #define MACHINE_LAYER 1 // we do not want to collide with the wall we attach machines too
 typedef enum {
-    MACHINE_BASE, // not attached to anything
+//    MACHINE_BASE, // not attached to anything
     MACHINE_GEAR,
     MACHINE_SPRING,
     MACHINE_FIXED, // the attachment points maintain their distance
     MACHINE_PIVOT, // the attachment can rotate round a point on the parent
+    MACHINE_SLIDE, // attachment points have a maximum distance
+    MACHINE_ATTACH_MAX //sentinal value for making random attachment
 } AttachmentType;
 
 typedef enum {
     MACHINE_BOX,
     MACHINE_WHEEL,
+    MACHINE_TYPE_MAX //sentinel for making random attachment
 } BodyType;
 
 
@@ -55,9 +57,11 @@ typedef struct MachineDescription {
 MachineDescription *mgMachineNew();
 void mgMachineDestroy(MachineDescription *md); // you need to free attachments yourself
 void mgMachineFree(MachineDescription *md);
+MachineDescription *mgMachineCopy(MachineDescription *md);
 
 Attachment *mgAttachmentNew();
 void mgAttachmentFree(Attachment * at);
+Attachment *mgAttachmentCopy(Attachment *at);
 
 
 void mgMachineAttachToBody(Attachment *attachment, cpBody *machineBody, cpBody *body, cpSpace *space);

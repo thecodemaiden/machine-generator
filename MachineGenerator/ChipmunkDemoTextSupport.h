@@ -19,23 +19,17 @@
  * SOFTWARE.
  */
 
-#ifndef __CHIPMUNK_SHADER__
-#define __CHIPMUNK_SHADER__
-
-#include <stddef.h>
+#ifndef __CHIPMUNK_TEXT__
+#define __CHIPMUNK_TEXT__
 #include "chipmunk.h"
-void CheckGLErrors(void);
-#define CHECK_GL_ERRORS() CheckGLErrors()
 
-GLint CompileShader(GLenum type, const char *source);
-GLint LinkProgram(GLint vshader, GLint fshader);
-cpBool ValidateProgram(GLint program);
+void ChipmunkDemoTextInit(void);
+//#define ChipmunkDemoTextDrawString(...)
+void ChipmunkDemoTextDrawString(cpVect pos, char *str);
+void ChipmunkDemoTextFlushRenderer(void);
+void ChipmunkDemoTextClearRenderer(void);
 
-#define GLSL(x) #x
-
-void SetAttribute(GLuint program, char *name, GLint size, GLenum gltype, GLsizei stride, GLvoid *offset);
-
-#define SET_ATTRIBUTE(program, type, name, gltype)\
-	SetAttribute(program, #name, sizeof(((type *)NULL)->name)/sizeof(GLfloat), gltype, sizeof(type), (GLvoid *)offsetof(type, name))
+void ChipmunkDemoTextPushRenderer(void);
+void ChipmunkDemoTextPopRenderer(void);
 
 #endif

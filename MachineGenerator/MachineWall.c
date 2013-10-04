@@ -14,14 +14,19 @@ static void getPegFromAttachment(cpBody *body, cpConstraint *c, void *data){
     
     if (cpConstraintGetB(c) == body) {
         cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
-        if (cpBodyIsStatic(otherBody))
+        if (cpBodyGetMass(otherBody) == INFINITY)
             *(cpBody **)data = otherBody;
     }
 }
 
-static void removeShapes(cpBody *body, cpShape *s, void *data)
+static void removePegShapes(cpBody *body, cpShape *s, void *data)
 {
-    cpSpaceRemoveShape(cpShapeGetSpace(s), s);
+    cpSpace *space = cpShapeGetSpace(s);
+    if (data) {
+        space = (cpSpace *)data;
+    }
+    cpSpaceRemoveStaticShape(space, s);
+    cpShapeFree(s);
 }
 
 
@@ -54,9 +59,9 @@ static cpVect gridPositionToWorld(MachineWall *wall, cpVect gridPosition) {
     return pegPosition;
 }
 
-static void freeShapes(cpBody *body, cpShape *shape, void *data)
+static void freeWallShapes(cpBody *body, cpShape *shape, void *data)
 {
-    //  cpSpaceRemoveShape(cpShapeGetSpace(shape), shape);
+    cpSpaceRemoveShape(cpShapeGetSpace(shape), shape);
     cpShapeFree(shape);
 }
 
@@ -71,7 +76,7 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
     wall->machines = (MachineDescription **)calloc(nPegs, sizeof (MachineDescription *));
     
     wall->attachments = (Attachment ***)calloc(nPegs, sizeof(Attachment ***));
-    for (int i=0; i<=nPegs; i++) {
+    for (int i=0; i<nPegs; i++) {
         wall->attachments[i] = (Attachment **)calloc(nPegs, sizeof(Attachment **));
     }
     
@@ -80,25 +85,70 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
     wall->size = cpv(hPegs, vPegs);
     wall->body = cpBodyNew(INFINITY, INFINITY);
     cpBodySetPos(wall->body, position);
-    cpShape *wallShape = cpBoxShapeNew(wall->body, width, height);
-    cpShapeSetLayers(wallShape, WALL_LAYER);
-    cpSpaceAddShape(space, wallShape);
+   // cpShape *wallShape = cpBoxShapeNew(wall->body, width, height);
+   // cpShapeSetLayers(wallShape, WALL_LAYER);
+ //   cpSpaceAddShape(space, wallShape);
+
     
     return wall;
 }
 
+MachineWall *mgMachineWallCopy(MachineWall *original, cpVect position)
+{
+    // DEEP COPY
+    cpFloat originalW = (original->size.x +1)*original->gridSpacing.x;
+    cpFloat originalH = (original->size.y +1)*original->gridSpacing.y;
+    MachineWall *copy = mgMachineWallNew(originalW, originalH, original->size.x, original->size.y, position, original->space);
+    
+    // copy the attachment grid and the machines...!
+    for (int x = 0; x < copy->size.x; x++ ) {
+        for (int y = 0; y < copy->size.y; y++) {
+            cpVect gridPos = cpv(x,y);
+            int machineNum = machinePositionToNumber(copy->size, gridPos);
+            MachineDescription *machineCopy = mgMachineCopy(original->machines[machineNum]);
+            Attachment *wallAttachment = mgAttachmentCopy(original->attachments[machineNum][machineNum]);
+            mgMachineWallAddMachine(copy, machineCopy, wallAttachment, gridPos);
+        }
+    }
+    
+    int nPegs = copy->size.x*copy->size.y;
+    for (int i=0; i<nPegs; i++)
+        for (int j=0; j<i; j++) {
+            Attachment *attachmentToCopy = original->attachments[i][j];
+            if (attachmentToCopy) {
+                Attachment *attachmentCopy = mgAttachmentCopy(attachmentToCopy);
+                cpVect machine1Pos = machineNumberToPosition(copy->size, i);
+                cpVect machine2Pos = machineNumberToPosition(copy->size, j);
+                
+                mgMachineWallAttachMachines(copy, machine1Pos, machine2Pos, attachmentCopy);
+            }
+        }
+    return copy;
+}
+
 void mgMachineWallFree(MachineWall *wall)
 {
-    free(wall->machines);
+    
+    //detach the machinesss
+    for (int x = 0; x < wall->size.x; x++ ) {
+        for (int y = 0; y < wall->size.y; y++) {
+            cpVect gridPos = cpv(x,y);
+            mgMachineWallRemoveMachine(wall, gridPos);
+        }
+
+    }
     
     int nPegs = wall->size.x * wall->size.y;
-    
-    for (int i=0; i<=nPegs; i++) {
+
+    for (int i=0; i<nPegs; i++) {
         free (wall->attachments[i]);
     }
+    
+    free(wall->machines);
+
     free(wall->attachments);
     
-    cpBodyEachShape(wall->body, freeShapes, NULL);
+    cpBodyEachShape(wall->body, freeWallShapes, wall->space);
     
     cpBodyFree(wall->body);
     free(wall);
@@ -111,16 +161,16 @@ void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, 
 {
     int machineNumber = machinePositionToNumber(wall->size, gridPosition);
     
-    
     MachineDescription *alreadyAttached = wall->machines[machineNumber];
     if (!alreadyAttached) {
         
         cpVect pegPosition = gridPositionToWorld(wall, gridPosition);
-        cpBody *pegBody = cpBodyNew(INFINITY, INFINITY);
+        cpBody *pegBody = cpBodyNewStatic();
         cpBodySetPos(pegBody, pegPosition);
         cpShape *pegShape = cpCircleShapeNew(pegBody, 5.0, cpv(0,0));
         cpShapeSetLayers(pegShape, PEG_LAYER);
-        cpSpaceAddShape(wall->space, pegShape);
+        cpSpaceAddStaticShape(wall->space, pegShape);
+        
         
         wall->machines[machineNumber] = newMachine;
         
@@ -139,16 +189,31 @@ void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition)
     
     MachineDescription *machine = wall->machines[machineNum];
     if (machine) {
+        printf("Removing machine at %d,%d\n", (int)gridPosition.x, (int)gridPosition.y);
+        
         cpBody *attachmentBody = machine->body;
         cpBody *pegBody = NULL;
         cpBodyEachConstraint(attachmentBody, getPegFromAttachment, &pegBody);
+      
+        assert(pegBody);
+        
+        //remove the attachments
+        int nPegs = wall->size.x * wall->size.y;
+        // remove the attachments for this machine
+        for (int i=0; i<nPegs; i++) {
+            cpVect otherMachinePos = machineNumberToPosition(wall->size, i);
+            mgMachineWallDetachMachines(wall, gridPosition, otherMachinePos);
+        }
+        
         mgMachineDetachFromBody(attachmentBody, pegBody, wall->space);
-        cpBodyEachShape(pegBody, removeShapes, NULL);
+        cpBodyEachShape(pegBody, removePegShapes, wall->space);
         cpBodyFree(pegBody);
         wall->machines[machineNum] = NULL;
         
         // no longer allowing 'dangling' machines - everything is nailed to the wall for now
-        mgMachineDestroy(machine);
+        mgMachineFree(machine);
+        
+       
     }
 }
 
@@ -184,6 +249,7 @@ boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpV
             Attachment *existingAttachment = wall->attachments[machine1Num][machine2Num];
             if (existingAttachment) {
                 mgMachineDetachFromBody(machine1->body, machine2->body, wall->space);
+                mgMachineDetachFromBody(machine2->body, machine1->body, wall->space);
                 wall->attachments[machine1Num][machine2Num] = wall->attachments[machine2Num][machine1Num] = NULL;
                 detached = true;
             }

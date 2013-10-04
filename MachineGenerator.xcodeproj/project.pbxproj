@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E237DCFF17FE01C800AD51FA /* Algorithm.c in Sources */ = {isa = PBXBuildFile; fileRef = E237DCFE17FE01C800AD51FA /* Algorithm.c */; };
 		E2426EBF17EB98BE00C071C1 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = E2426EBD17EB98BE00C071C1 /* InfoPlist.strings */; };
 		E2426ECD17EB98BF00C071C1 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E2426ECC17EB98BF00C071C1 /* Images.xcassets */; };
 		E2426EEB17EB992600C071C1 /* libChipmunk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426EEA17EB992600C071C1 /* libChipmunk.a */; };
@@ -17,6 +18,8 @@
 		E2426F0117EBA0D800C071C1 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = E2426EFB17EBA0D800C071C1 /* COPYING.txt */; };
 		E2426F0217EBA0D800C071C1 /* libglfw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0017EBA0D800C071C1 /* libglfw.a */; };
 		E2426F0417EBA17000C071C1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2426F0317EBA17000C071C1 /* IOKit.framework */; };
+		E284A83517FE812300929C44 /* HelperFunctions.c in Sources */ = {isa = PBXBuildFile; fileRef = E284A83417FE812300929C44 /* HelperFunctions.c */; };
+		E284A83817FE82BE00929C44 /* ChipmunkDemoTextSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = E284A83617FE82BE00929C44 /* ChipmunkDemoTextSupport.c */; };
 		E2A46AC317F3CB9000950A45 /* MachineWall.c in Sources */ = {isa = PBXBuildFile; fileRef = E2A46AC217F3CB9000950A45 /* MachineWall.c */; };
 		E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */; };
 		E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */; };
@@ -34,6 +37,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		E237DCFC17FDE91500AD51FA /* Algorithm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Algorithm.h; sourceTree = "<group>"; };
+		E237DCFD17FDF00100AD51FA /* Algorithm1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Algorithm1.h; sourceTree = "<group>"; };
+		E237DCFE17FE01C800AD51FA /* Algorithm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Algorithm.c; sourceTree = "<group>"; };
 		E2426EB117EB98BE00C071C1 /* MachineGenerator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MachineGenerator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E2426EB717EB98BE00C071C1 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		E2426EB817EB98BE00C071C1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
@@ -52,6 +58,11 @@
 		E2426EFE17EBA0D800C071C1 /* glfw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glfw.h; sourceTree = "<group>"; };
 		E2426F0017EBA0D800C071C1 /* libglfw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libglfw.a; sourceTree = "<group>"; };
 		E2426F0317EBA17000C071C1 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
+		E284A83317FE811300929C44 /* HelperFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HelperFunctions.h; sourceTree = "<group>"; };
+		E284A83417FE812300929C44 /* HelperFunctions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = HelperFunctions.c; sourceTree = "<group>"; };
+		E284A83617FE82BE00929C44 /* ChipmunkDemoTextSupport.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ChipmunkDemoTextSupport.c; sourceTree = "<group>"; };
+		E284A83717FE82BE00929C44 /* ChipmunkDemoTextSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ChipmunkDemoTextSupport.h; sourceTree = "<group>"; };
+		E284A83917FE840E00929C44 /* VeraMoBd.ttf_sdf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VeraMoBd.ttf_sdf.h; sourceTree = "<group>"; };
 		E2A46AC217F3CB9000950A45 /* MachineWall.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = MachineWall.c; sourceTree = "<group>"; };
 		E2A46AC417F3CB9C00950A45 /* MachineWall.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MachineWall.h; sourceTree = "<group>"; };
 		E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ChipmunkDebugDraw.c; sourceTree = "<group>"; };
@@ -85,6 +96,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E237DCF917FDE8ED00AD51FA /* Algorithms */ = {
+			isa = PBXGroup;
+			children = (
+				E237DCFC17FDE91500AD51FA /* Algorithm.h */,
+				E237DCFD17FDF00100AD51FA /* Algorithm1.h */,
+				E237DCFE17FE01C800AD51FA /* Algorithm.c */,
+			);
+			name = Algorithms;
+			sourceTree = "<group>";
+		};
 		E2426EA817EB98BE00C071C1 = {
 			isa = PBXGroup;
 			children = (
@@ -128,14 +149,20 @@
 		E2426EBA17EB98BE00C071C1 /* MachineGenerator */ = {
 			isa = PBXGroup;
 			children = (
+				E237DCF917FDE8ED00AD51FA /* Algorithms */,
 				E2C7FC4617EBB78F000A10F6 /* Display */,
 				E2C7FC4217EBAFB8000A10F6 /* ChipmunkDebugDraw.h */,
 				E2C7FC3F17EBAF54000A10F6 /* ChipmunkDebugDraw.c */,
+				E284A83617FE82BE00929C44 /* ChipmunkDemoTextSupport.c */,
+				E284A83717FE82BE00929C44 /* ChipmunkDemoTextSupport.h */,
 				E2C7FC4317EBAFB8000A10F6 /* ChipmunkDemoShaderSupport.h */,
 				E2C7FC4417EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c */,
+				E284A83917FE840E00929C44 /* VeraMoBd.ttf_sdf.h */,
 				E2426ECC17EB98BF00C071C1 /* Images.xcassets */,
 				E2426EBB17EB98BE00C071C1 /* Supporting Files */,
 				E2426EEC17EB9E3600C071C1 /* main.c */,
+				E284A83317FE811300929C44 /* HelperFunctions.h */,
+				E284A83417FE812300929C44 /* HelperFunctions.c */,
 			);
 			path = MachineGenerator;
 			sourceTree = "<group>";
@@ -337,11 +364,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E284A83817FE82BE00929C44 /* ChipmunkDemoTextSupport.c in Sources */,
 				E2C7FC4517EBB03A000A10F6 /* ChipmunkDemoShaderSupport.c in Sources */,
+				E237DCFF17FE01C800AD51FA /* Algorithm.c in Sources */,
 				E2C7FC4117EBAF54000A10F6 /* ChipmunkDebugDraw.c in Sources */,
 				E2426EED17EB9E3600C071C1 /* main.c in Sources */,
 				E2A46AC317F3CB9000950A45 /* MachineWall.c in Sources */,
 				E2C7FC4817EBB989000A10F6 /* Machine.c in Sources */,
+				E284A83517FE812300929C44 /* HelperFunctions.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

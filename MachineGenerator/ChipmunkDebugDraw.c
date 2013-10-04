@@ -491,8 +491,8 @@ drawConstraint(cpConstraint *constraint, void *unused)
 		cpVect a = cpvadd(body_a->p, cpvrotate(joint->anchr1, body_a->rot));
 		cpVect b = cpvadd(body_b->p, cpvrotate(joint->anchr2, body_b->rot));
 
-		ChipmunkDebugDrawDot(5, a, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawDot(5, b, CONSTRAINT_COLOR);
+        ChipmunkDebugDrawSegment(body_a->p, a, CONSTRAINT_COLOR);
+        ChipmunkDebugDrawSegment(body_b->p, b, CONSTRAINT_COLOR);
 	} else if(klass == cpGrooveJointGetClass()){
 		cpGrooveJoint *joint = (cpGrooveJoint *)constraint;
 	

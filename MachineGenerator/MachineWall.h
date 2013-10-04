@@ -35,11 +35,13 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
 void mgMachineWallAddMachine(MachineWall *wall, MachineDescription *newMachine, Attachment *attachment, cpVect gridPosition);
 void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition);
 
+MachineWall *mgMachineWallCopy(MachineWall *original, cpVect position); // necessary if we're going to mutate and possibly discard mutation results
+
 MachineDescription *mgMachineWallGetMachineAtPosition(MachineWall *wall, cpVect gridPosition);
 Attachment *mgMachineWallGetAttachmentBetween(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos);
 
 boolean_t mgMachineWallAttachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
 boolean_t mgMachineWallDetachMachines(MachineWall *wall, cpVect machine1Pos, cpVect machine2Pos);
 
-void mgMachineWallFree(MachineWall *wall);
+void mgMachineWallFree(MachineWall *wall); // frees machines and attachments too
 

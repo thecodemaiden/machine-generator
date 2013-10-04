@@ -12,8 +12,11 @@
 #include "GL/glfw.h"
 #include "ChipmunkDebugDraw.h"
 
+#include "ChipmunkDemoTextSupport.h"
+
 #import "Machine.h"
 #import "MachineWall.h"
+#import "Algorithm.h"
 
 cpSpace *worldSpace;
 static cpBool paused = cpFalse;
@@ -29,6 +32,17 @@ static double Accumulator = 0.0;
 static double LastTime = 0.0;
 
 
+MachineWall *wall = NULL;
+
+
+static void refreshWall()
+{
+    if (wall) {
+        mgMachineWallFree(wall);
+    }
+    wall = mgMachineWallNew(200, 200, 8, 8, cpv((-200-10)/2, (-200-10)/2), worldSpace);
+    randomGenerator1(wall);
+}
 
 void createGroundBox(cpSpace *space)
 {
@@ -68,7 +82,7 @@ cpSpace *setupSpace()
 {
     cpSpace *space = cpSpaceNew();
 	cpSpaceSetIterations(space, 5);
-	cpSpaceSetGravity(space, cpv(0, -10));
+	cpSpaceSetGravity(space, cpv(0, 0));
     
 
     
@@ -77,6 +91,18 @@ cpSpace *setupSpace()
    // insertTestMachines(space);
     
     return space;
+}
+
+static void
+DrawInstructions()
+{
+	ChipmunkDemoTextDrawString(cpv(-300, 220),
+                               "Controls:\n"
+                               "` - pause/resume simulation\n"
+                               "1 - step once (while paused)\n"
+                               "x - generate new system\n"
+                               "Use the mouse to grab objects.\n"
+                               );
 }
 
 static void
@@ -106,6 +132,8 @@ WindowClose()
 	return GL_TRUE;
 }
 
+
+
 static void
 Keyboard(int key, int state)
 {
@@ -121,7 +149,13 @@ Keyboard(int key, int state)
 	} else if(key == '\\'){
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
-	}
+    } else if (key == 'x') {
+        if (cpSpaceIsLocked(worldSpace)) {
+            cpSpaceAddPostStepCallback(worldSpace, refreshWall, "refreshWall", NULL);
+        } else {
+            refreshWall();
+        }
+    }
 	
 //	GLfloat translate_increment = 50.0f/(GLfloat)scale;
 //	GLfloat scale_increment = 1.2f;
@@ -202,6 +236,7 @@ SetupGL(void)
 	cpAssertHard(GLEW_ARB_vertex_array_object, "Requires VAO support.");
 	
 	ChipmunkDebugDrawInit();
+    ChipmunkDemoTextInit();
 	
 	glClearColor(52.0f/255.0f, 62.0f/255.0f, 72.0f/255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -263,7 +298,7 @@ Tick(double dt)
 		
 		// update bodies
 		cpSpaceStep(worldSpace, dt);
-        cpSpaceEachShape(worldSpace, eachShape, NULL);
+      //  cpSpaceEachShape(worldSpace, eachShape, NULL);
   //      cpSpaceEachBody(worldSpace, &eachBody, NULL);
         
 //		ChipmunkDemoTicks++;
@@ -296,14 +331,15 @@ static void Display(void)
     ChipmunkDebugDrawConstraints(worldSpace);
 }
 
-void runSimulation()
+void updateWorld()
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 //	glTranslatef((GLfloat)translate.x, (GLfloat)translate.y, 0.0f);
 //	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
-	
-	Update();
+
+    
+	Update();    
 	
 	ChipmunkDebugDrawPushRenderer();
     Display();
@@ -316,54 +352,27 @@ void runSimulation()
 	ChipmunkDebugDrawFlushRenderer();
 	ChipmunkDebugDrawPopRenderer();
 	
+    ChipmunkDemoTextPushRenderer();
+	// Now render all the UI text.
+	DrawInstructions();
+	
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix(); {
+		// Draw the text at fixed positions,
+		// but save the drawing matrix for the mouse picking
+		glLoadIdentity();
+		
+		ChipmunkDemoTextFlushRenderer();
+		ChipmunkDemoTextPopRenderer();
+	} glPopMatrix();
+	
 	
 	glfwSwapBuffers();
 	glClear(GL_COLOR_BUFFER_BIT);
+    
 }
 
-void createTestWalls()
-{
-    MachineWall *wall1 = mgMachineWallNew(200, 200, 10, 10, cpv((-200-10)/2, (-200-10)/2), worldSpace);
- //   MachineWall *m2 = mgMachineWallNew(200, 200, 10, 10, cpv((200+10)/2, (200+10)/2), worldSpace);
-    
-    MachineDescription bar1;
-    bar1.machineType = MACHINE_BOX;
-    bar1.length = 70;
-    bar1.height = 15.0;
-    bar1.body = NULL;
-    
-    Attachment spring;
-    spring.attachmentLength = 10.0;
-    spring.firstAttachPoint = cpvzero;
-    spring.secondAttachPoint = cpv(-1,0);
-    spring.attachmentType = MACHINE_SPRING;
-    
-    mgMachineWallAddMachine(wall1, &bar1, &spring, cpv(5,5));
-    
-    MachineDescription wheel1;
-    wheel1.machineType = MACHINE_WHEEL;
-    wheel1.length = 25;
-    wheel1.body = NULL;
-    
-    Attachment pivot;
-    pivot.attachmentLength = 0.0; // ignored for pivots any way
-    pivot.firstAttachPoint = cpvzero;
-    pivot.secondAttachPoint = cpvzero;
-    pivot.attachmentType = MACHINE_PIVOT;
-    
-    mgMachineWallAddMachine(wall1, &wheel1, &pivot, cpv(3,7));
-    
-    Attachment rigid;
-    rigid.attachmentLength = 20; //cpvdist(<#const cpVect v1#>, <#const cpVect v2#>)
-    rigid.firstAttachPoint = cpv(1,0);
-    rigid.secondAttachPoint = cpv(1,0);
-    rigid.attachmentType = MACHINE_FIXED;
-    
-    mgMachineWallAttachMachines(wall1, cpv(5,5), cpv(3,7), &rigid);
-    
-    // uncomment to test removal
-   // mgMachineWallDetachMachines(wall1, cpv(3,7), cpv(5,5));
-}
+
 
 int main(int argc, char **argv)
 {
@@ -372,12 +381,10 @@ int main(int argc, char **argv)
 
     mouse_body = cpBodyNew(INFINITY, INFINITY);
     
-    createTestWalls();
+    refreshWall();
     
-   
-
     while(1) {
-        runSimulation();
+        updateWorld();
     }
     
     // should technically free al
