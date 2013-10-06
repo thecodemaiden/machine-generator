@@ -1,22 +1,24 @@
 //
-//  main.c
-//  MachineGenerator
+//  main.cpp
+//  SystemGenerator
 //
-//  Created by Adeola Bannis on 9/19/13.
-//  Copyright (c) 2013 Adeola Bannis. All rights reserved.
+//  Created by Adeola Bannis on 10/5/13.
+//
 //
 
-#include <stdio.h>
+extern "C" {
+#include <cstdio>
 #include "chipmunk.h"
-#include "GL/glew.h"
-#include "GL/glfw.h"
+#include "glew.h"
+#include "glfw.h"
 #include "ChipmunkDebugDraw.h"
 
 #include "ChipmunkDemoTextSupport.h"
+}
 
-#import "Machine.h"
-#import "MachineWall.h"
-#import "Algorithm.h"
+#include "MachinePart.h"
+#include "MachineSystem.h"
+#include "Type1Algorithm.h"
 
 cpSpace *worldSpace;
 static cpBool paused = cpFalse;
@@ -31,18 +33,6 @@ static cpConstraint *mouse_joint = NULL;
 static double Accumulator = 0.0;
 static double LastTime = 0.0;
 
-
-MachineWall *wall = NULL;
-
-
-static void refreshWall()
-{
-    if (wall) {
-        mgMachineWallFree(wall);
-    }
-    wall = mgMachineWallNew(200, 200, 8, 8, cpv((-200-10)/2, (-200-10)/2), worldSpace);
-    randomGenerator1(wall);
-}
 
 void createGroundBox(cpSpace *space)
 {
@@ -75,7 +65,7 @@ void createGroundBox(cpSpace *space)
     cpShapeSetElasticity(groundShape, 1.0);
     cpSpaceAddStaticShape(space, groundShape);
     
-
+    
 }
 
 cpSpace *setupSpace()
@@ -86,11 +76,9 @@ cpSpace *setupSpace()
     cpSpaceSetSleepTimeThreshold(space, 0.5);
 	cpSpaceSetGravity(space, cpv(0, 0));
     
-
     
-    
-   // createGroundBox(space);
-   // insertTestMachines(space);
+    // createGroundBox(space);
+    // insertTestMachines(space);
     
     return space;
 }
@@ -134,17 +122,28 @@ WindowClose()
 	return GL_TRUE;
 }
 
+static MachineSystem *sys = NULL;
 
+void refreshWall(cpSpace *space, void *key, void *data)
+{
+    if (sys)
+        delete sys;
+    
+    sys = new MachineSystem(200, 200, 8, 8, cpvzero, space);
+    
+    randomGenerator1(sys);
+
+}
 
 static void
 Keyboard(int key, int state)
 {
 	if(state == GLFW_RELEASE) return;
 	
-	int index = key - 'a';
+//	int index = key - 'a';
 	
 	
-     if(key == '`'){
+    if(key == '`'){
 		paused = !paused;
     } else if(key == '1'){
 		step = cpTrue;
@@ -152,32 +151,11 @@ Keyboard(int key, int state)
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
     } else if (key == 'x') {
-        if (cpSpaceIsLocked(worldSpace)) {
-            cpSpaceAddPostStepCallback(worldSpace, refreshWall, "refreshWall", NULL);
-        } else {
-            refreshWall();
-        }
+        if (!cpSpaceIsLocked(worldSpace))
+            refreshWall(worldSpace, NULL, NULL);
+        else
+            cpSpaceAddPostStepCallback(worldSpace, refreshWall, (void*)"wall", NULL);
     }
-	
-//	GLfloat translate_increment = 50.0f/(GLfloat)scale;
-//	GLfloat scale_increment = 1.2f;
-//	if(key == '5'){
-//		translate.x = 0.0f;
-//		translate.y = 0.0f;
-//		scale = 1.0f;
-//	}else if(key == '4'){
-//		translate.x += translate_increment;
-//	}else if(key == '6'){
-//		translate.x -= translate_increment;
-//	}else if(key == '2'){
-//		translate.y += translate_increment;
-//	}else if(key == '8'){
-//		translate.y -= translate_increment;
-//	}else if(key == '7'){
-//		scale /= scale_increment;
-//	}else if(key == '9'){
-//		scale *= scale_increment;
-//	}
 }
 
 static cpVect
@@ -226,11 +204,11 @@ Click(int button, int state)
 			mouse_joint = NULL;
 		}
 	} else if(button == GLFW_MOUSE_BUTTON_2){
-	//	ChipmunkDemoRightDown = ChipmunkDemoRightClick = (state == GLFW_PRESS);
+        //	ChipmunkDemoRightDown = ChipmunkDemoRightClick = (state == GLFW_PRESS);
 	}
 }
 
-static void
+void
 SetupGL(void)
 {
 	glewExperimental = GL_TRUE;
@@ -256,40 +234,29 @@ SetupGL(void)
 void setupGLFW()
 {
     
-        cpAssertHard(glfwInit(), "Error initializing GLFW.");
-        
-        cpAssertHard(glfwOpenWindow(640, 480, 8, 8, 8, 8, 0, 0, GLFW_WINDOW), "Error opening GLFW window.");
-        glfwSwapInterval(1);
-        
-        SetupGL();
-        
-        glfwSetWindowSizeCallback(Reshape);
-        glfwSetWindowCloseCallback(WindowClose);
+    cpAssertHard(glfwInit(), "Error initializing GLFW.");
     
-        
-        glfwSetCharCallback(Keyboard);
-   //     glfwSetKeyCallback(SpecialKeyboard);
-        
-        glfwSetMousePosCallback(Mouse);
-        glfwSetMouseButtonCallback(Click);
-}
-
-static void
-eachShape(cpShape *shape, void *unused)
-{
-    cpSpace *s = cpShapeGetSpace(shape);
-    if (s) {
-        
-    } else {
-        
-    }
+    cpAssertHard(glfwOpenWindow(640, 480, 8, 8, 8, 8, 0, 0, GLFW_WINDOW), "Error opening GLFW window.");
+    glfwSwapInterval(1);
+    
+    SetupGL();
+    
+    glfwSetWindowSizeCallback(Reshape);
+    glfwSetWindowCloseCallback(WindowClose);
+    
+    
+    glfwSetCharCallback(Keyboard);
+    //     glfwSetKeyCallback(SpecialKeyboard);
+    
+    glfwSetMousePosCallback(Mouse);
+    glfwSetMouseButtonCallback(Click);
 }
 
 static void
 Tick(double dt)
 {
 	if(!paused || step){
-				
+        
 		// Completely reset the renderer only at the beginning of a tick.
 		// That way it can always display at least the last ticks' debug drawing.
 		ChipmunkDebugDrawClearRenderer();
@@ -300,11 +267,11 @@ Tick(double dt)
 		
 		// update bodies
 		cpSpaceStep(worldSpace, dt);
-      //  cpSpaceEachShape(worldSpace, eachShape, NULL);
-  //      cpSpaceEachBody(worldSpace, &eachBody, NULL);
+        //  cpSpaceEachShape(worldSpace, eachShape, NULL);
+        //      cpSpaceEachBody(worldSpace, &eachBody, NULL);
         
-//		ChipmunkDemoTicks++;
-//		ChipmunkDemoTime += dt;
+        //		ChipmunkDemoTicks++;
+        //		ChipmunkDemoTime += dt;
 		
 		step = cpFalse;
 		
@@ -337,11 +304,11 @@ void updateWorld()
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-//	glTranslatef((GLfloat)translate.x, (GLfloat)translate.y, 0.0f);
-//	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
-
+    //	glTranslatef((GLfloat)translate.x, (GLfloat)translate.y, 0.0f);
+    //	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
     
-	Update();    
+    
+	Update();
 	
 	ChipmunkDebugDrawPushRenderer();
     Display();
@@ -380,17 +347,12 @@ int main(int argc, char **argv)
 {
     setupGLFW();
     worldSpace = setupSpace();
-
-    mouse_body = cpBodyNew(INFINITY, INFINITY);
     
-    refreshWall();
+    mouse_body = cpBodyNew(INFINITY, INFINITY);
     
     while(1) {
         updateWorld();
     }
-    
-    // should technically free al
-
     
     return 0;
 }
