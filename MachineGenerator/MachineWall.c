@@ -61,7 +61,7 @@ static cpVect gridPositionToWorld(MachineWall *wall, cpVect gridPosition) {
 
 static void freeWallShapes(cpBody *body, cpShape *shape, void *data)
 {
-    cpSpaceRemoveShape(cpShapeGetSpace(shape), shape);
+    cpSpaceRemoveStaticShape(cpShapeGetSpace(shape), shape);
     cpShapeFree(shape);
 }
 
@@ -83,11 +83,24 @@ MachineWall *mgMachineWallNew(int width, int height, int hPegs, int vPegs, cpVec
     wall->gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
     wall->space = space;
     wall->size = cpv(hPegs, vPegs);
-    wall->body = cpBodyNew(INFINITY, INFINITY);
+    wall->body = cpBodyNewStatic();
     cpBodySetPos(wall->body, position);
-   // cpShape *wallShape = cpBoxShapeNew(wall->body, width, height);
-   // cpShapeSetLayers(wallShape, WALL_LAYER);
- //   cpSpaceAddShape(space, wallShape);
+    
+    cpShape *wallShape = cpSegmentShapeNew(wall->body, cpv(-width/2, height/2), cpv(width/2, height/2), .5);
+    cpShapeSetLayers(wallShape, WALL_LAYER);
+   cpSpaceAddStaticShape(space, wallShape);
+    
+    wallShape = cpSegmentShapeNew(wall->body, cpv(-width/2, -height/2), cpv(+width/2, -height/2), 0.5);
+    cpShapeSetLayers(wallShape, WALL_LAYER);
+    cpSpaceAddStaticShape(space, wallShape);
+    
+    wallShape = cpSegmentShapeNew(wall->body, cpv(-width/2, +height/2), cpv(-width/2, -height/2), 0.5);
+    cpShapeSetLayers(wallShape, WALL_LAYER);
+    cpSpaceAddStaticShape(space, wallShape);
+    
+    wallShape = cpSegmentShapeNew(wall->body, cpv(+width/2, +height/2), cpv(+width/2, -height/2), 0.5);
+    cpShapeSetLayers(wallShape, WALL_LAYER);
+    cpSpaceAddStaticShape(space, wallShape);
 
     
     return wall;
@@ -189,7 +202,6 @@ void mgMachineWallRemoveMachine(MachineWall *wall, cpVect gridPosition)
     
     MachineDescription *machine = wall->machines[machineNum];
     if (machine) {
-        printf("Removing machine at %d,%d\n", (int)gridPosition.x, (int)gridPosition.y);
         
         cpBody *attachmentBody = machine->body;
         cpBody *pegBody = NULL;

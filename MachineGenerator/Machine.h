@@ -18,18 +18,21 @@
 #define MACHINE_LAYER 1 // we do not want to collide with the wall we attach machines too
 typedef enum {
 //    MACHINE_BASE, // not attached to anything
-    MACHINE_GEAR,
-    MACHINE_SPRING,
-    MACHINE_FIXED, // the attachment points maintain their distance
-    MACHINE_PIVOT, // the attachment can rotate round a point on the parent
-    MACHINE_SLIDE, // attachment points have a maximum distance
-    MACHINE_ATTACH_MAX //sentinal value for making random attachment
+    ATTACH_GEAR,
+    ATTACH_SPRING,
+    ATTACH_FIXED, // the attachment points maintain their distance
+    
+    // the pivot jointis like a hinge if the attach points don't overlap
+    ATTACH_PIVOT, // the attachment can rotate round a point on the parent
+    
+    ATTACH_SLIDE, // attachment points have a maximum distance
+    ATTACH_TYPE_MAX //sentinel value for making random attachment
 } AttachmentType;
 
 typedef enum {
     MACHINE_BOX,
     MACHINE_WHEEL,
-    MACHINE_TYPE_MAX //sentinel for making random attachment
+    MACHINE_TYPE_MAX //sentinel for making random machine
 } BodyType;
 
 
@@ -44,7 +47,8 @@ typedef struct Attachment
     
     AttachmentType attachmentType;
     float attachmentLength; // distance between parent and child attachment points
-
+    
+    cpConstraint *constraint; // NULL until the attachment is formed
 } Attachment;
 
 typedef struct MachineDescription {
@@ -54,19 +58,32 @@ typedef struct MachineDescription {
     cpBody *body; // NULL until it is built or attached
 } MachineDescription;
 
-MachineDescription *mgMachineNew();
-void mgMachineDestroy(MachineDescription *md); // you need to free attachments yourself
+// allocates space for a new machine
+MachineDescription *mgMachineNew(); // free when done
+
+// frees the physical body but not the description
+void mgMachineDestroy(MachineDescription *md);
+
+// frees the space for the machine description
 void mgMachineFree(MachineDescription *md);
-MachineDescription *mgMachineCopy(MachineDescription *md);
 
-Attachment *mgAttachmentNew();
+// allocates space and copies description but not the physical body
+MachineDescription *mgMachineCopy(MachineDescription *md); // free when done
+
+// allocates space for a new attachment
+Attachment *mgAttachmentNew(); //free when done
+
 void mgAttachmentFree(Attachment * at);
-Attachment *mgAttachmentCopy(Attachment *at);
 
+// allocates space and copies attachment info
+Attachment *mgAttachmentCopy(Attachment *at); // free when done
 
+// attach a body to another with the attachment info given
 void mgMachineAttachToBody(Attachment *attachment, cpBody *machineBody, cpBody *body, cpSpace *space);
 
+// detach two connected bodies completely
 void mgMachineDetachFromBody(cpBody *machineBody, cpBody *parentBody, cpSpace *space);
 
+// create the physical body for the machine description
 void constructBodyForDescription(MachineDescription *md, cpVect position, cpSpace *space);
 

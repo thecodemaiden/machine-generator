@@ -82,6 +82,8 @@ cpSpace *setupSpace()
 {
     cpSpace *space = cpSpaceNew();
 	cpSpaceSetIterations(space, 5);
+    // allow bodies to 'sleep' so that we have less CPU use when nothing is moving
+    cpSpaceSetSleepTimeThreshold(space, 0.5);
 	cpSpaceSetGravity(space, cpv(0, 0));
     
 

@@ -40,7 +40,7 @@ static Attachment *randomAttachment()
 {
     Attachment *a = mgAttachmentNew();
     a->attachmentLength = 0;
-    a->attachmentType = arc4random_uniform(MACHINE_ATTACH_MAX);
+    a->attachmentType = arc4random_uniform(ATTACH_TYPE_MAX);
 
     return a;
 }
@@ -60,8 +60,8 @@ mgMachineWallPopulator randomGenerator1(MachineWall *wall)
         if (!mgMachineWallGetMachineAtPosition(wall, mPos)) {
             Attachment *a = mgAttachmentNew();
             do {
-                a->attachmentType = arc4random_uniform(MACHINE_ATTACH_MAX);
-            }while (a->attachmentType == MACHINE_GEAR); //can't attach to wall with gear...
+                a->attachmentType = arc4random_uniform(ATTACH_TYPE_MAX);
+            }while (a->attachmentType == ATTACH_GEAR); //can't attach to wall with gear...
             a->attachmentLength = arc4random_uniform(20);
             
             mgMachineWallAddMachine(wall, randomMachine(wall->gridSpacing.x), a, mPos);
@@ -91,6 +91,5 @@ mgMachineWallPopulator randomGenerator1(MachineWall *wall)
             nMachinesToPlace--; // one less to place
         }
     }
-    printf("Done generating");
     return NULL;
 }
