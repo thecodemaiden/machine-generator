@@ -37,6 +37,9 @@ public:
     bool attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
     bool detachMachines(cpVect machine1Pos, cpVect machine2Pos);
     
+    void getRandomAttachment(Attachment **attachment, cpVect *pos1, cpVect *pos2);
+    void getRandomPartPosition(cpVect *partPosition);
+    
     cpSpace *getSpace();
     cpVect getSize();
     cpVect getSpacing();
@@ -51,7 +54,10 @@ private:
     std::vector< std::vector<Attachment*> > attachments;
     cpVect gridSpacing;
 
-    cpVect size; // n of pegs horizont
+    cpVect size; // n of pegs horizontally and vertically
+    
+    int nMachines;
+    int nAttachments; //does not count attachment to walls
     
     int machinePositionToNumber(cpVect gridPosition);
     cpVect machineNumberToPosition(int machineNumber);

@@ -51,6 +51,9 @@ public:
 
 void randomGenerator1(MachineSystem *sys);
 
+// THERES A BUG AAAAAH	
+MachineSystem *attachmentMutator1(MachineSystem *sys);
+
 
 
 #endif /* defined(__SystemGenerator__Type1Algorithm__) */

@@ -86,3 +86,26 @@ void randomGenerator1(MachineSystem *sys)
     }
 
 }
+
+MachineSystem  *attachmentMutator1(MachineSystem *sys)
+{
+    MachineSystem *newMachine = new MachineSystem(*sys);
+    
+    Attachment *chosenAttachment = NULL;
+    cpVect part1 = cpvzero;
+    cpVect part2 = cpvzero;
+    
+    newMachine->getRandomAttachment(&chosenAttachment, &part1, &part2);
+    
+    if (chosenAttachment) {
+    // break the attachment, change it, then reattach
+    newMachine->detachMachines(part1, part2);
+    AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+    
+    // don't change the length - for now
+    chosenAttachment->attachmentType = newAttachmentType;
+    
+    newMachine->attachMachines(part1, part2, chosenAttachment);
+    }
+    return newMachine;
+}

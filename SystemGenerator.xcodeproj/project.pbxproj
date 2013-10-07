@@ -24,6 +24,7 @@
 		E2A1D85A1800E733003FA4AE /* ChipmunkDemoShaderSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D80F1800E488003FA4AE /* ChipmunkDemoShaderSupport.c */; };
 		E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85C1800EBFC003FA4AE /* MachineSystem.cpp */; };
 		E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */; };
+		E2BDBC9918035AE4005128BE /* AdeolaBadAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* AdeolaBadAlgorithm.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +81,8 @@
 		E2A1D85D1800EBFC003FA4AE /* MachineSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineSystem.h; sourceTree = "<group>"; };
 		E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachinePart.cpp; sourceTree = "<group>"; };
 		E2A1D8601800EC84003FA4AE /* MachinePart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachinePart.h; sourceTree = "<group>"; };
+		E2BDBC9718035AE4005128BE /* AdeolaBadAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaBadAlgorithm.cpp; sourceTree = "<group>"; };
+		E2BDBC9818035AE4005128BE /* AdeolaBadAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaBadAlgorithm.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +221,8 @@
 			children = (
 				E25FD8831801C2C800566B8D /* Type1Algorithm.h */,
 				E25FD8871801D08D00566B8D /* Type1Algorithm.cpp */,
+				E2BDBC9818035AE4005128BE /* AdeolaBadAlgorithm.h */,
+				E2BDBC9718035AE4005128BE /* AdeolaBadAlgorithm.cpp */,
 			);
 			name = Algorithms;
 			sourceTree = "<group>";
@@ -365,6 +370,7 @@
 				E25FD8881801D08D00566B8D /* Type1Algorithm.cpp in Sources */,
 				E2A1D85A1800E733003FA4AE /* ChipmunkDemoShaderSupport.c in Sources */,
 				E2A1D8581800E72D003FA4AE /* ChipmunkDebugDraw.c in Sources */,
+				E2BDBC9918035AE4005128BE /* AdeolaBadAlgorithm.cpp in Sources */,
 				E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */,
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,
 				E2A1D8591800E730003FA4AE /* ChipmunkDemoTextSupport.c in Sources */,

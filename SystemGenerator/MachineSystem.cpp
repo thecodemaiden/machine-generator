@@ -18,7 +18,9 @@
 MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space)
 : parts(hPegs*vPegs),
   attachments((hPegs*vPegs), std::vector<Attachment *>(hPegs*vPegs, NULL)),
-  space(space)
+  space(space),
+  nMachines(0),
+  nAttachments(0)
 {
     
     gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
@@ -48,7 +50,9 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
 MachineSystem::MachineSystem(MachineSystem &original, cpVect position)
 : space(original.space),
  size(original.size),
-gridSpacing(original.gridSpacing)
+gridSpacing(original.gridSpacing),
+nMachines(0),
+nAttachments(0)
 {
     cpFloat width = (original.size.x +1)*original.gridSpacing.x;
     cpFloat height = (original.size.y +1)*original.gridSpacing.y;
@@ -79,18 +83,23 @@ gridSpacing(original.gridSpacing)
     
     attachments.resize(nPegs);
     
+    for (int i=0; i<nPegs; i++)
+        attachments[i].resize(nPegs, NULL);
+    
     for (int x = 0; x < size.x; x++ ) {
         for (int y = 0; y < size.y; y++) {
             cpVect gridPos = cpv(x,y);
             int machineNum = machinePositionToNumber(gridPos);
-            MachinePart *newPart = new MachinePart(*original.parts[machineNum]);
-            Attachment *wallAttachment = new Attachment(*original.attachments[machineNum][machineNum]);
-            addPart(newPart, wallAttachment, gridPos);
+            MachinePart *machineToCopy = original.parts[machineNum];
+            if (machineToCopy) {
+                MachinePart *newPart = new MachinePart(*machineToCopy);
+                Attachment *wallAttachment = new Attachment(*original.attachments[machineNum][machineNum]);
+                addPart(newPart, wallAttachment, gridPos);
+            }
         }
     }
     
     for (int i=0; i<nPegs; i++) {
-        attachments[i].resize(nPegs, NULL);
         for (int j=0; j<i; j++) {
             Attachment *attachmentToCopy = original.attachments[i][j];
             if (attachmentToCopy) {
@@ -134,7 +143,7 @@ void MachineSystem::addPart(MachinePart *newPart, Attachment *attachment, cpVect
         cpSpaceAddStaticShape(space, pegShape);
         
         parts[machineNumber] = newPart;
-        
+        nMachines++;
         newPart->setPosition(pegPosition);
         newPart->attachToBody(attachment, pegBody);
         attachments[machineNumber][machineNumber] = attachment;
@@ -189,7 +198,7 @@ void MachineSystem::removePart(cpVect gridPosition)
         
         cpBodyFree(pegBody);
         parts[machineNum] = NULL;
-        
+        nMachines--;
         // no longer allowing 'dangling' machines - everything is nailed to the wall for now
         delete partToRemove;
     }
@@ -224,6 +233,7 @@ bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attac
                 machine1->attachToBody(attachment, machine2->body);
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = attachment;
                 added = true;
+                nAttachments++;
             }
         }
     }
@@ -247,6 +257,7 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
                
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = NULL;
                 detached = true;
+                nAttachments--;
             }
         }
     }
@@ -267,6 +278,9 @@ MachineSystem::~MachineSystem()
     
     for (int i=0; i<nPegs; i++) {
         for (int j=0; j<nPegs; j++) {
+            // CHECK
+            // may not be necessary - could have removed attachments when removing parts
+            // and only wall attachments remain to be removed
             delete attachments[i][j];
         }
     }
@@ -277,6 +291,84 @@ MachineSystem::~MachineSystem()
     });
     
     cpBodyFree(body);
+}
+
+#pragma mark - random pickers
+
+void MachineSystem::getRandomAttachment(Attachment **attachment, cpVect *pos1, cpVect *pos2)
+{
+    // attachment matrix is nxn, where n is number of machines.
+    // we can search above or below the diagonal to get an attachment
+    // I chose below, so for machine 0 we search attachments to 1..n-1
+    // for machine 1 we search attachments to 2..n-1
+    // for machine n-1 we don't have to search
+    
+    if (!pos1 || !pos2) {
+        // I'm not doing work if there's nowhere to put the result
+        return;
+    }
+    
+    cpVect p1 = cpv(-1,-1);
+    cpVect p2 = cpv(-1,-1);
+    Attachment *found = NULL;
+    
+    // we pick an existing attachment with uniform probability
+    int attachmentToPick = arc4random_uniform(nAttachments);
+    
+    int possibleParts = size.x*size.y;
+    int foundAttachments = 0;
+    
+    for (int i=0; i<possibleParts; i++) {
+        for (int j=i+1; j<possibleParts; j++) {
+            if (attachments[i][j]) {
+                if (foundAttachments == attachmentToPick) {
+                    p1 = machineNumberToPosition(i);
+                    p2 = machineNumberToPosition(j);
+                    found = attachments[i][j];
+                    break;
+                } else {
+                    foundAttachments++;
+                }
+            }
+        }
+        if (found)
+            break;
+    }
+    
+    *pos1 = p1;
+    *pos2 = p2;
+    if (attachment)
+        *attachment = found;
+    
+}
+
+void MachineSystem::getRandomPartPosition(cpVect *partPosition)
+{
+    
+    if (!partPosition) {
+        // don't do work if there's nowhere to put the result
+        return;
+    }
+    
+    cpVect pos = cpv(-1,-1);
+    // we pick an existing machine with uniform probability
+    int partToPick = arc4random_uniform(nMachines);
+    int possibleParts = size.x*size.y;
+    
+    int foundParts = 0;
+    for (int i=0; i<possibleParts; i++) {
+        if (parts[i]) {
+            if (partToPick == foundParts) {
+                // we found the nth existing machine
+                pos = machineNumberToPosition(i);
+                break;
+            } else {
+                foundParts++;
+            }
+                
+        }
+    }
+    *partPosition = pos;
 }
 
 #pragma mark - more helpers

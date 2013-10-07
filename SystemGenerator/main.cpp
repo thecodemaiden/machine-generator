@@ -73,7 +73,7 @@ cpSpace *setupSpace()
     cpSpace *space = cpSpaceNew();
 	cpSpaceSetIterations(space, 5);
     // allow bodies to 'sleep' so that we have less CPU use when nothing is moving
-    cpSpaceSetSleepTimeThreshold(space, 0.5);
+   // cpSpaceSetSleepTimeThreshold(space, 0.5);
 	cpSpaceSetGravity(space, cpv(0, 0));
     
     
@@ -91,6 +91,7 @@ DrawInstructions()
                                "` - pause/resume simulation\n"
                                "1 - step once (while paused)\n"
                                "x - generate new system\n"
+                               "m - mutate current system\n"
                                "Use the mouse to grab objects.\n"
                                );
 }
@@ -135,6 +136,15 @@ void refreshWall(cpSpace *space, void *key, void *data)
 
 }
 
+void mutateWall(cpSpace *space, void *key, void *data)
+{
+    if (sys) {
+        MachineSystem *newSys = attachmentMutator1(sys);
+        delete sys;
+        sys = newSys;
+    }
+}
+
 static void
 Keyboard(int key, int state)
 {
@@ -152,9 +162,14 @@ Keyboard(int key, int state)
 		glDisable(GL_POINT_SMOOTH);
     } else if (key == 'x') {
         if (!cpSpaceIsLocked(worldSpace))
-            refreshWall(worldSpace, NULL, NULL);
+            refreshWall(worldSpace, sys, NULL);
         else
-            cpSpaceAddPostStepCallback(worldSpace, refreshWall, (void*)"wall", NULL);
+            cpSpaceAddPostStepCallback(worldSpace, refreshWall, sys, NULL);
+    } else if (key == 'm') {
+        if (!cpSpaceIsLocked(worldSpace))
+            mutateWall(worldSpace, sys, NULL);
+        else
+            cpSpaceAddPostStepCallback(worldSpace, mutateWall, sys, NULL);
     }
 }
 
@@ -349,6 +364,8 @@ int main(int argc, char **argv)
     worldSpace = setupSpace();
     
     mouse_body = cpBodyNew(INFINITY, INFINITY);
+    
+    refreshWall(worldSpace, sys, NULL);
     
     while(1) {
         updateWorld();
