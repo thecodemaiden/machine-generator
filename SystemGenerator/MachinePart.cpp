@@ -244,7 +244,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
 void MachinePart::detachFromBody(cpBody *otherBody)
 {
     cpBodyEachConstraint_b(otherBody, ^(cpConstraint *constraint) {
-        if ((cpConstraintGetA(constraint) == otherBody && cpConstraintGetB(constraint) == otherBody)) {
+        if ((cpConstraintGetA(constraint) == otherBody && cpConstraintGetB(constraint) == body)) {
             cpSpaceRemoveConstraint(space, constraint);
             cpConstraintFree(constraint);
         }

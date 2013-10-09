@@ -51,6 +51,8 @@ MachineSystem::MachineSystem(MachineSystem &original, cpVect position)
 : space(original.space),
  size(original.size),
 gridSpacing(original.gridSpacing),
+inputMachinePosition(original.inputMachinePosition),
+outputMachinePosition(original.outputMachinePosition),
 nMachines(0),
 nAttachments(0)
 {
@@ -150,28 +152,15 @@ void MachineSystem::addPart(MachinePart *newPart, Attachment *attachment, cpVect
     }
 }
 
-//static void findPeg(cpBody *body, cpConstraint *c, void *data){
-//    printf("X");
-//
-//    if (cpConstraintGetB(c) == body) {
-//        cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
-//        if (cpBodyGetMass(otherBody) == INFINITY)
-//            *(cpBody **)data = otherBody;
-//    }
-//}
-
 void MachineSystem::removePart(cpVect gridPosition)
 {
-    // ermagerd, free it when doneeeeee
     int machineNum = machinePositionToNumber(gridPosition);
     
     MachinePart *partToRemove = parts[machineNum];
     if (partToRemove) {
         
         cpBody *attachmentBody = partToRemove->getBody();
-        __block cpBody *pegBody = NULL;
-//        cpBodyEachConstraint(attachmentBody, findPeg, &pegBody);
-        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *c) {
+        __block cpBody *pegBody = NULL;        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *c) {
             if (cpConstraintGetB(c) == attachmentBody) {
                 cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
                 if (cpBodyGetMass(otherBody) == INFINITY)
@@ -181,7 +170,6 @@ void MachineSystem::removePart(cpVect gridPosition)
         
         assert(pegBody);
         
-        //remove the attachments
         int nPegs = size.x * size.y;
         // remove the attachments for this machine
         for (int i=0; i<nPegs; i++) {
@@ -255,6 +243,8 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
                 machine1->detachFromBody(machine2->body);
                 machine2->detachFromBody(machine1->body);
                
+                existingAttachment->constraint = NULL; // it got freed by one of the two calls above, so don't keep it around
+                
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = NULL;
                 detached = true;
                 nAttachments--;
@@ -334,7 +324,6 @@ void MachineSystem::getRandomAttachment(Attachment **attachment, cpVect *pos1, c
         if (found)
             break;
     }
-    
     *pos1 = p1;
     *pos2 = p2;
     if (attachment)

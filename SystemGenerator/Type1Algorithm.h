@@ -12,46 +12,41 @@
 #include "MachineSystem.h"
 #include <vector>
 
-// this is an 'abstract class' - there is no code supplied for most of these methods
+
+typedef void (*spaceUpdateFunc)(cpSpace *space, long steps, cpFloat stepTime, bool visible, cpVect translation);
+
+// this is an abstract class - there is no code supplied for most of these methods
 class Type1Algorithm {
-private:
-    std::vector<MachineSystem *> population;
-    std::vector<float> fitnesses;
+
 public:
     
-    // basic implementation of constructor and destructor for subclasses to build on
-    Type1Algorithm(int populationSize = 100)
-     : population(std::vector<MachineSystem *>(populationSize)),
-       fitnesses(std::vector<float>(populationSize))
-    {
-        // each system should probably get its own space
-    }
+    Type1Algorithm(){};
+    virtual ~Type1Algorithm(){};
     
-    virtual ~Type1Algorithm(){
+    // perform parent selection, offspring production, fitness evaluation, and re-population
+    void tick();
     
-    };
+    // set this for use in tick() - steps the simulation
+    spaceUpdateFunc updateFunction;
     
+private:
     // (random) initializer
-    virtual void populateSystem(MachineSystem *sys) = 0;
+    virtual MachineSystem *createInitialSystem() = 0;
     
     // operators
     virtual MachineSystem *mutateSystem(MachineSystem *original) = 0;
     virtual void combineSystems(MachineSystem *parent1, MachineSystem *parent2, MachineSystem **child1, MachineSystem **child2) = 0;
     
-    // fitness evaluator
-    virtual cpFloat *evaluateSystem(MachineSystem *sys) = 0;
+    // write your own fitness evaluator
     
     // the main loop will keep state updated with this 'post-step callback'
-    // 'key' should be the address of this object
-    // 'data' is currently NULL
-    cpPostStepFunc afterWorldStep(cpSpace *space, void *key, void *data);
+    // 'key' allows you to determine which object this was called for
+    // 'data' is currently unused
+    virtual void afterWorldStep(cpSpace *space, void *key, void *data) = 0;
 };
 
-// a bunch of operators/generators that can be combined in Type1Algorithm subclasses
-
+// example operators/generators
 void randomGenerator1(MachineSystem *sys);
-
-// THERES A BUG AAAAAH	
 MachineSystem *attachmentMutator1(MachineSystem *sys);
 
 

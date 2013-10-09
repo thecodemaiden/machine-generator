@@ -9,8 +9,8 @@
 extern "C" {
 #include <cstdio>
 #include "chipmunk.h"
-#include "glew.h"
-#include "glfw.h"
+#include "GL/glew.h"
+#include "GL/glfw.h"
 #include "ChipmunkDebugDraw.h"
 
 #include "ChipmunkDemoTextSupport.h"
@@ -24,13 +24,7 @@ cpSpace *worldSpace;
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
 
-// mouse input
-cpVect ChipmunkDemoMouse;
-static cpBody *mouse_body = NULL;
-static cpConstraint *mouse_joint = NULL;
-
 // for time step
-static double Accumulator = 0.0;
 static double LastTime = 0.0;
 
 
@@ -92,8 +86,16 @@ DrawInstructions()
                                "1 - step once (while paused)\n"
                                "x - generate new system\n"
                                "m - mutate current system\n"
-                               "Use the mouse to grab objects.\n"
+                               "< - rotate input body counterclockwise\n"
+                               "> - rotate input body clockwise\n"
                                );
+}
+
+static void DrawStats(float inputAngle, float outputAngle)
+{
+    static char output[127];
+    sprintf(output, "Input angle: %.3f, output angle: %.3f", inputAngle, outputAngle);
+    ChipmunkDemoTextDrawString(cpv(-300, -220), output);
 }
 
 static void
@@ -170,57 +172,17 @@ Keyboard(int key, int state)
             mutateWall(worldSpace, sys, NULL);
         else
             cpSpaceAddPostStepCallback(worldSpace, mutateWall, sys, NULL);
+    } else if (key == '<' || key == '>') {
+        MachinePart *inputPart = sys->partAtPosition(sys->inputMachinePosition);
+        cpBody *inputBody = inputPart->body;
+        cpFloat angVel = cpBodyGetAngVel(inputBody);
+        if (key == '<')
+            angVel += M_PI/3; // 60 degree increment
+        else
+            angVel -= M_PI/3;
+
+        cpBodySetAngVel(inputBody, angVel);
     }
-}
-
-static cpVect
-MouseToSpace(int x, int y)
-{
-	GLdouble model[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX, model);
-	
-	GLdouble proj[16];
-	glGetDoublev(GL_PROJECTION_MATRIX, proj);
- 	
-	GLint view[4];
-	glGetIntegerv(GL_VIEWPORT, view);
-	
-	int ww, wh;
-	glfwGetWindowSize(&ww, &wh);
-	
-	GLdouble mx, my, mz;
-	gluUnProject(x, wh - y, 0.0f, model, proj, view, &mx, &my, &mz);
-	
-	return cpv(mx, my);
-}
-
-static void
-Mouse(int x, int y)
-{
-	ChipmunkDemoMouse = MouseToSpace(x, y);
-}
-
-static void
-Click(int button, int state)
-{
-	if(button == GLFW_MOUSE_BUTTON_1){
-		if(state == GLFW_PRESS){
-			cpShape *shape = cpSpacePointQueryFirst(worldSpace, ChipmunkDemoMouse, CP_ALL_LAYERS, CP_NO_GROUP);
-			if(shape){
-				cpBody *body = shape->body;
-				mouse_joint = cpPivotJointNew2(mouse_body, body, cpvzero, cpBodyWorld2Local(body, ChipmunkDemoMouse));
-				mouse_joint->maxForce = 50000.0f;
-				mouse_joint->errorBias = cpfpow(1.0f - 0.15f, 60.0f);
-				cpSpaceAddConstraint(worldSpace, mouse_joint);
-			}
-		} else if(mouse_joint){
-			cpSpaceRemoveConstraint(worldSpace, mouse_joint);
-			cpConstraintFree(mouse_joint);
-			mouse_joint = NULL;
-		}
-	} else if(button == GLFW_MOUSE_BUTTON_2){
-        //	ChipmunkDemoRightDown = ChipmunkDemoRightClick = (state == GLFW_PRESS);
-	}
 }
 
 void
@@ -261,36 +223,30 @@ void setupGLFW()
     
     
     glfwSetCharCallback(Keyboard);
-    //     glfwSetKeyCallback(SpecialKeyboard);
-    
-    glfwSetMousePosCallback(Mouse);
-    glfwSetMouseButtonCallback(Click);
 }
 
-static void
-Tick(double dt)
-{
-	if(!paused || step){
+
+void runSpace(cpSpace *space, long steps, cpFloat stepTime, bool visible, cpVect translation){
+    
+    glTranslatef((GLfloat)translation.x, (GLfloat)translation.y, 0.0f);
+
+    // Completely reset the renderer only at the beginning of a tick.
+    // That way it can always display at least the last ticks' debug drawing.
+    if (visible)
+        ChipmunkDebugDrawClearRenderer();
+
+    for (int i=0; i<steps; i++) {
+        // update bodies
+        cpSpaceStep(space, stepTime);
         
-		// Completely reset the renderer only at the beginning of a tick.
-		// That way it can always display at least the last ticks' debug drawing.
-		ChipmunkDebugDrawClearRenderer();
-		
-		cpVect new_point = cpvlerp(mouse_body->p, ChipmunkDemoMouse, 0.25f);
-		mouse_body->v = cpvmult(cpvsub(new_point, mouse_body->p), 60.0f);
-		mouse_body->p = new_point;
-		
-		// update bodies
-		cpSpaceStep(worldSpace, dt);
-        //  cpSpaceEachShape(worldSpace, eachShape, NULL);
-        //      cpSpaceEachBody(worldSpace, &eachBody, NULL);
+    }
+    
+    if (visible) {
+        ChipmunkDebugDrawPushRenderer();
         
-        //		ChipmunkDemoTicks++;
-        //		ChipmunkDemoTime += dt;
-		
-		step = cpFalse;
-		
-	}
+        ChipmunkDebugDrawShapes(space);
+        ChipmunkDebugDrawConstraints(space);
+    }
 }
 
 static void
@@ -298,47 +254,74 @@ Update(void)
 {
 	double time = glfwGetTime();
 	double dt = time - LastTime;
+
+    LastTime = time;
+
+    
 	if(dt > 0.2) dt = 0.2;
 	
 	double fixed_dt = 1.0/60;
+    long steps = lrint(dt/fixed_dt);
 	
-	for(Accumulator += dt; Accumulator > fixed_dt; Accumulator -= fixed_dt){
-		Tick(fixed_dt);
-	}
-	
-	LastTime = time;
+    if (paused) {
+        if (step) {
+            steps = 1;
+            step = false;
+        } else {
+            steps = 0;
+        }
+    }
+    
+    runSpace(worldSpace, steps, fixed_dt, true, cpvzero);
+    
+   
+    
 }
 
-static void Display(void)
-{
-    ChipmunkDebugDrawShapes(worldSpace);
-    ChipmunkDebugDrawConstraints(worldSpace);
-}
+
 
 void updateWorld()
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-    //	glTranslatef((GLfloat)translate.x, (GLfloat)translate.y, 0.0f);
     //	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
     
     
 	Update();
-	
-	ChipmunkDebugDrawPushRenderer();
-    Display();
     
-	// Highlight the shape under the mouse because it looks neat.
-	cpShape *nearest = cpSpaceNearestPointQueryNearest(worldSpace, ChipmunkDemoMouse, 0.0f, CP_ALL_LAYERS, CP_NO_GROUP, NULL);
-	if(nearest) ChipmunkDebugDrawShape(nearest, RGBAColor(1.0f, 0.0f, 0.0f, 1.0f), LAColor(0.0f, 0.0f));
-	
+
+    
+    // outline input and output bodies
+    cpBody *body = sys->partAtPosition(sys->inputMachinePosition)->body;
+    cpFloat currentInputAngle = cpBodyGetAngle(body);
+    __block cpShape *shape = NULL;
+    cpBodyEachShape_b(body, ^(cpShape *s) {
+        shape = s;
+    });
+    if (shape) {
+        //input in blue
+        ChipmunkDebugDrawShape(shape, RGBAColor(0.0f, 0.0f, 1.0f, 1.0f), LAColor(0.0f, 0.0f));
+    }
+    
+    body = sys->partAtPosition(sys->outputMachinePosition)->body;
+    cpFloat currentOutputAngle = cpBodyGetAngle(body);
+
+    shape = NULL;
+    cpBodyEachShape_b(body, ^(cpShape *s) {
+        shape = s;
+    });
+    if (shape) {
+        //output in red
+        ChipmunkDebugDrawShape(shape, RGBAColor(1.0f, 0.0f, 0.0f, 1.0f), LAColor(0.0f, 0.0f));
+    }
+    
 	// Draw the renderer contents and reset it back to the last tick's state.
 	ChipmunkDebugDrawFlushRenderer();
 	ChipmunkDebugDrawPopRenderer();
-	
+		
     ChipmunkDemoTextPushRenderer();
-	// Now render all the UI text.
 	DrawInstructions();
+     DrawStats(currentInputAngle, currentOutputAngle);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix(); {
@@ -349,23 +332,19 @@ void updateWorld()
 		ChipmunkDemoTextFlushRenderer();
 		ChipmunkDemoTextPopRenderer();
 	} glPopMatrix();
-	
-	
+    
 	glfwSwapBuffers();
 	glClear(GL_COLOR_BUFFER_BIT);
     
+    
 }
-
-
 
 int main(int argc, char **argv)
 {
     setupGLFW();
     worldSpace = setupSpace();
     
-    mouse_body = cpBodyNew(INFINITY, INFINITY);
-    
-    refreshWall(worldSpace, sys, NULL);
+    refreshWall(worldSpace, &sys, NULL);
     
     while(1) {
         updateWorld();
