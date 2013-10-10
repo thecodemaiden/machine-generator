@@ -10,16 +10,16 @@
 
 
 // basic implementation of constructor and destructor for subclasses to build on
-AdeolaAlgorithm::AdeolaAlgorithm(int populationSize)
-:Type1Algorithm(),
-  population(populationSize),
-   lastInputValues(stepSize)
+AdeolaAlgorithm::AdeolaAlgorithm(int populationSize, float p_m)
+:population(populationSize),
+ p_m(p_m)
 {
     for (int i=0; i<populationSize; i++) {
-        population[i] = new SystemInfo(stepSize);
+        population[i] = new SystemInfo(simSteps);
         population[i]->space = cpSpaceNew();
         population[i]->system = createInitialSystem(population[i]->space);
     }
+    bestIndividual = NULL;
 };
 
  AdeolaAlgorithm::~AdeolaAlgorithm(){
@@ -33,7 +33,44 @@ AdeolaAlgorithm::AdeolaAlgorithm(int populationSize)
 
 void AdeolaAlgorithm::tick()
 {
+    size_t populationSize = population.size();
     
+    float maxFitness = -FLT_MAX;
+    size_t bestPos = -1;
+    for (size_t popIter = 0; popIter <populationSize; popIter++) {
+        // mutate each one
+    
+        float random = (float)rand()/RAND_MAX;
+        SystemInfo *individual = population[popIter];
+        if (random < p_m) {
+            MachineSystem *system = individual->system;
+            individual->system = mutateSystem(system);
+            delete system;
+        }
+        
+        // set angvel of input body
+        cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
+        cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
+        cpBodySetAngVel(inputBody, M_PI_4);
+        
+        for (int i=0; i<simSteps; i++) {
+            individual->inputValues[i] = cpBodyGetAngle(inputBody);
+            cpSpaceStep(individual->space, 0.5);
+            individual->outputValues[i] = cpBodyGetAngle(outputBody);
+        }
+        
+        cpBodySetAngVel(inputBody, 0);
+        cpBodyResetForces(outputBody);
+        
+        individual->fitness = evaluateSystem(individual);
+        if (individual->fitness > maxFitness) {
+            maxFitness = individual->fitness;
+            bestIndividual = individual;
+            bestPos = popIter;
+        }
+    }
+    
+    fprintf(stderr, "BEST FITNESS: %f (%lu)\n", maxFitness, bestPos);
 }
 
 // (random) initializer
@@ -47,31 +84,29 @@ MachineSystem * AdeolaAlgorithm::createInitialSystem(cpSpace *space)
 // operators
 MachineSystem *AdeolaAlgorithm::mutateSystem(MachineSystem *original)
 {
-    float random = rand()/RAND_MAX;
-    if (random < p_m)
-        return attachmentMutator1(original);
-    return NULL;
-}
-
-void AdeolaAlgorithm::combineSystems(MachineSystem *parent1, MachineSystem *parent2, MachineSystem **child1, MachineSystem **child2)
-{
-    // no recombination yet
-    if (child1)
-        *child1 = NULL;
-    if (child2)
-        *child2 = NULL;
+    return attachmentMutator1(original);
 }
 
 // fitness evaluator
-cpFloat AdeolaAlgorithm::evaluateSystem(MachineSystem *sys)
+cpFloat AdeolaAlgorithm::evaluateSystem(SystemInfo *sys)
 {
-    return 0.0;
+    cpFloat fitness = 0.0;
+    size_t nSteps = sys->inputValues.size();
+    
+    for (size_t i=0; i<nSteps; i++) {
+        float error = sys->inputValues[i] - sys->outputValues[i];
+        fitness += error*error;
+    }
+    
+    return -fitness; // we want zero error
 }
 
-// the main loop will keep state updated with this 'post-step callback'
-// 'key' should be the address of this object
-// 'data' is currently NULL
-void AdeolaAlgorithm::afterWorldStep(cpSpace *space, void *key, void *data)
+cpSpace * AdeolaAlgorithm::simulationSpaceForBestIndividual()
 {
-    
+    return bestIndividual->space;
+}
+
+MachineSystem *AdeolaAlgorithm::bestSystem()
+{
+    return bestIndividual->system;
 }

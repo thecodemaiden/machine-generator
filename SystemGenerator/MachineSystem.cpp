@@ -207,6 +207,13 @@ Attachment *MachineSystem::attachmentBetween(cpVect machine1Pos, cpVect machine2
     return attachments[machine1Num][machine2Num];
 }
 
+Attachment *MachineSystem::attachmentToWall(cpVect gridPosition)
+{
+    int machineNum = machinePositionToNumber(gridPosition);
+    return attachments[machineNum][machineNum];
+}
+
+
 bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment)
 {
     bool added = false;

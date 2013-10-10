@@ -28,12 +28,22 @@ secondAttachPoint(toCopy.secondAttachPoint)
     
 }
 
+static void deleteCallback(cpSpace *space, void *key, void *data)
+{
+    cpConstraint *constraint = *(cpConstraint **)data;
+    cpSpaceRemoveConstraint(space, constraint);
+    cpConstraintFree(constraint);
+}
+
 Attachment::~Attachment()
 {
     cpSpace *s =cpConstraintGetSpace(constraint);
     if (s) {
-        cpSpaceRemoveConstraint(s, constraint);
-        cpConstraintFree(constraint);
+        if (cpSpaceIsLocked(s)) {
+            cpSpaceAddPostStepCallback(s, &deleteCallback, this, (void *)&constraint);
+        } else {
+            deleteCallback(s, (void *)this, (void *)&constraint);
+        }
     }
 }
 

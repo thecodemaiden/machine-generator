@@ -18,9 +18,8 @@ extern "C" {
 
 #include "MachinePart.h"
 #include "MachineSystem.h"
-#include "Type1Algorithm.h"
+#include "AdeolaBadAlgorithm.h"
 
-cpSpace *worldSpace;
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
 
@@ -119,41 +118,38 @@ static int
 WindowClose()
 {
 	glfwTerminate();
-    cpSpaceFree(worldSpace);
 	exit(EXIT_SUCCESS);
 	
 	return GL_TRUE;
 }
 
-static MachineSystem *sys = NULL;
 
-void refreshWall(cpSpace *space, void *key, void *data)
-{
-    if (sys)
-        delete sys;
-    
-    sys = new MachineSystem(200, 200, 8, 8, cpvzero, space);
-    
-    randomGenerator1(sys);
-
-}
-
-void mutateWall(cpSpace *space, void *key, void *data)
-{
-    if (sys) {
-        MachineSystem *newSys = attachmentMutator1(sys);
-        delete sys;
-        sys = newSys;
-    }
-}
+//void refreshWall(cpSpace *space, void *key, void *data)
+//{
+//    if (sys)
+//        delete sys;
+//    
+//    sys = new MachineSystem(200, 200, 8, 8, cpvzero, space);
+//    
+//    randomGenerator1(sys);
+//
+//}
+//
+//void mutateWall(cpSpace *space, void *key, void *data)
+//{
+//    if (sys) {
+//        MachineSystem *newSys = attachmentMutator1(sys);
+//        delete sys;
+//        sys = newSys;
+//    }
+//}
 
 static void
 Keyboard(int key, int state)
 {
 	if(state == GLFW_RELEASE) return;
 	
-//	int index = key - 'a';
-	
+//	int index = key - 'a'
 	
     if(key == '`'){
 		paused = !paused;
@@ -162,26 +158,26 @@ Keyboard(int key, int state)
 	} else if(key == '\\'){
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
-    } else if (key == 'x') {
-        if (!cpSpaceIsLocked(worldSpace))
-            refreshWall(worldSpace, sys, NULL);
-        else
-            cpSpaceAddPostStepCallback(worldSpace, refreshWall, sys, NULL);
-    } else if (key == 'm') {
-        if (!cpSpaceIsLocked(worldSpace))
-            mutateWall(worldSpace, sys, NULL);
-        else
-            cpSpaceAddPostStepCallback(worldSpace, mutateWall, sys, NULL);
-    } else if (key == '<' || key == '>') {
-        MachinePart *inputPart = sys->partAtPosition(sys->inputMachinePosition);
-        cpBody *inputBody = inputPart->body;
-        cpFloat angVel = cpBodyGetAngVel(inputBody);
-        if (key == '<')
-            angVel += M_PI/3; // 60 degree increment
-        else
-            angVel -= M_PI/3;
-
-        cpBodySetAngVel(inputBody, angVel);
+//    } else if (key == 'x') {
+//        if (!cpSpaceIsLocked(worldSpace))
+//            refreshWall(worldSpace, sys, NULL);
+//        else
+//            cpSpaceAddPostStepCallback(worldSpace, refreshWall, sys, NULL);
+//    } else if (key == 'm') {
+//        if (!cpSpaceIsLocked(worldSpace))
+//            mutateWall(worldSpace, sys, NULL);
+//        else
+//            cpSpaceAddPostStepCallback(worldSpace, mutateWall, sys, NULL);
+//    } else if (key == '<' || key == '>') {
+//        MachinePart *inputPart = sys->partAtPosition(sys->inputMachinePosition);
+//        cpBody *inputBody = inputPart->body;
+//        cpFloat angVel = cpBodyGetAngVel(inputBody);
+//        if (key == '<')
+//            angVel += M_PI/3; // 60 degree increment
+//        else
+//            angVel -= M_PI/3;
+//
+//        cpBodySetAngVel(inputBody, angVel);
     }
 }
 
@@ -226,69 +222,20 @@ void setupGLFW()
 }
 
 
-void runSpace(cpSpace *space, long steps, cpFloat stepTime, bool visible, cpVect translation){
-    
-    glTranslatef((GLfloat)translation.x, (GLfloat)translation.y, 0.0f);
-
-    // Completely reset the renderer only at the beginning of a tick.
-    // That way it can always display at least the last ticks' debug drawing.
-    if (visible)
-        ChipmunkDebugDrawClearRenderer();
-
-    for (int i=0; i<steps; i++) {
-        // update bodies
-        cpSpaceStep(space, stepTime);
-        
-    }
-    
-    if (visible) {
-        ChipmunkDebugDrawPushRenderer();
-        
-        ChipmunkDebugDrawShapes(space);
-        ChipmunkDebugDrawConstraints(space);
-    }
-}
-
-static void
-Update(void)
-{
-	double time = glfwGetTime();
-	double dt = time - LastTime;
-
-    LastTime = time;
-
-    
-	if(dt > 0.2) dt = 0.2;
-	
-	double fixed_dt = 1.0/60;
-    long steps = lrint(dt/fixed_dt);
-	
-    if (paused) {
-        if (step) {
-            steps = 1;
-            step = false;
-        } else {
-            steps = 0;
-        }
-    }
-    
-    runSpace(worldSpace, steps, fixed_dt, true, cpvzero);
-    
-   
-    
-}
-
-
-
-void updateWorld()
+void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation)
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
     //	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
     
+    glTranslatef((GLfloat)translation.x, (GLfloat)translation.y, 0.0f);
     
-	Update();
+    ChipmunkDebugDrawClearRenderer();
     
+    ChipmunkDebugDrawPushRenderer();
+    
+    ChipmunkDebugDrawShapes(space);
+    ChipmunkDebugDrawConstraints(space);
 
     
     // outline input and output bodies
@@ -342,12 +289,16 @@ void updateWorld()
 int main(int argc, char **argv)
 {
     setupGLFW();
-    worldSpace = setupSpace();
     
-    refreshWall(worldSpace, &sys, NULL);
-    
+    AdeolaAlgorithm *a = new AdeolaAlgorithm(5);
+
     while(1) {
-        updateWorld();
+        a->tick();
+        double now = glfwGetTime();
+        if (now - LastTime > 1.0) {
+            LastTime = now;
+            updateWorld(a->simulationSpaceForBestIndividual(), a->bestSystem(), cpvzero);
+        }
     }
     
     return 0;

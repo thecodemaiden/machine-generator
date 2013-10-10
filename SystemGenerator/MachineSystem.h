@@ -31,8 +31,9 @@ public:
     void addPart(MachinePart *newMachine, Attachment *attachment, cpVect gridPosition);
     void removePart(cpVect gridPosition);
     
-    MachinePart * partAtPosition(cpVect gridPosition);
-    Attachment * attachmentBetween(cpVect machine1Pos, cpVect machine2Pos);
+    MachinePart *partAtPosition(cpVect gridPosition);
+    Attachment *attachmentBetween(cpVect machine1Pos, cpVect machine2Pos);
+    Attachment *attachmentToWall(cpVect gridPosition);
     
     bool attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
     bool detachMachines(cpVect machine1Pos, cpVect machine2Pos);

@@ -6,7 +6,7 @@
 //
 //
 
-#include "Type1Algorithm.h"
+#include "Algorithm.h"
 
 static MachinePart *randomPart(cpSpace *space, cpVect size)
 {
