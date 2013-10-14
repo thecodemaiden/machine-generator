@@ -17,7 +17,8 @@ typedef void (*spaceUpdateFunc)(cpSpace *space, long steps, cpFloat stepTime);
 // example operators/generators
 void randomGenerator1(MachineSystem *sys);
 void randomGenerator2(MachineSystem *sys);
-MachineSystem *attachmentMutator1(MachineSystem *sys);
+MachineSystem *attachmentMutator1(MachineSystem *sys); // change attachment between 2 machines
+MachineSystem *attachmentMutator2(MachineSystem *sys); // change attachment to wall
 
 
 

@@ -17,11 +17,11 @@ static MachinePart *randomPart(cpSpace *space, cpVect size)
     if (m->machineType == MACHINE_BOX) {
         // will it be tall or wide?
         if (((float)random()/RAND_MAX) > 0.5) {
-            m->length = size.x;
+            m->length = size.x*M_SQRT1_2;
             m->height = arc4random_uniform(50) + 25;;
         } else {
             m->length = arc4random_uniform(50) + 25;;
-            m->height = size.y;
+            m->height = size.y*M_SQRT1_2;
         }
         
     } else {
@@ -135,23 +135,53 @@ void randomGenerator2(MachineSystem *sys)
 
 MachineSystem  *attachmentMutator1(MachineSystem *sys)
 {
-    MachineSystem *newMachine = new MachineSystem(*sys);
+    MachineSystem *newSystem = new MachineSystem(*sys);
     
     Attachment *chosenAttachment = NULL;
     cpVect part1 = cpvzero;
     cpVect part2 = cpvzero;
     
-    newMachine->getRandomAttachment(&chosenAttachment, &part1, &part2);
+    newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
     
     if (chosenAttachment) {
+    // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
+        chosenAttachment = new Attachment(*chosenAttachment);
+        
     // break the attachment, change it, then reattach
-    newMachine->detachMachines(part1, part2);
+    newSystem->detachMachines(part1, part2);
     AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
     
     // don't change the length - for now
     chosenAttachment->attachmentType = newAttachmentType;
     
-    newMachine->attachMachines(part1, part2, chosenAttachment);
+    newSystem->attachMachines(part1, part2, chosenAttachment);
     }
-    return newMachine;
+    return newSystem;
+}
+
+
+MachineSystem  *attachmentMutator2(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    cpVect partPos = cpv(-1,-1);
+    newSystem->getRandomPartPosition(&partPos);
+    
+    if (partPos.x >= 0) {
+        Attachment *wallAttachment = newSystem->attachmentToWall(partPos);
+        
+         // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
+        wallAttachment = new Attachment(*wallAttachment);
+        
+        MachinePart *p = newSystem->partAtPosition(partPos);
+        newSystem->removePart(partPos);
+        AttachmentType oldAttachmentType = wallAttachment->attachmentType;
+        while (oldAttachmentType == wallAttachment->attachmentType && ATTACH_GEAR == wallAttachment->attachmentType)
+            wallAttachment->attachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+        
+        newSystem->addPart(p, wallAttachment, partPos);
+    }
+    
+    
+    return newSystem;
 }

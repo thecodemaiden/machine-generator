@@ -135,7 +135,6 @@ void MachineSystem::addPart(MachinePart *newPart, Attachment *attachment, cpVect
     
     MachinePart *alreadyAttached = parts[machineNumber];
     if (!alreadyAttached) {
-        
         cpVect pegPosition = gridPositionToWorld(gridPosition);
         cpBody *pegBody = cpBodyNewStatic();
         cpBodySetPos(pegBody, pegPosition);
@@ -178,6 +177,7 @@ void MachineSystem::removePart(cpVect gridPosition)
         
         
         partToRemove->detachFromBody(pegBody);
+        
         cpBodyEachShape_b(pegBody, ^(cpShape *shape) {
             cpSpaceRemoveStaticShape(space, shape);
             cpShapeFree(shape);
@@ -185,9 +185,15 @@ void MachineSystem::removePart(cpVect gridPosition)
         
         cpBodyFree(pegBody);
         parts[machineNum] = NULL;
+        
+        // delete the attachment else we'll leak memory
+        delete attachments[machineNum][machineNum];
+        
+        attachments[machineNum][machineNum] = NULL;
+        
         nMachines--;
         // no longer allowing 'dangling' machines - everything is nailed to the wall for now
-        delete partToRemove;
+        partToRemove->removeFromSpace();
     }
 
 }
@@ -251,6 +257,8 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
                
                 existingAttachment->constraint = NULL; // it got freed by one of the two calls above, so don't keep it around
                 
+                delete attachments[machine1Num][machine2Num];
+                
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = NULL;
                 detached = true;
                 nAttachments--;
@@ -266,7 +274,11 @@ MachineSystem::~MachineSystem()
     for (int x = 0; x < size.x; x++ ) {
         for (int y = 0; y < size.y; y++) {
             cpVect gridPos = cpv(x,y);
-            removePart(gridPos);
+            MachinePart *part = partAtPosition(gridPos);
+            if (part) {
+                removePart(gridPos);
+                delete part;
+            }
         }
         
     }

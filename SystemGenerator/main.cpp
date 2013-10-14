@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     while(1) {
         a->tick();
         double now = glfwGetTime();
-        if (now - LastTime > 1.0) {
+        if (now - LastTime > 0.5) {
             LastTime = now;
             MachineSystem *best = a->bestSystem();
             

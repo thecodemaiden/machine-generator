@@ -37,12 +37,14 @@ static void deleteCallback(cpSpace *space, void *key, void *data)
 
 Attachment::~Attachment()
 {
-    cpSpace *s =cpConstraintGetSpace(constraint);
-    if (s) {
-        if (cpSpaceIsLocked(s)) {
-            cpSpaceAddPostStepCallback(s, &deleteCallback, this, (void *)&constraint);
-        } else {
-            deleteCallback(s, (void *)this, (void *)&constraint);
+    if (constraint) {
+        cpSpace *s =cpConstraintGetSpace(constraint);
+        if (s) {
+            if (cpSpaceIsLocked(s)) {
+                cpSpaceAddPostStepCallback(s, &deleteCallback, this, (void *)&constraint);
+            } else {
+                deleteCallback(s, (void *)this, (void *)&constraint);
+            }
         }
     }
 }
@@ -102,7 +104,7 @@ void MachinePart::setPosition(cpVect position)
 void MachinePart::removeFromSpace()
 {
     // if you do this directly on a machine in a machine system, you'll have a Bad Time
-    if (body)
+    if (body) {
         
         cpBodyEachConstraint_b(body, ^(cpConstraint *constraint) {
             cpSpaceRemoveConstraint(space, constraint);
@@ -117,6 +119,7 @@ void MachinePart::removeFromSpace()
     cpSpaceRemoveBody(space, body);
     cpBodyFree(body);
     body = NULL;
+    }
 }
 
 MachinePart::~MachinePart()
@@ -191,7 +194,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     
     if (attachment->attachmentType == ATTACH_FIXED) {
         //    if (attachmentLength == 0 || attachmentLength > bodyDistance)
-        attachment->attachmentLength = bodyDistance;
+        attachment->attachmentLength = MIN(attachment->attachmentLength,bodyDistance);
         
         if (cpfabs(attachment->attachmentLength) < 1.0) {
             // zero length pin joints are bad for simulation
@@ -218,12 +221,6 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
         
         mainConstraint = cpGearJointNew(otherBody, body, 0.0, -GEAR_RATIO);
         cpSpaceAddConstraint(space, mainConstraint);
-        
-        // lash them together as well
-        cpConstraint  *weldJoint = cpPinJointNew(otherBody, body, otherAttachPoint, localAttachPoint);
-        cpSpaceAddConstraint(space, weldJoint);
-        
-        cpPinJointSetDist(weldJoint, attachment->attachmentLength);
         
     }
     

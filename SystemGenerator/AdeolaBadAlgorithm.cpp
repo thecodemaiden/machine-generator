@@ -38,15 +38,14 @@ void AdeolaAlgorithm::stepSystem(SystemInfo *individual)
 {
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
     cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
-    
+    cpSpace *systemSpace = individual->system->getSpace();
+
     // set angvel of input body
-    cpBodySetAngVel(inputBody, M_PI/4);
+    cpBodySetAngVel(inputBody, M_PI);
     
     for (int i=0; i<simSteps; i++) {
-        cpFloat ang = cpBodyGetAngle(inputBody) +  M_PI/20;
-        individual->inputValues[i] = normalize_angle(ang);
+        individual->inputValues[i] = normalize_angle(cpBodyGetAngle(inputBody));
        // cpBodySetAngle(inputBody, angV);
-        cpSpace *systemSpace = individual->system->getSpace();
         
         cpSpaceStep(systemSpace, 0.1);
         individual->outputValues[i] = normalize_angle(cpBodyGetAngle(outputBody));
@@ -60,18 +59,21 @@ void AdeolaAlgorithm::tick()
 {
     size_t populationSize = population.size();
     
-    float maxFitness = -FLT_MAX;
-    size_t bestPos = -1;
-    for (size_t popIter = 0; popIter <populationSize; popIter++) {
-        // mutate each one
+    float bestFitness = FLT_MAX; // we want zero fitness
+    float worstFitness = -FLT_MAX;
     
+    size_t bestPos = -1;
+    size_t worstPos = -1;
+    
+    for (size_t popIter = 0; popIter <populationSize; popIter++) {
+        // possibly mutate each one
         float random = (float)rand()/RAND_MAX;
         SystemInfo *individual = population[popIter];
         SystemInfo *mutant = NULL;
         if ( fabs(random) < p_m) {
             MachineSystem *system = individual->system;
             mutant = new SystemInfo(simSteps);
-            mutant->system = new MachineSystem(*system);
+            mutant->system = mutateSystem(system);
         }
         
         
@@ -79,30 +81,45 @@ void AdeolaAlgorithm::tick()
         individual->fitness = evaluateSystem(individual);
 
         if (mutant) {
-            float oldFitness = individual->fitness;
-            
             stepSystem(mutant);
             mutant->fitness = evaluateSystem(mutant);
             
-            float newFitness = mutant->fitness;
-            
-            if (mutant->fitness > individual->fitness) {
+            if (mutant->fitness < individual->fitness) {
                 population[popIter] = mutant;
                 delete individual;
                 individual = mutant;
-                fprintf(stderr, "Mutation successful. (%.3f->%.3f)\n", oldFitness, newFitness);
+                //fprintf(stderr, "Mutation successful. (%.3f->%.3f)\n", individual->fitness, mutant->fitness);
+            } else {
+                delete mutant;
             }
         }
 
         
-        if (individual->fitness > maxFitness) {
-            maxFitness = individual->fitness;
+        if (individual->fitness < bestFitness) {
+            bestFitness = individual->fitness;
             bestIndividual = individual;
             bestPos = popIter;
         }
+        
+        if (individual -> fitness > worstFitness) {
+            worstFitness = individual->fitness;
+            worstPos = popIter;
+        }
     }
     
-   // fprintf(stderr, "BEST FITNESS: %f (%lu)\n", maxFitness, bestPos);
+    if (bestPos != worstPos) {
+        // replace the worst one with a random machine
+        
+        fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
+        SystemInfo *worst = population[worstPos];
+        delete worst->system;
+        worst->fitness = 0;
+        worst->system = createInitialSystem();
+    } else {
+        fprintf(stderr, "Worst and best fitness are same - stop now?");
+    }
+    
+   // fprintf(stderr, "BEST FITNESS: %f (%lu)\n", bestFitness, bestPos);
 }
 
 // (random) initializer
@@ -116,7 +133,11 @@ MachineSystem * AdeolaAlgorithm::createInitialSystem()
 // operators
 MachineSystem *AdeolaAlgorithm::mutateSystem(MachineSystem *original)
 {
-    return attachmentMutator1(original);
+    // one or the other - twice the chance of mutator 1
+    if (arc4random_uniform(3) == 0)
+        return attachmentMutator2(original);
+    else
+        return attachmentMutator1(original);
 }
 
 // fitness evaluator
@@ -126,11 +147,12 @@ cpFloat AdeolaAlgorithm::evaluateSystem(SystemInfo *sys)
     size_t nSteps = sys->inputValues.size();
     
     for (size_t i=0; i<nSteps; i++) {
-        float error = sys->inputValues[i] - sys->outputValues[i];
-        fitness += error*error;
+        float error = fabs(sys->inputValues[i] - sys->outputValues[i]);
+        if (error == 0) error = 1e-20; // we don't want an infinite fitness because one error was 0
+        fitness += 2*log(error); // these errors are very small at times
     }
     
-    return -fitness; // we want zero error
+    return fitness; // 'ideal' fitness -> -inf
 }
 
 MachineSystem *AdeolaAlgorithm::bestSystem()
