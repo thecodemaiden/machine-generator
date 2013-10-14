@@ -34,6 +34,8 @@ class AdeolaAlgorithm {
     float p_m;
     float p_c = 0;
     int simSteps = 10;
+    int stagnantGenerations = 0;
+    int maxStagnation;
     
      MachineSystem *createInitialSystem();
      MachineSystem *mutateSystem(MachineSystem *original);
@@ -47,10 +49,10 @@ class AdeolaAlgorithm {
 public:
     spaceUpdateFunc updateFunction;
     
-    AdeolaAlgorithm(int populationSize=5, float p_m=0.02);
+    AdeolaAlgorithm(int populationSize=5, float p_m=0.02, int maxStagnation=5);
     ~AdeolaAlgorithm();
     
-    void tick();
+    bool tick(); // returns true if best fitness has been stagnant
     
     MachineSystem *bestSystem();
 };

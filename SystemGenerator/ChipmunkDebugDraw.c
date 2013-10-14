@@ -504,7 +504,20 @@ drawConstraint(cpConstraint *constraint, void *unused)
 		ChipmunkDebugDrawSegment(a, b, CONSTRAINT_COLOR);
 	} else if(klass == cpDampedSpringGetClass()){
 		drawSpring((cpDampedSpring *)constraint, body_a, body_b);
-	}
+	} else if (klass == cpGearJointGetClass()) {
+        // draw a yellow line between the bodies
+        //cpGearJoint *joint = (cpGearJoint *)constraint;
+        
+        const Color gearColor = {0.75f, 0.75f, 0.0, 1.0f};
+        
+        cpVect a = body_a->p;
+		cpVect b = body_b->p;
+		
+		ChipmunkDebugDrawDot(5, a, gearColor);
+		ChipmunkDebugDrawDot(5, b, gearColor);
+		ChipmunkDebugDrawSegment(a, b, gearColor);
+        
+    }
 }
 
 void

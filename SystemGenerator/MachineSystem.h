@@ -11,8 +11,8 @@
 
 #include <iostream>
 #include "MachinePart.h"
-#include <list>
 #include <vector>
+
 
 class MachineSystem {
     
