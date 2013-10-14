@@ -22,7 +22,8 @@ public:
     cpVect outputMachinePosition;
     
     // create a new system that can attach machine components
-    MachineSystem(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space);
+    // each system resides in its own cpSpace (no interaction with other systems)
+    MachineSystem(int width, int height, int hPegs, int vPegs, cpVect position);
     
     // deep copy!
     MachineSystem(MachineSystem &toCopy, cpVect position=cpvzero);

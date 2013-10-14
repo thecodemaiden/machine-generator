@@ -15,16 +15,15 @@
 #pragma mark - Helper Functions
 
 
-MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect position, cpSpace *space)
+MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect position)
 : parts(hPegs*vPegs),
   attachments((hPegs*vPegs), std::vector<Attachment *>(hPegs*vPegs, NULL)),
-  space(space),
+  space(cpSpaceNew()),
   nMachines(0),
   nAttachments(0)
 {
     
     gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
-    space = space;
     size = cpv(hPegs, vPegs);
     body = cpBodyNewStatic();
     cpBodySetPos(body, position);
@@ -48,7 +47,7 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
 }
 
 MachineSystem::MachineSystem(MachineSystem &original, cpVect position)
-: space(original.space),
+: space(cpSpaceNew()),
  size(original.size),
 gridSpacing(original.gridSpacing),
 inputMachinePosition(original.inputMachinePosition),
@@ -94,7 +93,7 @@ nAttachments(0)
             int machineNum = machinePositionToNumber(gridPos);
             MachinePart *machineToCopy = original.parts[machineNum];
             if (machineToCopy) {
-                MachinePart *newPart = new MachinePart(*machineToCopy);
+                MachinePart *newPart = new MachinePart(*machineToCopy, space);
                 Attachment *wallAttachment = new Attachment(*original.attachments[machineNum][machineNum]);
                 addPart(newPart, wallAttachment, gridPos);
             }
@@ -258,7 +257,8 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
             }
         }
     }
-    return detached;}
+    return detached;
+}
 
 MachineSystem::~MachineSystem()
 {
@@ -288,6 +288,8 @@ MachineSystem::~MachineSystem()
     });
     
     cpBodyFree(body);
+    
+    cpSpaceFree(space);
 }
 
 #pragma mark - random pickers

@@ -7,6 +7,7 @@
 //
 
 #include "Algorithm.h"
+#include <vector>
 
 static MachinePart *randomPart(cpSpace *space, cpVect size)
 {
@@ -85,6 +86,51 @@ void randomGenerator1(MachineSystem *sys)
         }
     }
 
+}
+
+void randomGenerator2(MachineSystem *sys)
+{
+    int nMachinesToPlace = arc4random_uniform(4)+2; // 3-5 machines to start
+    
+    std::vector<cpVect> placedMachines = std::vector<cpVect>();
+    
+    cpVect systemSize = sys->getSize();
+    
+    while (nMachinesToPlace) {
+        int mx = arc4random_uniform(systemSize.x);
+        int my = arc4random_uniform(systemSize.y);
+        cpVect mPos = cpv(mx, my);
+        if (!sys->partAtPosition(mPos)) {
+            Attachment *a = new Attachment();
+            do {
+                a->attachmentType = (AttachmentType) arc4random_uniform(ATTACH_TYPE_MAX);
+            }while (a->attachmentType == ATTACH_GEAR); //can't attach to wall with gear...
+          
+            a->attachmentLength = arc4random_uniform(20);
+            
+            sys->addPart(randomPart(sys->getSpace(), sys->getSpacing()), a, mPos);
+            
+            // join to previous machine
+            if (placedMachines.size()) {
+                cpVect lastMachinePos = placedMachines.back();
+                Attachment *a = randomAttachment();
+                a->attachmentLength = cpvlength(cpvlerp(mPos, lastMachinePos, 0.5))*cpvlength(sys->getSpacing());
+                sys->attachMachines(lastMachinePos, mPos, a);
+            }
+            placedMachines.push_back(mPos);
+            nMachinesToPlace--; // one less to place
+        }
+    }
+    
+    // set the input and output parts to DIFFERENT parts
+    int p1 = arc4random_uniform((int)placedMachines.size());
+    int p2=p1;
+    while (p2 == p1 )
+        p2  = arc4random_uniform((int)placedMachines.size());
+    
+    sys->inputMachinePosition = placedMachines[p1];
+    sys->outputMachinePosition = placedMachines[p2];
+    
 }
 
 MachineSystem  *attachmentMutator1(MachineSystem *sys)

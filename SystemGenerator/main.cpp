@@ -297,7 +297,9 @@ int main(int argc, char **argv)
         double now = glfwGetTime();
         if (now - LastTime > 1.0) {
             LastTime = now;
-            updateWorld(a->simulationSpaceForBestIndividual(), a->bestSystem(), cpvzero);
+            MachineSystem *best = a->bestSystem();
+            
+            updateWorld(best->getSpace(), best, cpvzero);
         }
     }
     

@@ -10,13 +10,13 @@
 #define __SystemGenerator__Type1Algorithm__
 
 #include "MachineSystem.h"
-#include <vector>
 
 
 typedef void (*spaceUpdateFunc)(cpSpace *space, long steps, cpFloat stepTime);
 
 // example operators/generators
 void randomGenerator1(MachineSystem *sys);
+void randomGenerator2(MachineSystem *sys);
 MachineSystem *attachmentMutator1(MachineSystem *sys);
 
 

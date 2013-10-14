@@ -72,12 +72,12 @@ body(NULL)
     
 }
 
-MachinePart::MachinePart(const MachinePart &other, cpVect position)
+MachinePart::MachinePart(const MachinePart &other, cpSpace *space, cpVect position)
 :machineType(other.machineType),
 position(position),
 length(other.length),
 height(other.height),
-space(other.space),
+space(space ?: other.space),
 body(NULL)
 {
     

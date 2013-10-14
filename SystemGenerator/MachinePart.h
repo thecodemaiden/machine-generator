@@ -76,7 +76,7 @@ public:
     MachinePart(BodyType machineType, cpVect position, cpFloat length, cpFloat height, cpSpace *space);
     
     //copy constructor
-    MachinePart(const MachinePart &other, cpVect position=cpvzero);
+    MachinePart(const MachinePart &other, cpSpace *space=NULL, cpVect position=cpvzero);
     
     // frees the physical body but not the description
     void removeFromSpace();

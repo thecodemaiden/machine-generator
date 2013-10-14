@@ -15,7 +15,6 @@ struct SystemInfo
 {
     // a machine system, its simulation space, and fitness info
     MachineSystem *system;
-    cpSpace *space;
     double fitness;
     std::vector<float> outputValues;
     std::vector<float> inputValues;
@@ -32,22 +31,23 @@ class AdeolaAlgorithm {
     float p_c = 0;
     int simSteps = 10;
     
-     MachineSystem *createInitialSystem(cpSpace *space=NULL);
+     MachineSystem *createInitialSystem();
      MachineSystem *mutateSystem(MachineSystem *original);
 
     cpFloat evaluateSystem(SystemInfo *sys);
     
     SystemInfo *bestIndividual;
+    
+    void stepSystem(SystemInfo *individual);
 
 public:
     spaceUpdateFunc updateFunction;
     
-    AdeolaAlgorithm(int populationSize=5, float p_m=0.1);
+    AdeolaAlgorithm(int populationSize=5, float p_m=0.02);
     ~AdeolaAlgorithm();
     
     void tick();
     
-    cpSpace *simulationSpaceForBestIndividual();
     MachineSystem *bestSystem();
 };
 
