@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D3E45DD1811BA6500B9F69D /* MarkAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */; };
 		E22F926E1801DCB8003F9B84 /* libChipmunk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E22F926D1801DCB8003F9B84 /* libChipmunk.a */; };
 		E22F92761801DCBD003F9B84 /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E22F92741801DCBD003F9B84 /* libGLEW.a */; };
 		E22F92771801DCBD003F9B84 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = E22F92751801DCBD003F9B84 /* LICENSE.txt */; };
@@ -28,6 +29,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4D3E45DB1811B9DB00B9F69D /* MarkAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MarkAlgorithm.h; sourceTree = "<group>"; };
+		4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MarkAlgorithm.cpp; sourceTree = "<group>"; };
 		E22F92531801DCB8003F9B84 /* chipmunk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chipmunk.h; sourceTree = "<group>"; };
 		E22F92541801DCB8003F9B84 /* chipmunk_ffi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chipmunk_ffi.h; sourceTree = "<group>"; };
 		E22F92551801DCB8003F9B84 /* chipmunk_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = chipmunk_private.h; sourceTree = "<group>"; };
@@ -223,6 +226,8 @@
 				E25FD8871801D08D00566B8D /* Algorithm.cpp */,
 				E2BDBC9818035AE4005128BE /* AdeolaBadAlgorithm.h */,
 				E2BDBC9718035AE4005128BE /* AdeolaBadAlgorithm.cpp */,
+				4D3E45DB1811B9DB00B9F69D /* MarkAlgorithm.h */,
+				4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */,
 			);
 			name = Algorithms;
 			sourceTree = "<group>";
@@ -373,6 +378,7 @@
 				E2BDBC9918035AE4005128BE /* AdeolaBadAlgorithm.cpp in Sources */,
 				E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */,
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,
+				4D3E45DD1811BA6500B9F69D /* MarkAlgorithm.cpp in Sources */,
 				E2A1D8591800E730003FA4AE /* ChipmunkDemoTextSupport.c in Sources */,
 				E2A1D84E1800E5E3003FA4AE /* main.cpp in Sources */,
 			);
