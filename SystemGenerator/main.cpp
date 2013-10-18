@@ -288,10 +288,10 @@ int main(int argc, char **argv)
             cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
             
-            // a motor will drive the angVel  of a body even when there are other forces acting on it
+            // a motor will drive the angVel of a body even when there are other forces acting on it
             drivingMotor = cpSimpleMotorNew(staticBody, inputBody, 0);
             cpSpaceAddConstraint(best->getSpace(), drivingMotor);
-            cpConstraintSetMaxForce(drivingMotor, 50000);
+            cpConstraintSetMaxForce(drivingMotor, 80000);
         }
         
         cpFloat startTime = glfwGetTime();

@@ -28,6 +28,7 @@
 #include "chipmunk_private.h"
 #include "ChipmunkDebugDraw.h"
 #include "ChipmunkDemoShaderSupport.h"
+#include "ChipmunkDemoTextSupport.h"
 
 /*
 	IMPORTANT - READ ME!
@@ -43,9 +44,9 @@
 
 const Color LINE_COLOR = {200.0f/255.0f, 210.0f/255.0f, 230.0f/255.0f, 1.0f};
 const Color GEAR_COLOR = {0.75f, 0.75f, 0.00f, 1.0f};
-const Color PIVOT_COLOR = {0.0f, 0.75f, 0.75f, 1.0f};
-const Color SPRING_COLOR = {0.0f, 0.75f, 0.0f, 1.0f};
-const Color FIXED_COLOR = {0.75f, 0.0f, 0.75f, 1.0f};
+const Color PIVOT_COLOR = {0.0f, 0.75f, 0.75f, .5f};
+const Color SPRING_COLOR = {0.0f, 0.75f, 0.0f, .5f};
+const Color FIXED_COLOR = {0.75f, 0.0f, 0.75f, .5f};
 
 const float SHAPE_ALPHA = 1.0f;
 
@@ -515,6 +516,21 @@ drawConstraint(cpConstraint *constraint, void *unused)
 		ChipmunkDebugDrawDot(5, a, GEAR_COLOR);
 		ChipmunkDebugDrawDot(5, b, GEAR_COLOR);
 		ChipmunkDebugDrawSegment(a, b, GEAR_COLOR);
+        
+        
+        ChipmunkDemoTextPushRenderer();
+     
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix(); {
+            // Draw the text at fixed positions,
+            // but save the drawing matrix for the mouse picking
+            glLoadIdentity();
+            
+            ChipmunkDemoTextFlushRenderer();
+            ChipmunkDemoTextPopRenderer();
+        } glPopMatrix();
+
+        
     }
 }
 

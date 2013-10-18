@@ -236,12 +236,3 @@ MachineSystem  *attachmentMutator2(MachineSystem *sys)
     
     return newSystem;
 }
-
-Attachment *adjustGearAttachment(Attachment *oldAttachment)
-{
-    Attachment *newAttachment = new Attachment(*oldAttachment);
-    if (newAttachment->attachmentType == ATTACH_GEAR) {
-        
-    }
-    return newAttachment;
-}

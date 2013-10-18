@@ -27,6 +27,40 @@ AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGene
          delete population[i];
  }
 
+
+static MachineSystem  *gearMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    Attachment *chosenAttachment = NULL;
+    cpVect part1 = cpvzero;
+    cpVect part2 = cpvzero;
+    
+    newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
+    
+    if (chosenAttachment) {
+        
+        if (chosenAttachment->attachmentType != ATTACH_GEAR) {
+            // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
+            chosenAttachment = new Attachment(*chosenAttachment);
+            
+            // break the attachment, change it, then reattach
+            
+            AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+            
+            // don't change the length - for now
+            chosenAttachment->attachmentType = newAttachmentType;
+            
+            newSystem->updateAttachmentBetween(part1, part2, chosenAttachment);
+        }
+        if (chosenAttachment->attachmentType == ATTACH_GEAR) {
+            cpFloat newRatio = (float)rand()/(RAND_MAX/4); // between -4 and 4
+            cpGearJointSetRatio(chosenAttachment->constraint, newRatio);
+        }
+    }
+    return newSystem;
+}
+
 void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 {
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
@@ -40,13 +74,14 @@ void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 
     
     for (int i=0; i<simSteps; i++) {
-        individual->inputValues[i] = normalize_angle(cpBodyGetAngle(inputBody));
+        individual->inputValues[i] = (cpBodyGetAngle(inputBody));
         
         cpSpaceStep(systemSpace, 0.1);
-        individual->outputValues[i] = normalize_angle(cpBodyGetAngle(outputBody));
+        individual->outputValues[i] = (cpBodyGetAngle(outputBody));
     }
     cpSpaceRemoveConstraint(systemSpace, motor);
     cpBodySetAngVel(outputBody, 0);
+    cpBodySetAngle(inputBody, 0);
 }
 
 
@@ -61,11 +96,11 @@ MachineSystem * AdeolaRotationAlgorithm::createInitialSystem()
 // operators
 MachineSystem *AdeolaRotationAlgorithm::mutateSystem(MachineSystem *original)
 {
-    // one or the other - twice the chance of mutator 1
+    // one or the other - twice the chance of gearMutator
     if (arc4random_uniform(3) == 0)
         return attachmentMutator2(original);
     else
-        return attachmentMutator1(original);
+        return gearMutator(original);
 }
 
 bool AdeolaRotationAlgorithm::tick()
@@ -173,6 +208,8 @@ bool AdeolaRotationAlgorithm::tick()
 // I am looking for inputAngle = outputAngle, so I really want 1 (same sign)
 // I also want the inputAngle to change a lot...
 
+// let's try inputAngle:outputAngle = 2
+
 cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
@@ -190,12 +227,17 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
     cpFloat sqrXDiffSum = 0.0;
     cpFloat sqrYDiffSum = 0.0;
     
+    cpFloat meandInputdOutput = 0.0;
+    
     for (int i=0; i<nSteps; i++) {
         float xDiff = (sys->inputValues[i]-inputMean);
         float yDiff = (sys->outputValues[i]-outputMean);
         numerator += xDiff*yDiff;
         sqrXDiffSum += xDiff*xDiff;
         sqrYDiffSum += yDiff*yDiff;
+        
+        if (i>0)
+            meandInputdOutput += (sys->inputValues[i] - sys->inputValues[i-1])/(sys->outputValues[i]-sys->outputValues[i-1]);
     }
     correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
 //    
@@ -208,14 +250,22 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
         correlation = 0;
     }
     
-    // so fitness ~= 1 if they are exactly opposite, ~100 if they correlate exactly
-        fitness = (fabs(correlation));
-        if (correlation > 0)
-            fitness *= 100;
-    // then i multiply by variances to discourage solutions that have the input or output parts stuck in place
+    if (meandInputdOutput != meandInputdOutput || fabs(meandInputdOutput) == INFINITY) {
+        meandInputdOutput = 0;
+    }
+    
+        fitness = correlation;
+    
+    if (outputVariance > 0) {
+        cpFloat distance = fabs (2.0 -meandInputdOutput);
+        fitness /= distance+0.1;
+    }
+
     
     return fitness*inputVariance*outputVariance; // 'ideal' fitness -> inf
 }
+
+
 
 bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {

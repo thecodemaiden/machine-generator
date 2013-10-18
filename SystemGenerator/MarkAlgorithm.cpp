@@ -30,11 +30,6 @@ MarkAlgorithm::~MarkAlgorithm(){
     }
 }
 
-cpFloat normalize_angle(cpFloat angle)
-{
-    return fmodf(angle, 2*M_PI);
-}
-
 void MarkAlgorithm::stepSystem(SystemInfo *individual)
 {
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;

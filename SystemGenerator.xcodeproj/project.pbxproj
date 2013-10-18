@@ -14,9 +14,9 @@
 		E22F927F1801DCC2003F9B84 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = E22F92791801DCC2003F9B84 /* COPYING.txt */; };
 		E22F92801801DCC2003F9B84 /* libglfw.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E22F927E1801DCC2003F9B84 /* libglfw.a */; };
 		E24EC868180CA11500D15C9E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = E24EC867180CA11500D15C9E /* README.md */; };
-		E24EC86E180CA63900D15C9E /* AdeolaBaseAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E24EC86C180CA63900D15C9E /* AdeolaBaseAlgorithm.cpp */; };
 		E25FD8881801D08D00566B8D /* Algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E25FD8871801D08D00566B8D /* Algorithm.cpp */; };
-		E2848639180F9BB700717D1D /* AdeolaDisplacementAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E24EC869180CA61500D15C9E /* AdeolaDisplacementAlgorithm.cpp */; };
+		E29764C11811C49B0004B173 /* AdeolaBaseAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */; };
+		E29764C21811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */; };
 		E2A1D81A1800E5A6003FA4AE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A1D8191800E5A6003FA4AE /* Cocoa.framework */; };
 		E2A1D84E1800E5E3003FA4AE /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D7C71800E33F003FA4AE /* main.cpp */; };
 		E2A1D8521800E6C1003FA4AE /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A1D8051800E3E8003FA4AE /* IOKit.framework */; };
@@ -67,12 +67,12 @@
 		E22F927C1801DCC2003F9B84 /* glfw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glfw.h; sourceTree = "<group>"; };
 		E22F927E1801DCC2003F9B84 /* libglfw.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libglfw.a; sourceTree = "<group>"; };
 		E24EC867180CA11500D15C9E /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
-		E24EC869180CA61500D15C9E /* AdeolaDisplacementAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaDisplacementAlgorithm.cpp; sourceTree = "<group>"; };
-		E24EC86A180CA61500D15C9E /* AdeolaDisplacementAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaDisplacementAlgorithm.h; sourceTree = "<group>"; };
-		E24EC86C180CA63900D15C9E /* AdeolaBaseAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaBaseAlgorithm.cpp; sourceTree = "<group>"; };
-		E24EC86D180CA63900D15C9E /* AdeolaBaseAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaBaseAlgorithm.h; sourceTree = "<group>"; };
 		E25FD8831801C2C800566B8D /* Algorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Algorithm.h; sourceTree = "<group>"; };
 		E25FD8871801D08D00566B8D /* Algorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Algorithm.cpp; sourceTree = "<group>"; };
+		E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaBaseAlgorithm.cpp; sourceTree = "<group>"; };
+		E29764BE1811C49B0004B173 /* AdeolaBaseAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaBaseAlgorithm.h; sourceTree = "<group>"; };
+		E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaDisplacementAlgorithm.cpp; sourceTree = "<group>"; };
+		E29764C01811C49B0004B173 /* AdeolaDisplacementAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaDisplacementAlgorithm.h; sourceTree = "<group>"; };
 		E2A1D7C71800E33F003FA4AE /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E2A1D7FE1800E3B4003FA4AE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E2A1D8001800E3BA003FA4AE /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -230,10 +230,14 @@
 		E25FD8811801C2A200566B8D /* Algorithms */ = {
 			isa = PBXGroup;
 			children = (
+				E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */,
+				E29764BE1811C49B0004B173 /* AdeolaBaseAlgorithm.h */,
+				E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */,
+				E29764C01811C49B0004B173 /* AdeolaDisplacementAlgorithm.h */,
 				E25FD8831801C2C800566B8D /* Algorithm.h */,
 				E25FD8871801D08D00566B8D /* Algorithm.cpp */,
-				E2BDBC9818035AE4005128BE /* AdeolaBadAlgorithm.h */,
-				E2BDBC9718035AE4005128BE /* AdeolaBadAlgorithm.cpp */,
+				E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */,
+				E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */,
 				4D3E45DB1811B9DB00B9F69D /* MarkAlgorithm.h */,
 				4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */,
 			);
@@ -384,10 +388,10 @@
 			files = (
 				E25FD8881801D08D00566B8D /* Algorithm.cpp in Sources */,
 				E2A1D85A1800E733003FA4AE /* ChipmunkDemoShaderSupport.c in Sources */,
+				E29764C21811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp in Sources */,
 				E2A1D8581800E72D003FA4AE /* ChipmunkDebugDraw.c in Sources */,
-				E24EC86E180CA63900D15C9E /* AdeolaBaseAlgorithm.cpp in Sources */,
-				E2848639180F9BB700717D1D /* AdeolaDisplacementAlgorithm.cpp in Sources */,
 				E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */,
+				E29764C11811C49B0004B173 /* AdeolaBaseAlgorithm.cpp in Sources */,
 				E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */,
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,
 				4D3E45DD1811BA6500B9F69D /* MarkAlgorithm.cpp in Sources */,
