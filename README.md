@@ -8,5 +8,5 @@ TODO
 
 NEW STUFF
 ---------
-	* Pulled in text display stuff from Chipmunk Demo
-	* Can create random systems!
+	* Made a complete EA (not that great)
+    * 

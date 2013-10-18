@@ -28,6 +28,26 @@ secondAttachPoint(toCopy.secondAttachPoint)
     
 }
 
+bool Attachment::operator==(const Attachment &other) const {
+   if (!cpveql(firstAttachPoint, other.firstAttachPoint))
+       return false;
+    
+    if (!cpveql(secondAttachPoint, other.secondAttachPoint))
+        return false;
+    
+    if (attachmentType != other.attachmentType)
+        return false;
+    
+    if (attachmentLength != other.attachmentLength)
+        return false;
+    
+    return true;
+}
+
+bool Attachment::operator!=(const Attachment &other) const {
+    return !(other == *this);
+}
+
 static void deleteCallback(cpSpace *space, void *key, void *data)
 {
     cpConstraint *constraint = *(cpConstraint **)data;
@@ -85,20 +105,14 @@ body(NULL)
     
 }
 
-cpVect MachinePart::getPosition()
+cpVect MachinePart::getOriginalPosition()
 {
-    if (!body)
-        return position;
-    
-    return cpBodyGetPos(body);
+    return position;
 }
 
-void MachinePart::setPosition(cpVect position)
+void MachinePart::setOriginalPosition(cpVect position)
 {
     this->position = position;
-    
-    if (body)
-        cpBodySetPos(body, position);
 }
 
 void MachinePart::removeFromSpace()
@@ -183,7 +197,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     cpConstraint *mainConstraint = NULL;
     
     if (attachment->attachmentType == ATTACH_SPRING) {
-        if (attachment->attachmentLength == 0) {
+        if (attachment->attachmentLength <= 0) {
             attachment->attachmentLength = bodyDistance;
         }
         
@@ -217,26 +231,28 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     }
     
     if (attachment->attachmentType == ATTACH_GEAR) {
-        //attachmentLength = bodyDistance;
+       
+        // also make sure they don't move relative to each other - with a pin joint in their centers
+        cpConstraint *distanceConstraint = cpPinJointNew(body, otherBody, cpvzero, cpvzero);
+        cpSpaceAddConstraint(space, distanceConstraint);
         
         mainConstraint = cpGearJointNew(otherBody, body, 0.0, -GEAR_RATIO);
         cpSpaceAddConstraint(space, mainConstraint);
         
     }
     
-    if (attachment->attachmentType == ATTACH_SLIDE) {
-        cpFloat bodyDistance = cpvdist(otherAttachLocal, localAttachPoint);
-        
+    if (attachment->attachmentType == ATTACH_SLIDE) {        
         mainConstraint = cpSlideJointNew(otherBody, body, otherAttachPoint, localAttachPoint, MIN(attachment->attachmentLength, bodyDistance), MAX(attachment->attachmentLength, bodyDistance));
         cpSpaceAddConstraint(space, mainConstraint);
     }
     
     attachment->constraint = mainConstraint;
+    mainConstraint->data = attachment;
     
     cpGroup smallestGroup = MIN(cpShapeGetGroup(otherShape), cpShapeGetGroup(bodyShape));
     smallestGroup = MIN(smallestGroup, 1);
     
-    if (attachment->attachmentType == ATTACH_PIVOT || attachment->attachmentType == ATTACH_GEAR) {
+    if (attachment->attachmentType == ATTACH_PIVOT) {
         // make them the same group so they don't collide
         cpShapeSetGroup(otherShape, smallestGroup);
         cpShapeSetGroup(bodyShape, smallestGroup);
@@ -253,6 +269,10 @@ void MachinePart::detachFromBody(cpBody *otherBody)
     cpBodyEachConstraint_b(otherBody, ^(cpConstraint *constraint) {
         if ((cpConstraintGetA(constraint) == otherBody && cpConstraintGetB(constraint) == body)) {
             cpSpaceRemoveConstraint(space, constraint);
+            if (constraint->data) {
+                Attachment *a = (Attachment *)constraint->data;
+                a->constraint = NULL;
+            }
             cpConstraintFree(constraint);
         }
     });

@@ -18,10 +18,13 @@ extern "C" {
 
 #include "MachinePart.h"
 #include "MachineSystem.h"
-#include "AdeolaBadAlgorithm.h"
+#include "AdeolaRotationAlgorithm.h"
+#include "AdeolaDisplacementAlgorithm.h"
 
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
+
+static cpBool restartAlgorithm = cpFalse;
 
 // for time step
 static double LastTime = 0.0;
@@ -81,19 +84,14 @@ DrawInstructions()
 {
 	ChipmunkDemoTextDrawString(cpv(-300, 220),
                                "Controls:\n"
-                               "` - pause/resume simulation\n"
-                               "1 - step once (while paused)\n"
-                               "x - generate new system\n"
-                               "m - mutate current system\n"
-                               "< - rotate input body counterclockwise\n"
-                               "> - rotate input body clockwise\n"
+                               "x - restart EA\n"
                                );
 }
 
-static void DrawStats(float inputAngle, float outputAngle)
+static void DrawStats(char *inputStr, char *outputStr)
 {
-    static char output[127];
-    sprintf(output, "Input angle: %.3f, output angle: %.3f", inputAngle, outputAngle);
+    static char output[500];
+    sprintf(output, "%s\t%s", inputStr, outputStr);
     ChipmunkDemoTextDrawString(cpv(-300, -220), output);
 }
 
@@ -138,6 +136,8 @@ Keyboard(int key, int state)
 	} else if(key == '\\'){
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
+    } else if(key == 'x') {
+        restartAlgorithm = true;
     }
 }
 
@@ -193,7 +193,7 @@ void run_space(cpSpace *space, cpFloat timePassed) {
     }
 }
 
-void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat timeStep)
+void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat timeStep, char *inputDescription = NULL, char *outputDescription = NULL)
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -214,7 +214,6 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
     
     // outline input and output bodies
     cpBody *body = sys->partAtPosition(sys->inputMachinePosition)->body;
-    cpFloat currentInputAngle = cpBodyGetAngle(body);
     __block cpShape *shape = NULL;
     cpBodyEachShape_b(body, ^(cpShape *s) {
         shape = s;
@@ -225,7 +224,6 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
     }
     
     body = sys->partAtPosition(sys->outputMachinePosition)->body;
-    cpFloat currentOutputAngle = cpBodyGetAngle(body);
 
     shape = NULL;
     cpBodyEachShape_b(body, ^(cpShape *s) {
@@ -242,7 +240,9 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
 		
     ChipmunkDemoTextPushRenderer();
 	DrawInstructions();
-     DrawStats(currentInputAngle, currentOutputAngle);
+    
+    if (inputDescription && outputDescription)
+        DrawStats(inputDescription, outputDescription);
 	
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix(); {
@@ -263,28 +263,50 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
 int main(int argc, char **argv)
 {
     setupGLFW();
-    
-    AdeolaAlgorithm *a = new AdeolaAlgorithm(5);
-    MachineSystem *best = NULL;
 
-    while(!a->tick()) {
-        double now = glfwGetTime();
-        if (now - LastTime > 0.5) {
-            LastTime = now;
-            best = a->bestSystem();
-            
-            updateWorld(best->getSpace(), best, cpvzero, 0.0);
+    while (1) {
+        restartAlgorithm = false;
+       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 1000, 15);
+      //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
+
+        MachineSystem *best = NULL;
+        
+        while(!restartAlgorithm && !a->tick()) {
+            double now = glfwGetTime();
+            if (now - LastTime > 0.5) {
+                LastTime = now;
+                best = a->bestSystem();
+                
+                updateWorld(best->getSpace(), best, cpvzero, 0.0);
+            }
         }
+        cpConstraint *drivingMotor = NULL;
+        if (!restartAlgorithm) {
+            best = a->bestSystem();
+            fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
+            
+            cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
+            cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
+            
+            // a motor will drive the angVel  of a body even when there are other forces acting on it
+            drivingMotor = cpSimpleMotorNew(staticBody, inputBody, 0);
+            cpSpaceAddConstraint(best->getSpace(), drivingMotor);
+            cpConstraintSetMaxForce(drivingMotor, 50000);
+        }
+        
+        cpFloat startTime = glfwGetTime();
+        while(!restartAlgorithm) {
+            double now = glfwGetTime();
+            //sinusoidal motor!
+            cpFloat motorAngle = 2*M_PI*cos((now-startTime));
+            cpSimpleMotorSetRate(drivingMotor, motorAngle);
+            updateWorld(best->getSpace(), best, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
+            LastTime = now;
+            
+        }
+        cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
+        delete a;
+        a = NULL;
     }
-    
-    fprintf(stderr, "Found best system!\n");
-    best = a->bestSystem();
-    while(1) {
-        double now = glfwGetTime();
-        updateWorld(best->getSpace(), best, cpvzero, now-LastTime);
-        LastTime = now;
-
-    }
-    
     return 0;
 }

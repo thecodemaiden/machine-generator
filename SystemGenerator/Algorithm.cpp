@@ -9,6 +9,11 @@
 #include "Algorithm.h"
 #include <vector>
 
+cpFloat normalize_angle(cpFloat angle)
+{
+    return fmodf(angle, 2*M_PI);
+}
+
 static MachinePart *randomPart(cpSpace *space, cpVect size)
 {
     MachinePart *m = new MachinePart(space);
@@ -144,19 +149,67 @@ MachineSystem  *attachmentMutator1(MachineSystem *sys)
     newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
     
     if (chosenAttachment) {
-    // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
+        // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
         chosenAttachment = new Attachment(*chosenAttachment);
         
-    // break the attachment, change it, then reattach
-    newSystem->detachMachines(part1, part2);
-    AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
-    
-    // don't change the length - for now
-    chosenAttachment->attachmentType = newAttachmentType;
-    
-    newSystem->attachMachines(part1, part2, chosenAttachment);
+        // break the attachment, change it, then reattach
+        
+        AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+        
+        // don't change the length - for now
+        chosenAttachment->attachmentType = newAttachmentType;
+        
+        newSystem->updateAttachmentBetween(part1, part2, chosenAttachment);
     }
     return newSystem;
+}
+
+void randomGenerator3(MachineSystem *sys)
+{
+    int nMachinesToPlace = arc4random_uniform(3)+3; // 3-5 machines to start
+    
+    std::vector<cpVect> placedMachines = std::vector<cpVect>();
+    
+    cpVect systemSize = sys->getSize();
+    
+    while (nMachinesToPlace) {
+        int mx = arc4random_uniform(systemSize.x);
+        int my = arc4random_uniform(systemSize.y);
+        cpVect mPos = cpv(mx, my);
+        if (!sys->partAtPosition(mPos)) {
+            Attachment *a = new Attachment();
+            do {
+                a->attachmentType = (AttachmentType) arc4random_uniform(ATTACH_TYPE_MAX);
+            }while (a->attachmentType == ATTACH_GEAR); //can't attach to wall with gear...
+            
+            a->attachmentLength = arc4random_uniform(3)*cpvlength(sys->getSpacing()) + 10;
+            MachinePart *newPart = randomPart(sys->getSpace(), sys->getSpacing());
+            sys->addPart(newPart, a, mPos);
+            
+            // join to previous machine
+            if (placedMachines.size()) {
+                cpVect lastMachinePos = placedMachines.back();
+                Attachment *a = randomAttachment();
+                
+                cpFloat partDistance = cpvdist(sys->partAtPosition(lastMachinePos)->body->p, newPart->body->p);
+                // make attachment lengths the exact distance between parts
+                a->attachmentLength = partDistance;
+                sys->attachMachines(lastMachinePos, mPos, a);
+            }
+            placedMachines.push_back(mPos);
+            nMachinesToPlace--; // one less to place
+        }
+    }
+    
+    // set the input and output parts to DIFFERENT parts
+    int p1 = arc4random_uniform((int)placedMachines.size());
+    int p2=p1;
+    while (p2 == p1 )
+        p2  = arc4random_uniform((int)placedMachines.size());
+    
+    sys->inputMachinePosition = placedMachines[p1];
+    sys->outputMachinePosition = placedMachines[p2];
+    
 }
 
 
@@ -173,15 +226,22 @@ MachineSystem  *attachmentMutator2(MachineSystem *sys)
          // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
         wallAttachment = new Attachment(*wallAttachment);
         
-        MachinePart *p = newSystem->partAtPosition(partPos);
-        newSystem->removePart(partPos);
         AttachmentType oldAttachmentType = wallAttachment->attachmentType;
         while (oldAttachmentType == wallAttachment->attachmentType && ATTACH_GEAR == wallAttachment->attachmentType)
             wallAttachment->attachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
         
-        newSystem->addPart(p, wallAttachment, partPos);
+        newSystem->updateAttachmentToWall(partPos, wallAttachment);
     }
     
     
     return newSystem;
+}
+
+Attachment *adjustGearAttachment(Attachment *oldAttachment)
+{
+    Attachment *newAttachment = new Attachment(*oldAttachment);
+    if (newAttachment->attachmentType == ATTACH_GEAR) {
+        
+    }
+    return newAttachment;
 }
