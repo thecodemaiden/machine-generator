@@ -42,7 +42,11 @@
 */
 
 const Color LINE_COLOR = {200.0f/255.0f, 210.0f/255.0f, 230.0f/255.0f, 1.0f};
-const Color CONSTRAINT_COLOR = {0.75f, 0.0f, 0.75f, 1.0f};
+const Color GEAR_COLOR = {0.75f, 0.75f, 0.00f, 1.0f};
+const Color PIVOT_COLOR = {0.0f, 0.75f, 0.75f, 1.0f};
+const Color SPRING_COLOR = {0.0f, 0.75f, 0.0f, 1.0f};
+const Color FIXED_COLOR = {0.75f, 0.0f, 0.75f, 1.0f};
+
 const float SHAPE_ALPHA = 1.0f;
 
 float ChipmunkDebugDrawPointLineScale = 1.0f;
@@ -438,8 +442,8 @@ drawSpring(cpDampedSpring *spring, cpBody *body_a, cpBody *body_b)
 	cpVect a = cpvadd(body_a->p, cpvrotate(spring->anchr1, body_a->rot));
 	cpVect b = cpvadd(body_b->p, cpvrotate(spring->anchr2, body_b->rot));
 	
-	ChipmunkDebugDrawDot(5, a, CONSTRAINT_COLOR);
-	ChipmunkDebugDrawDot(5, b, CONSTRAINT_COLOR);
+	ChipmunkDebugDrawDot(5, a, SPRING_COLOR);
+	ChipmunkDebugDrawDot(5, b, SPRING_COLOR);
 
 	cpVect delta = cpvsub(b, a);
 	GLfloat cos = delta.x;
@@ -456,7 +460,7 @@ drawSpring(cpDampedSpring *spring, cpBody *body_a, cpBody *body_b)
 	}
 	
 	for(int i=0; i<spring_count-1; i++){
-		ChipmunkDebugDrawSegment(verts[i], verts[i + 1], CONSTRAINT_COLOR);
+		ChipmunkDebugDrawSegment(verts[i], verts[i + 1], SPRING_COLOR);
 	}
 }
 
@@ -473,26 +477,26 @@ drawConstraint(cpConstraint *constraint, void *unused)
 		cpVect a = cpvadd(body_a->p, cpvrotate(joint->anchr1, body_a->rot));
 		cpVect b = cpvadd(body_b->p, cpvrotate(joint->anchr2, body_b->rot));
 		
-		ChipmunkDebugDrawDot(5, a, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawDot(5, b, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawSegment(a, b, CONSTRAINT_COLOR);
+		ChipmunkDebugDrawDot(5, a, FIXED_COLOR);
+		ChipmunkDebugDrawDot(5, b, FIXED_COLOR);
+		ChipmunkDebugDrawSegment(a, b, FIXED_COLOR);
 	} else if(klass == cpSlideJointGetClass()){
 		cpSlideJoint *joint = (cpSlideJoint *)constraint;
 	
 		cpVect a = cpvadd(body_a->p, cpvrotate(joint->anchr1, body_a->rot));
 		cpVect b = cpvadd(body_b->p, cpvrotate(joint->anchr2, body_b->rot));
 		
-		ChipmunkDebugDrawDot(5, a, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawDot(5, b, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawSegment(a, b, CONSTRAINT_COLOR);
+		ChipmunkDebugDrawDot(5, a, FIXED_COLOR);
+		ChipmunkDebugDrawDot(5, b, FIXED_COLOR);
+		ChipmunkDebugDrawSegment(a, b, FIXED_COLOR);
 	} else if(klass == cpPivotJointGetClass()){
-		cpPivotJoint *joint = (cpPivotJoint *)constraint;
-	
+        cpPivotJoint *joint = (cpPivotJoint *)constraint;
+        
 		cpVect a = cpvadd(body_a->p, cpvrotate(joint->anchr1, body_a->rot));
 		cpVect b = cpvadd(body_b->p, cpvrotate(joint->anchr2, body_b->rot));
 
-        ChipmunkDebugDrawSegment(body_a->p, a, CONSTRAINT_COLOR);
-        ChipmunkDebugDrawSegment(body_b->p, b, CONSTRAINT_COLOR);
+        ChipmunkDebugDrawSegment(body_a->p, a, PIVOT_COLOR);
+        ChipmunkDebugDrawSegment(body_b->p, b, PIVOT_COLOR);
 	} else if(klass == cpGrooveJointGetClass()){
 		cpGrooveJoint *joint = (cpGrooveJoint *)constraint;
 	
@@ -500,23 +504,17 @@ drawConstraint(cpConstraint *constraint, void *unused)
 		cpVect b = cpvadd(body_a->p, cpvrotate(joint->grv_b, body_a->rot));
 		cpVect c = cpvadd(body_b->p, cpvrotate(joint->anchr2, body_b->rot));
 		
-		ChipmunkDebugDrawDot(5, c, CONSTRAINT_COLOR);
-		ChipmunkDebugDrawSegment(a, b, CONSTRAINT_COLOR);
+		ChipmunkDebugDrawDot(5, c, PIVOT_COLOR);
+		ChipmunkDebugDrawSegment(a, b, PIVOT_COLOR);
 	} else if(klass == cpDampedSpringGetClass()){
 		drawSpring((cpDampedSpring *)constraint, body_a, body_b);
 	} else if (klass == cpGearJointGetClass()) {
-        // draw a yellow line between the bodies
-        //cpGearJoint *joint = (cpGearJoint *)constraint;
-        
-        const Color gearColor = {0.75f, 0.75f, 0.0, 1.0f};
-        
         cpVect a = body_a->p;
 		cpVect b = body_b->p;
 		
-		ChipmunkDebugDrawDot(5, a, gearColor);
-		ChipmunkDebugDrawDot(5, b, gearColor);
-		ChipmunkDebugDrawSegment(a, b, gearColor);
-        
+		ChipmunkDebugDrawDot(5, a, GEAR_COLOR);
+		ChipmunkDebugDrawDot(5, b, GEAR_COLOR);
+		ChipmunkDebugDrawSegment(a, b, GEAR_COLOR);
     }
 }
 

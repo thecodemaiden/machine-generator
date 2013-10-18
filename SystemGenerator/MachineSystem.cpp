@@ -22,7 +22,7 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
   nMachines(0),
   nAttachments(0)
 {
-    
+    cpSpaceSetIterations(space, 20);
     gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
     size = cpv(hPegs, vPegs);
     body = cpBodyNewStatic();
@@ -144,7 +144,7 @@ void MachineSystem::addPart(MachinePart *newPart, Attachment *attachment, cpVect
         
         parts[machineNumber] = newPart;
         nMachines++;
-        newPart->setPosition(pegPosition);
+        newPart->setOriginalPosition(pegPosition);
         newPart->attachToBody(attachment, pegBody);
         attachments[machineNumber][machineNumber] = attachment;
     }
@@ -158,7 +158,8 @@ void MachineSystem::removePart(cpVect gridPosition)
     if (partToRemove) {
         
         cpBody *attachmentBody = partToRemove->getBody();
-        __block cpBody *pegBody = NULL;        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *c) {
+        __block cpBody *pegBody = NULL;
+        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *c) {
             if (cpConstraintGetB(c) == attachmentBody) {
                 cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
                 if (cpBodyGetMass(otherBody) == INFINITY)
@@ -255,7 +256,6 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
                 machine1->detachFromBody(machine2->body);
                 machine2->detachFromBody(machine1->body);
                
-                existingAttachment->constraint = NULL; // it got freed by one of the two calls above, so don't keep it around
                 
                 delete attachments[machine1Num][machine2Num];
                 
@@ -266,6 +266,54 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
         }
     }
     return detached;
+}
+
+
+void MachineSystem::updateAttachmentBetween(cpVect machine1Pos, cpVect machine2Pos, Attachment *newAttachment)
+{
+    if (!cpveql(machine1Pos, machine2Pos)) {
+        MachinePart *machine1 = partAtPosition(machine1Pos);
+        MachinePart *machine2 = partAtPosition(machine2Pos);
+        if (machine1 && machine2) {
+            int machine1Num = machinePositionToNumber(machine1Pos);
+            int machine2Num = machinePositionToNumber(machine2Pos);
+            Attachment *existingAttachment = attachments[machine1Num][machine2Num];
+            if (existingAttachment) {
+                detachMachines(machine1Pos, machine2Pos);
+                attachMachines(machine1Pos, machine2Pos, newAttachment);
+            }
+        }
+    }
+}
+
+void MachineSystem::updateAttachmentToWall(cpVect gridPosition, Attachment *newAttachment)
+{
+    
+    int machineNum = machinePositionToNumber(gridPosition);
+    
+    MachinePart *partToUpdate = parts[machineNum];
+    if (partToUpdate) {
+        Attachment *existingAttachment = attachments[machineNum][machineNum];
+        
+        cpBody *attachmentBody = partToUpdate->getBody();
+        __block cpBody *pegBody = NULL;
+        cpBodyEachConstraint_b(attachmentBody, ^(cpConstraint *c) {
+            if (cpConstraintGetB(c) == attachmentBody) {
+                cpBody *otherBody = cpConstraintGetA(c); // the peg is always body A
+                if (cpBodyGetMass(otherBody) == INFINITY)
+                    pegBody = otherBody;
+            }
+        });
+        
+        assert(pegBody);
+        
+        partToUpdate->detachFromBody(pegBody);
+        
+        delete existingAttachment;
+        
+        partToUpdate->attachToBody(newAttachment, pegBody);
+        attachments[machineNum][machineNum] = newAttachment;
+    }
 }
 
 MachineSystem::~MachineSystem()
@@ -303,6 +351,7 @@ MachineSystem::~MachineSystem()
     
     cpSpaceFree(space);
 }
+
 
 #pragma mark - random pickers
 

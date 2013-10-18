@@ -6,43 +6,38 @@
 //
 //
 
-#include "AdeolaBadAlgorithm.h"
+#include "AdeolaRotationAlgorithm.h"
 #include <numeric>
 
-// basic implementation of constructor and destructor for subclasses to build on
-AdeolaAlgorithm::AdeolaAlgorithm(int populationSize, float p_m, int maxStagnation)
-:population(populationSize),
- p_m(p_m),
- maxStagnation(maxStagnation)
+AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
+:AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
+    population.resize(populationSize);
+    
+    bestIndividual = NULL;
+    
     for (int i=0; i<populationSize; i++) {
         population[i] = new SystemInfo(simSteps);
         population[i]->system = createInitialSystem();
     }
-    bestIndividual = NULL;
-};
-
- AdeolaAlgorithm::~AdeolaAlgorithm(){
-     // free the space
-     for (int i=0; i<population.size(); i++) {
-         delete population[i]->system;
-         delete population[i];
-     }
- }
-
-cpFloat normalize_angle(cpFloat angle)
-{
-    return fmodf(angle, 2*M_PI);
 }
 
-void AdeolaAlgorithm::stepSystem(SystemInfo *individual)
+ AdeolaRotationAlgorithm::~AdeolaRotationAlgorithm(){
+     for (int i=0; i<population.size(); i++)
+         delete population[i];
+ }
+
+void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 {
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
     cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
     cpSpace *systemSpace = individual->system->getSpace();
 
-    // set angvel of input body
-    cpBodySetAngVel(inputBody, M_PI);
+    
+    cpConstraint *motor = cpSimpleMotorNew(cpSpaceGetStaticBody(systemSpace), inputBody, M_PI);
+    cpSpaceAddConstraint(systemSpace, motor);
+    cpConstraintSetMaxForce(motor, 50000);
+
     
     for (int i=0; i<simSteps; i++) {
         individual->inputValues[i] = normalize_angle(cpBodyGetAngle(inputBody));
@@ -50,26 +45,44 @@ void AdeolaAlgorithm::stepSystem(SystemInfo *individual)
         cpSpaceStep(systemSpace, 0.1);
         individual->outputValues[i] = normalize_angle(cpBodyGetAngle(outputBody));
     }
-    
-//           cpBodySetAngVel(inputBody, 0);
-//            cpBodyResetForces(outputBody);
+    cpSpaceRemoveConstraint(systemSpace, motor);
+    cpBodySetAngVel(outputBody, 0);
 }
 
-bool AdeolaAlgorithm::tick()
+
+// (random) initializer
+MachineSystem * AdeolaRotationAlgorithm::createInitialSystem()
+{
+    MachineSystem *sys = new MachineSystem(300, 300, 5, 5, cpvzero);
+    randomGenerator2(sys);
+    return sys;
+}
+
+// operators
+MachineSystem *AdeolaRotationAlgorithm::mutateSystem(MachineSystem *original)
+{
+    // one or the other - twice the chance of mutator 1
+    if (arc4random_uniform(3) == 0)
+        return attachmentMutator2(original);
+    else
+        return attachmentMutator1(original);
+}
+
+bool AdeolaRotationAlgorithm::tick()
 {
     size_t populationSize = population.size();
     
-    float bestFitness = INFINITY; // we want zero fitness
-    float worstFitness = -INFINITY;
+    cpFloat bestFitness = -INFINITY; // we want zero fitness
+    cpFloat worstFitness = INFINITY;
     
-    float lastBestFitness = bestIndividual ? bestIndividual->fitness : bestFitness;
+    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : bestFitness;
     
     size_t bestPos = -1;
     size_t worstPos = -1;
     
     for (size_t popIter = 0; popIter <populationSize; popIter++) {
         // possibly mutate each one
-        float random = (float)rand()/RAND_MAX;
+        cpFloat random = (cpFloat)rand()/RAND_MAX;
         SystemInfo *individual = population[popIter];
         SystemInfo *mutant = NULL;
         if ( fabs(random) < p_m) {
@@ -78,41 +91,40 @@ bool AdeolaAlgorithm::tick()
             mutant->system = mutateSystem(system);
         }
         
-        
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
-
+        
         if (mutant) {
             stepSystem(mutant);
             mutant->fitness = evaluateSystem(mutant);
             
-            if (mutant->fitness < individual->fitness) {
+            if (mutant->fitness > individual->fitness) {
                 population[popIter] = mutant;
                 delete individual;
                 individual = mutant;
-                //fprintf(stderr, "Mutation successful. (%.3f->%.3f)\n", individual->fitness, mutant->fitness);
             } else {
                 delete mutant;
             }
         }
-
         
-        if (individual->fitness < bestFitness) {
+        if (individual->fitness > bestFitness) {
             bestFitness = individual->fitness;
             bestIndividual = individual;
             bestPos = popIter;
         }
         
-        if (individual -> fitness >= worstFitness) {
+        if (individual -> fitness <= worstFitness) {
             worstFitness = individual->fitness;
             worstPos = popIter;
         }
+        
+        
     }
     
     if (bestPos != worstPos) {
         // replace the worst one with a random machine
         
-       // fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
+        // fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
         SystemInfo *worst = population[worstPos];
         delete worst->system;
         worst->fitness = 0;
@@ -129,32 +141,18 @@ bool AdeolaAlgorithm::tick()
     else
         stagnantGenerations = 0;
     
-    bool stop =  fabs(bestFitness) < 1e-7 && (bestFitness >= 0 || (stagnantGenerations >= maxStagnation));
+    bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
+    
+    generations++;
     
     return  stop;
 }
 
-// (random) initializer
-MachineSystem * AdeolaAlgorithm::createInitialSystem()
-{
-    MachineSystem *sys = new MachineSystem(300, 300, 5, 5, cpvzero);
-    randomGenerator2(sys);
-    return sys;
-}
-
-// operators
-MachineSystem *AdeolaAlgorithm::mutateSystem(MachineSystem *original)
-{
-    // one or the other - twice the chance of mutator 1
-    if (arc4random_uniform(3) == 0)
-        return attachmentMutator2(original);
-    else
-        return attachmentMutator1(original);
-}
-
+//
 // fitness evaluator
+// --- SIMPLE AND DOESN'T WORK WELL ---
 // find error in system
-//cpFloat AdeolaAlgorithm::evaluateSystem(SystemInfo *sys)
+//cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 //{
 //    cpFloat fitness = 0.0;
 //    size_t nSteps = sys->inputValues.size();
@@ -165,16 +163,17 @@ MachineSystem *AdeolaAlgorithm::mutateSystem(MachineSystem *original)
 //        fitness += 2*log(error); // these errors are very small at times
 //    }
 //    
-//    return fitness; // 'ideal' fitness -> -inf
+//    return -fitness; // ideal log error -> -inf
 //}
 
+// ----- FANCY (RIDICULOUS) FITNESS FUNCTION BELOW -----
+// ----- SOMETIMES PICKS EXACT OPPOSITE OF WHAT I WANT -----
 // find correlation between input and ouput values
-// if |correlation| -> 1, that's good (same or exact opposite)
-// I am looking for inputAngle = outputAngle, so I really want 1
-
+// if |correlation| -> 1, that's good (input is linearly related to output)
+// I am looking for inputAngle = outputAngle, so I really want 1 (same sign)
 // I also want the inputAngle to change a lot...
 
-cpFloat AdeolaAlgorithm::evaluateSystem(SystemInfo *sys)
+cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
@@ -199,28 +198,57 @@ cpFloat AdeolaAlgorithm::evaluateSystem(SystemInfo *sys)
         sqrYDiffSum += yDiff*yDiff;
     }
     correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
-    
-    cpFloat inputVariance = sqrXDiffSum/nSteps;
+//    
+   cpFloat inputVariance = sqrXDiffSum/nSteps;
     cpFloat outputVariance = sqrYDiffSum/nSteps;
-    
+//    
     if (correlation != correlation || fabs(correlation) == INFINITY) {
         // the mean output value, and all output values, were zero -> correlation = NaN
-        // the mean input value, and all input values, were zero -> correlation = +/-inf
-        fitness = 4.0;
-    } else {
-        fitness = 0.9*(1 - fabs(correlation));
-        if (correlation > 0)
-            fitness *= 0.01;
-        if (inputVariance > 0 && outputVariance > 0)
-            fitness /= inputVariance*outputVariance;
-        else
-            fitness *=4;
+        // otherwise the mean input value, and all input values, were zero -> correlation = +/-inf
+        correlation = 0;
     }
     
-    return fitness; // 'ideal' fitness -> 0
+    // so fitness ~= 1 if they are exactly opposite, ~100 if they correlate exactly
+        fitness = (fabs(correlation));
+        if (correlation > 0)
+            fitness *= 100;
+    // then i multiply by variances to discourage solutions that have the input or output parts stuck in place
+    
+    return fitness*inputVariance*outputVariance; // 'ideal' fitness -> inf
 }
 
-MachineSystem *AdeolaAlgorithm::bestSystem()
+bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
+{
+    return bestFitness > 300;
+}
+
+MachineSystem *AdeolaRotationAlgorithm::bestSystem()
 {
     return bestIndividual->system;
+}
+
+ char* AdeolaRotationAlgorithm::inputDescription()
+{
+    if (!bestIndividual)
+        return "";
+    
+    static char buffer[100];
+    cpBody *inputBody = bestIndividual->system->partAtPosition(bestIndividual->system->inputMachinePosition)->body;
+
+    snprintf(buffer, 100, "Input angle : %.3f", cpBodyGetAngle(inputBody));
+    
+    return buffer;
+}
+
+ char* AdeolaRotationAlgorithm::outputDescription()
+{
+    if (!bestIndividual)
+        return "";
+    
+    static char buffer[100];
+    cpBody *outputBody = bestIndividual->system->partAtPosition(bestIndividual->system->outputMachinePosition)->body;
+    
+    snprintf(buffer, 100, "Output angle : %.3f", cpBodyGetAngle(outputBody));
+    
+    return buffer;
 }

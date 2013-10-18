@@ -39,9 +39,12 @@ public:
     bool attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
     bool detachMachines(cpVect machine1Pos, cpVect machine2Pos);
     
+    void updateAttachmentBetween(cpVect machine1Pos, cpVect machine2Pos, Attachment *newAttachment);
+    void updateAttachmentToWall(cpVect gridPosition, Attachment *newAttachment);
+    
     void getRandomAttachment(Attachment **attachment, cpVect *pos1, cpVect *pos2);
     void getRandomPartPosition(cpVect *partPosition);
-    
+        
     cpSpace *getSpace();
     cpVect getSize();
     cpVect getSpacing();

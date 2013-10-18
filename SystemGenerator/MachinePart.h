@@ -61,6 +61,10 @@ public:
     // copy constructor
     Attachment (const Attachment &toCopy);
     
+    //comparison operators
+    bool operator==(const Attachment &other) const;
+    bool operator!=(const Attachment &other) const;
+    
     ~Attachment();
 };
 
@@ -92,8 +96,8 @@ public:
     void detachFromBody(cpBody *otherBody);
     
     cpBody *getBody();
-    void setPosition(cpVect position);
-    cpVect getPosition();
+    void setOriginalPosition(cpVect position);
+    cpVect getOriginalPosition();
     
 private:
     cpVect position;
