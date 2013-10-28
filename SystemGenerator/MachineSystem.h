@@ -49,6 +49,9 @@ public:
     cpVect getSize();
     cpVect getSpacing();
     
+    void saveToDisk(std::string filename);
+    void loadFromDisk(std::string filename);
+    
     ~MachineSystem(); // frees machines and attachments too (should it?)
     
 private:

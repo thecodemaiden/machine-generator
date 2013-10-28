@@ -13,28 +13,10 @@ extern "C" {
 #include "chipmunk.h"
 }
 
+#include "Attachment.h"
 #include <iostream>
 
 #define MASS_MULTIPLIER 0.2 // in case we want to make things more or less massive
-
-#define SPRING_STIFFNESS 10.0
-#define SPRING_DAMPING 1.0
-
-#define GEAR_RATIO 1.0
-
-#define MACHINE_LAYER 1 // we do not want to collide with the wall we attach machines too
-typedef enum {
-    //    MACHINE_BASE, // not attached to anything
-    ATTACH_GEAR,
-    ATTACH_SPRING,
-    ATTACH_FIXED, // the attachment points maintain their distance
-    
-    // the pivot joint is like a hinge if the attach points don't overlap
-    ATTACH_PIVOT, // the attachment can rotate round a point on the parent
-    
-    ATTACH_SLIDE, // attachment points have a maximum distance
-    ATTACH_TYPE_MAX //sentinel value for making random attachment
-} AttachmentType;
 
 typedef enum {
     MACHINE_BOX,
@@ -42,31 +24,7 @@ typedef enum {
     MACHINE_TYPE_MAX //sentinel for making random machine
 } BodyType;
 
-class Attachment
-{
-public:
-    // attach points run {-1,1} for each component: {left,right} and {top,bottom} respectively
-    // {0,0} is body center
-    cpVect firstAttachPoint;
-    cpVect secondAttachPoint;
-    
-    AttachmentType attachmentType;
-    cpFloat attachmentLength; // distance between parent and child attachment points
-    
-    cpConstraint *constraint; // NULL until the attachment is formed
-    
-    // constructor
-    Attachment(AttachmentType attachmentType = ATTACH_FIXED, cpVect firstAttachPoint = cpvzero, cpVect secondAttachPoint = cpvzero, cpFloat attachmentLength=0.0);
-    
-    // copy constructor
-    Attachment (const Attachment &toCopy);
-    
-    //comparison operators
-    bool operator==(const Attachment &other) const;
-    bool operator!=(const Attachment &other) const;
-    
-    ~Attachment();
-};
+#define MACHINE_LAYER 1 // we do not want to collide with the wall we attach machines to
 
 class MachinePart {
 public:

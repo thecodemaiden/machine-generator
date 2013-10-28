@@ -195,6 +195,8 @@ void run_space(cpSpace *space, cpFloat timePassed) {
 
 void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat timeStep, char *inputDescription = NULL, char *outputDescription = NULL)
 {
+    glEnable (GL_DEPTH_TEST);   // Enables Depth Testing
+    glDepthFunc(GL_GREATER);
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
     //	glScalef((GLfloat)scale, (GLfloat)scale, 1.0f);
@@ -266,7 +268,7 @@ int main(int argc, char **argv)
 
     while (1) {
         restartAlgorithm = false;
-       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 1000, 15);
+       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
 
         MachineSystem *best = NULL;
@@ -304,7 +306,8 @@ int main(int argc, char **argv)
             LastTime = now;
             
         }
-        cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
+        if (drivingMotor)
+            cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
         delete a;
         a = NULL;
     }

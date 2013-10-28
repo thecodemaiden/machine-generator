@@ -16,6 +16,8 @@ AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGene
     
     bestIndividual = NULL;
     
+    allTimeBestFitness = -FLT_MAX;
+    
     for (int i=0; i<populationSize; i++) {
         population[i] = new SystemInfo(simSteps);
         population[i]->system = createInitialSystem();
@@ -39,22 +41,19 @@ static MachineSystem  *gearMutator(MachineSystem *sys)
     newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
     
     if (chosenAttachment) {
-        
-        if (chosenAttachment->attachmentType != ATTACH_GEAR) {
-            // we have to copy the attachment before detaching the machines, because the wall owns it and is going to delete it
-            chosenAttachment = new Attachment(*chosenAttachment);
-            
-            // break the attachment, change it, then reattach
-            
-            AttachmentType newAttachmentType = (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
-            
+        AttachmentType t = chosenAttachment->attachmentType();
+        if (t != ATTACH_GEAR) {
+            // turn it into a gear!
             // don't change the length - for now
-            chosenAttachment->attachmentType = newAttachmentType;
+            GearAttachment *newAttachment = new GearAttachment(chosenAttachment->firstAttachPoint, chosenAttachment->secondAttachPoint, chosenAttachment->attachmentLength);
             
-            newSystem->updateAttachmentBetween(part1, part2, chosenAttachment);
-        }
-        if (chosenAttachment->attachmentType == ATTACH_GEAR) {
-            cpFloat newRatio = (float)rand()/(RAND_MAX/4); // between -4 and 4
+            newSystem->updateAttachmentBetween(part1, part2, newAttachment);
+        } else  {
+            // modify the gear!
+            // we *add* a small factor between -1 and 1 to the gear ratio!
+            // get a number between 0 and 2, then subtract 1
+            cpFloat addition = (float)rand()/(RAND_MAX/2) - 1;
+            cpFloat newRatio = addition + cpGearJointGetRatio(chosenAttachment->constraint);
             cpGearJointSetRatio(chosenAttachment->constraint, newRatio);
         }
     }
@@ -152,9 +151,12 @@ bool AdeolaRotationAlgorithm::tick()
             worstFitness = individual->fitness;
             worstPos = popIter;
         }
-        
+    
         
     }
+    
+    if (bestFitness > allTimeBestFitness)
+        allTimeBestFitness = bestFitness;
     
     if (bestPos != worstPos) {
         // replace the worst one with a random machine
@@ -179,7 +181,10 @@ bool AdeolaRotationAlgorithm::tick()
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
     generations++;
-    
+    if (stop) {
+        fprintf(stderr, "ALL TIME BEST FITNESS: %f", allTimeBestFitness);
+
+    }
     return  stop;
 }
 
@@ -252,6 +257,8 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
     
     if (meandInputdOutput != meandInputdOutput || fabs(meandInputdOutput) == INFINITY) {
         meandInputdOutput = 0;
+    } else {
+        meandInputdOutput /= nSteps;
     }
     
         fitness = correlation;
@@ -269,7 +276,7 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 
 bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {
-    return bestFitness > 300;
+    return bestFitness > 10;
 }
 
 MachineSystem *AdeolaRotationAlgorithm::bestSystem()

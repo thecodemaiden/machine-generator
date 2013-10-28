@@ -8,68 +8,6 @@
 
 #include "MachinePart.h"
 
-#pragma  mark - Attachments
-
-Attachment::Attachment(AttachmentType attachmentType, cpVect firstAttachPoint, cpVect secondAttachPoint, cpFloat attachmentLength)
-: attachmentType(attachmentType),
-firstAttachPoint(firstAttachPoint),
-secondAttachPoint(secondAttachPoint),
-attachmentLength(attachmentLength)
-{
-    
-}
-
-Attachment::Attachment(const Attachment &toCopy)
-:attachmentType(toCopy.attachmentType),
-attachmentLength(toCopy.attachmentLength),
-firstAttachPoint(toCopy.firstAttachPoint),
-secondAttachPoint(toCopy.secondAttachPoint)
-{
-    
-}
-
-bool Attachment::operator==(const Attachment &other) const {
-   if (!cpveql(firstAttachPoint, other.firstAttachPoint))
-       return false;
-    
-    if (!cpveql(secondAttachPoint, other.secondAttachPoint))
-        return false;
-    
-    if (attachmentType != other.attachmentType)
-        return false;
-    
-    if (attachmentLength != other.attachmentLength)
-        return false;
-    
-    return true;
-}
-
-bool Attachment::operator!=(const Attachment &other) const {
-    return !(other == *this);
-}
-
-static void deleteCallback(cpSpace *space, void *key, void *data)
-{
-    cpConstraint *constraint = *(cpConstraint **)data;
-    cpSpaceRemoveConstraint(space, constraint);
-    cpConstraintFree(constraint);
-}
-
-Attachment::~Attachment()
-{
-    if (constraint) {
-        cpSpace *s =cpConstraintGetSpace(constraint);
-        if (s) {
-            if (cpSpaceIsLocked(s)) {
-                cpSpaceAddPostStepCallback(s, &deleteCallback, this, (void *)&constraint);
-            } else {
-                deleteCallback(s, (void *)this, (void *)&constraint);
-            }
-        }
-    }
-}
-
-#pragma mark - Machine Parts
 
 static int availableGroup = 1;
 
@@ -192,57 +130,65 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     
     cpFloat bodyDistance = cpvdist(otherAttachLocal, localAttachPoint);
     
-    assert(attachment->attachmentType != ATTACH_TYPE_MAX);
-    
+    AttachmentType attachmentType = attachment->attachmentType();
+        
     cpConstraint *mainConstraint = NULL;
     
-    if (attachment->attachmentType == ATTACH_SPRING) {
-        if (attachment->attachmentLength <= 0) {
-            attachment->attachmentLength = bodyDistance;
-        }
+    if (SpringAttachment *spring = dynamic_cast<SpringAttachment *>(attachment)) {
+//        if (spring->attachmentLength <= 0) {
+//            spring->attachmentLength = bodyDistance;
+//        }
         
-        mainConstraint = cpDampedSpringNew(otherBody, body, otherAttachPoint, localAttachPoint, attachment->attachmentLength, SPRING_STIFFNESS, SPRING_DAMPING);
+        mainConstraint = cpDampedSpringNew(otherBody, body, otherAttachPoint, localAttachPoint, spring->attachmentLength, spring->stiffness, spring->damping);
         cpSpaceAddConstraint(space, mainConstraint);
         
     }
     
-    if (attachment->attachmentType == ATTACH_FIXED) {
-        //    if (attachmentLength == 0 || attachmentLength > bodyDistance)
-        attachment->attachmentLength = MIN(attachment->attachmentLength,bodyDistance);
+    if (FixedAttachment *fixed = dynamic_cast<FixedAttachment *>(attachment)) {
+        fixed->attachmentLength = bodyDistance;
         
-        if (cpfabs(attachment->attachmentLength) < 1.0) {
+        if (cpfabs(fixed->attachmentLength) < 1.0) {
             // zero length pin joints are bad for simulation
             mainConstraint = cpPivotJointNew2(otherBody, body, otherAttachPoint, localAttachPoint);
             cpSpaceAddConstraint(space, mainConstraint);
         } else {
             mainConstraint = cpPinJointNew(otherBody, body, otherAttachPoint, localAttachPoint);
             cpSpaceAddConstraint(space, mainConstraint);
-            cpPinJointSetDist(mainConstraint, attachment->attachmentLength);
+            cpPinJointSetDist(mainConstraint, fixed->attachmentLength);
         }
         
     }
     
-    if (attachment->attachmentType == ATTACH_PIVOT) {
-        // do we need this joint type?
-        cpVect pivotAttachPoint = cpBodyLocal2World(otherBody, otherAttachPoint);
+    if (PivotAttachment *pivot = dynamic_cast<PivotAttachment *>(attachment)) {
+        // get the world coords of the attach points and interpolate between them
+        cpVect worldAttachPoint1 = cpBodyLocal2World(body, localAttachPoint);
+        cpVect worldAttachPoint2 = cpBodyLocal2World(otherBody, otherAttachPoint);
+        cpVect pivotAttachPoint = cpvlerp(worldAttachPoint1, worldAttachPoint2, pivot->pivotPosition);
         mainConstraint = cpPivotJointNew(otherBody, body, pivotAttachPoint);
         cpSpaceAddConstraint(space, mainConstraint);
-        
     }
     
-    if (attachment->attachmentType == ATTACH_GEAR) {
+    if (GearAttachment *gear = dynamic_cast<GearAttachment *>(attachment)) {
        
         // also make sure they don't move relative to each other - with a pin joint in their centers
         cpConstraint *distanceConstraint = cpPinJointNew(body, otherBody, cpvzero, cpvzero);
         cpSpaceAddConstraint(space, distanceConstraint);
         
-        mainConstraint = cpGearJointNew(otherBody, body, 0.0, -GEAR_RATIO);
+        mainConstraint = cpGearJointNew(otherBody, body, gear->phase, gear->gearRatio);
         cpSpaceAddConstraint(space, mainConstraint);
         
     }
     
-    if (attachment->attachmentType == ATTACH_SLIDE) {        
-        mainConstraint = cpSlideJointNew(otherBody, body, otherAttachPoint, localAttachPoint, MIN(attachment->attachmentLength, bodyDistance), MAX(attachment->attachmentLength, bodyDistance));
+    if (SlideAttachment *slide = dynamic_cast<SlideAttachment *>(attachment)) {
+        if (slide->maxDistance == 0)
+            slide->maxDistance = bodyDistance;
+        if (slide->minDistance > slide->maxDistance) {
+            cpFloat temp = slide->minDistance;
+            slide->minDistance = slide->maxDistance;
+            slide->maxDistance = temp;
+        }
+        
+        mainConstraint = cpSlideJointNew(otherBody, body, otherAttachPoint, localAttachPoint, slide->minDistance,slide->maxDistance);
         cpSpaceAddConstraint(space, mainConstraint);
     }
     
@@ -252,7 +198,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     cpGroup smallestGroup = MIN(cpShapeGetGroup(otherShape), cpShapeGetGroup(bodyShape));
     smallestGroup = MIN(smallestGroup, 1);
     
-    if (attachment->attachmentType == ATTACH_PIVOT) {
+    if (attachmentType == ATTACH_PIVOT) {
         // make them the same group so they don't collide
         cpShapeSetGroup(otherShape, smallestGroup);
         cpShapeSetGroup(bodyShape, smallestGroup);

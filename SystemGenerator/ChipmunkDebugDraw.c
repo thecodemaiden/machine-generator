@@ -86,6 +86,7 @@ ChipmunkDebugDrawInit(void)
 		varying vec4 v_outline_color;
 		
 		void main(void){
+            
 			// TODO get rid of the GL 2.x matrix bit eventually?
 			gl_Position = gl_ModelViewProjectionMatrix*vec4(vertex, 0.0, 1.0);
 			
@@ -151,6 +152,8 @@ ChipmunkDebugDrawInit(void)
 	glBindVertexArrayAPPLE(0);
 	
 	CHECK_GL_ERRORS();
+    
+    
 }
 
 
@@ -512,20 +515,24 @@ drawConstraint(cpConstraint *constraint, void *unused)
 	} else if (klass == cpGearJointGetClass()) {
         cpVect a = body_a->p;
 		cpVect b = body_b->p;
-		
+	
+        static char gearRatioStr[8];
+        
+        sprintf(gearRatioStr, "%.3f", cpGearJointGetRatio(constraint));
+        
 		ChipmunkDebugDrawDot(5, a, GEAR_COLOR);
 		ChipmunkDebugDrawDot(5, b, GEAR_COLOR);
 		ChipmunkDebugDrawSegment(a, b, GEAR_COLOR);
         
-        
         ChipmunkDemoTextPushRenderer();
-     
+        cpVect pos = cpvlerp(a, b, 0.5);
+        ChipmunkDemoTextDrawString(pos, gearRatioStr);
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix(); {
             // Draw the text at fixed positions,
             // but save the drawing matrix for the mouse picking
-            glLoadIdentity();
-            
+//            glLoadIdentity();
+            glTranslatef(0, 0, -0.5);
             ChipmunkDemoTextFlushRenderer();
             ChipmunkDemoTextPopRenderer();
         } glPopMatrix();

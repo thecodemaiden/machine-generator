@@ -94,7 +94,7 @@ nAttachments(0)
             MachinePart *machineToCopy = original.parts[machineNum];
             if (machineToCopy) {
                 MachinePart *newPart = new MachinePart(*machineToCopy, space);
-                Attachment *wallAttachment = new Attachment(*original.attachments[machineNum][machineNum]);
+                Attachment *wallAttachment = Attachment::copyAttachment(original.attachments[machineNum][machineNum]);
                 addPart(newPart, wallAttachment, gridPos);
             }
         }
@@ -104,7 +104,7 @@ nAttachments(0)
         for (int j=0; j<i; j++) {
             Attachment *attachmentToCopy = original.attachments[i][j];
             if (attachmentToCopy) {
-                Attachment *attachmentCopy = new Attachment(*attachmentToCopy);
+                Attachment *attachmentCopy = Attachment::copyAttachment(attachmentToCopy);
                 cpVect machine1Pos = machineNumberToPosition(i);
                 cpVect machine2Pos = machineNumberToPosition(j);
                 
@@ -457,4 +457,18 @@ cpVect MachineSystem::gridPositionToWorld(cpVect gridPosition) {
     pegPosition = cpvadd(pegPosition, cpBodyGetPos(this->body));
     
     return pegPosition;
+}
+
+#pragma mark - save and load
+
+void saveToDisk(std::string filename)
+{
+    // machines: body type, height, width
+    // attachments: 
+    
+}
+
+void loadFromDisk(std::string filename)
+{
+    
 }

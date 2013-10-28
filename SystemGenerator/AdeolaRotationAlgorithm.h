@@ -26,7 +26,7 @@ class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
     SystemInfo *bestIndividual;
     
 public:
-    
+    cpFloat allTimeBestFitness;
     AdeolaRotationAlgorithm(int populationSize=5, int maxGenerations = 100, int maxStagnation=5, float p_m=0.2, float p_c= 0);
     ~AdeolaRotationAlgorithm();
     
