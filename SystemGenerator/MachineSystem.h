@@ -49,7 +49,7 @@ public:
     cpVect getSpacing();
     
     void saveToDisk(const char* filename);
-    static MachineSystem * loadFromDisk(const char* filename, cpFloat wallWidth=100, cpFloat wallHeight = 100);
+    static MachineSystem * loadFromDisk(const char* filename, cpFloat wallWidth=100, cpFloat wallHeight = 100, cpVect position=cpvzero);
     
     ~MachineSystem(); // frees machines and attachments too (should it?)
     

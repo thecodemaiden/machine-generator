@@ -464,22 +464,56 @@ cpVect MachineSystem::gridPositionToWorld(cpVect gridPosition) {
 
 #pragma mark - save and load
 
+
+
+void outputAttachment(std::ofstream & o, Attachment *a, int part1, int part2)
+{
+    o << part1 << "\t" << part2 << "\t" << a->attachmentType() << "\t" << a->firstAttachPoint.x << "\t";
+    o << a->firstAttachPoint.y << "\t" << a->secondAttachPoint.x << "\t" << a->secondAttachPoint.y << "\t";
+    o << a->attachmentLength;
+    switch (a->attachmentType()) {
+        case ATTACH_SPRING:
+            o << "\t" << ((SpringAttachment *)a)->damping << "\t" << ((SpringAttachment *)a)->stiffness <<"\n";
+            break;
+        case ATTACH_SLIDE:
+            o  << "\t" << ((SlideAttachment *)a)->maxDistance << "\t" << ((SlideAttachment*)a)->minDistance << "\n";
+            break;
+        case ATTACH_PIVOT:
+            o << "\t" << ((PivotAttachment *)a)->pivotPosition << "\n";
+            break;
+        case ATTACH_GEAR:
+            o << "\t" << ((GearAttachment *)a)->gearRatio << "\t" << ((GearAttachment *)a)->phase << "\n";
+            break;
+        default:
+            o << "\n";
+            break;
+    }
+}
+
+void outputMachine(std::ofstream & outputStream, MachinePart *p, int machinePos)
+{
+    outputStream << machinePos << "\t" << p->machineType << "\t" << p->height << "\t" << p->length << "\n";
+}
+
 void MachineSystem::saveToDisk(const char* filename)
 {
     /* 1. grid size: x \t y \n
-     2. 'parts'
+     2. n (number of defined parts)
      3. list of machines of format:
         // number \t body type \t height \t width
-     4. 'attachments'
-     5. list of attachments of format:
+        // attachment (output format below)
+     4. n (number of defined attachments)
+     5. list of (other) attachments of format:
          machine1 \t machine2 \t attachment type \t attach point 1 x \t attach point 1 y \t attach point 2 x \t attach point 2 y \t
-            attachment length \t (optional stuff)
+            attachment length [\t optional stuff]
+     
          where optional stuff depends on type:
             Gear - ratio \t phase
-            Slide - min distance \t max distance
+            Slide - max distance \t min distance
             Pivot - pivot point
             Spring - damping \t stiffness
             Fixed - nothing
+     6. Input and output machine position: input.x \t input.y \t output.x \t output.y \t
     */
     
     std::ofstream outputFile;
@@ -487,43 +521,27 @@ void MachineSystem::saveToDisk(const char* filename)
     
     //first the grid size
     outputFile << size.x << "\t" << size.y << "\n";
-    outputFile << "parts\n";
+    outputFile << nMachines << "\n";
     for (int i=0; i<parts.size(); i++) {
         MachinePart *p = parts[i];
         if (p) {
-            outputFile << i << "\t" << p->machineType << "\t" << p->height << "\t" << p->length << "\n";
+            outputMachine(outputFile, p, i);
+            outputAttachment(outputFile, attachments[i][i], i, i);
         }
     }
-    outputFile << "attachments\n";
+    outputFile << nAttachments << "\n";
     for (int i=0; i<attachments.size(); i++) {
         std::vector<Attachment *> attachmentList= attachments[i];
-        for (int j=i; j<attachmentList.size(); j++) {
+        for (int j=i+1; j<attachmentList.size(); j++) {
             // only really have to cover a triangle of the attachments
             Attachment *a = attachmentList[j];
             if (a) {
-                outputFile << i << "\t" << j << "\t" << a->attachmentType() << "\t" << a->firstAttachPoint.x << "\t";
-                outputFile << a->firstAttachPoint.y << "\t" << a->secondAttachPoint.x << "\t" << a->secondAttachPoint.y << "\t";
-                outputFile << a->attachmentLength;
-                switch (a->attachmentType()) {
-                        case ATTACH_SPRING:
-                        outputFile << "\t" << ((SpringAttachment *)a)->damping << "\t" << ((SpringAttachment *)a)->stiffness <<"\n";
-                        break;
-                    case ATTACH_SLIDE:
-                        outputFile  << "\t" << ((SlideAttachment *)a)->minDistance << "\t" << ((SlideAttachment*)a)->maxDistance << "\n";
-                        break;
-                    case ATTACH_PIVOT:
-                        outputFile << "\t" << ((PivotAttachment *)a)->pivotPosition << "\n";
-                        break;
-                    case ATTACH_GEAR:
-                        outputFile << "\t" << ((GearAttachment *)a)->gearRatio << "\t" << ((GearAttachment *)a)->phase << "\n";
-                        break;
-                    default:
-                        outputFile << "\n";
-                        break;
-                }
+                outputAttachment(outputFile, a, i, j);
             }
         }
     }
+    
+    outputFile << inputMachinePosition.x <<"\t" << inputMachinePosition.y << "\t" << outputMachinePosition.x << "\t" << outputMachinePosition.y << "\n";
     
     outputFile.close();
 }
@@ -542,29 +560,124 @@ static std::vector<std::string> splitString(std::string s, char delim) {
     return parts;
 }
 
-MachineSystem * MachineSystem::loadFromDisk(const char* filename, cpFloat wallWidth, cpFloat wallHeight)
+MachineSystem * MachineSystem::loadFromDisk(const char* filename, cpFloat wallWidth, cpFloat wallHeight, cpVect position)
 {
     MachineSystem *sys = NULL;
     
     std::ifstream inputFile;
     inputFile.open(filename);
     
+    if (!inputFile.is_open())
+        return sys;
     
-    // not currently checking for errorrrssss
+    // not currently checking for other errorrrssss
     int hPegs =0;
     int vPegs =0;
     
     std::vector<std::string> lineParts;
     std::string line;
+    
     std::getline(inputFile, line);
     lineParts = splitString(line, '\t');
-    
     if (lineParts.size() == 2) {
         hPegs = atoi(lineParts[0].c_str());
         vPegs = atoi(lineParts[1].c_str());
     }
     
-    cpVect     gridSpacing = cpv((float)wallWidth/(hPegs + 1), (float)wallHeight/(vPegs + 1));
+    sys = new MachineSystem(wallWidth, wallHeight, hPegs, vPegs, position);
+    cpSpace *s = sys->getSpace();
+    
+    // read in the machine parts and their wall attachments
+    std::getline(inputFile, line);
+    lineParts = splitString(line, '\t');
+    
+    int nParts = atoi(lineParts[0].c_str());
+    for (int i=0; i<nParts; i++) {
+        // read in the parts and their wall attachments
+        std::getline(inputFile, line);
+        lineParts = splitString(line, '\t');
+        int machineNum = atoi(lineParts[0].c_str());
+        
+        MachinePart *p = new MachinePart((BodyType)atoi(lineParts[1].c_str()), cpvzero, atof(lineParts[3].c_str()), atof(lineParts[2].c_str()), s);
+        
+        // read attachmentInfo
+        std::getline(inputFile, line);
+        lineParts = splitString(line, '\t');
+        // ignore the machine numbers, should both be this machine
+        Attachment *a = NULL;
+        AttachmentType t = (AttachmentType)atoi(lineParts[2].c_str());
+        cpVect firstAttachPoint = cpv(atof(lineParts[3].c_str()), atof(lineParts[4].c_str()));
+        cpVect secondAttachPoint = cpv(atof(lineParts[5].c_str()), atof(lineParts[6].c_str()));
+        cpFloat attachmentLength = atof(lineParts[7].c_str());
+        switch (t) {
+            case ATTACH_FIXED:
+                a = new FixedAttachment(firstAttachPoint, secondAttachPoint, attachmentLength);
+                break;
+            case ATTACH_GEAR:
+                a = new GearAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            case ATTACH_PIVOT:
+                a = new PivotAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()));
+                break;
+            case ATTACH_SLIDE:
+                a = new SlideAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            case ATTACH_SPRING:
+                a = new SpringAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            default:
+                break;
+        }
+        sys->addPart(p, a, sys->machineNumberToPosition(machineNum));
+    }
+    
+    // now read in all the other attachments
+    std::getline(inputFile, line);
+    lineParts = splitString(line, '\t');
+    
+    int nAttachments = atoi(lineParts[0].c_str());
+    for (int i=0; i<nAttachments; i++) {
+        // read in the attachment info
+        std::getline(inputFile, line);
+        lineParts = splitString(line, '\t');
+        
+        Attachment *a = NULL;
+        AttachmentType t = (AttachmentType)atoi(lineParts[2].c_str());
+        
+        int part1 = atoi(lineParts[0].c_str());
+        int part2 = atoi(lineParts[1].c_str());
+        
+        cpVect firstAttachPoint = cpv(atof(lineParts[3].c_str()), atof(lineParts[4].c_str()));
+        cpVect secondAttachPoint = cpv(atof(lineParts[5].c_str()), atof(lineParts[6].c_str()));
+        cpFloat attachmentLength = atof(lineParts[7].c_str());
+        switch (t) {
+            case ATTACH_FIXED:
+                a = new FixedAttachment(firstAttachPoint, secondAttachPoint, attachmentLength);
+                break;
+            case ATTACH_GEAR:
+                a = new GearAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            case ATTACH_PIVOT:
+                a = new PivotAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()));
+                break;
+            case ATTACH_SLIDE:
+                a = new SlideAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            case ATTACH_SPRING:
+                a = new SpringAttachment(firstAttachPoint, secondAttachPoint, attachmentLength, atof(lineParts[8].c_str()), atof(lineParts[9].c_str()));
+                break;
+            default:
+                break;
+        }
+
+        sys->attachMachines(sys->machineNumberToPosition(part1), sys->machineNumberToPosition(part2), a);
+    }
+    
+    // finally, get input and output machine positions
+    std::getline(inputFile, line);
+    lineParts = splitString(line, '\t');
+    sys->inputMachinePosition = cpv(atoi(lineParts[0].c_str()), atoi(lineParts[1].c_str()));
+    sys->outputMachinePosition = cpv(atoi(lineParts[2].c_str()), atoi(lineParts[3].c_str()));
     
     inputFile.close();
     return sys;

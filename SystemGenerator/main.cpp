@@ -266,14 +266,14 @@ int main(int argc, char **argv)
 {
     setupGLFW();
 
-    MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
+   // MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
     
     while (1) {
         restartAlgorithm = false;
        AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
 
-        MachineSystem *best = NULL;
+        MachineSystem *best = NULL;//s;
         
         while(!restartAlgorithm && !a->tick()) {
             double now = glfwGetTime();
