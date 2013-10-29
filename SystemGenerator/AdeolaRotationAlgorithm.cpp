@@ -12,6 +12,7 @@
 AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
 :AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
+    simSteps = 40;
     population.resize(populationSize);
     
     bestIndividual = NULL;
@@ -125,6 +126,12 @@ bool AdeolaRotationAlgorithm::tick()
             mutant->system = mutateSystem(system);
         }
         
+        // reset the individual... by copying!
+        MachineSystem *original = individual->system;
+        MachineSystem *copy = new MachineSystem(*original);
+        individual->system = copy;
+        delete original;
+        
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
         
@@ -182,7 +189,7 @@ bool AdeolaRotationAlgorithm::tick()
     
     generations++;
     if (stop) {
-        fprintf(stderr, "ALL TIME BEST FITNESS: %f", allTimeBestFitness);
+        fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
 
     }
     return  stop;
@@ -265,7 +272,7 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
     
     if (outputVariance > 0) {
         cpFloat distance = fabs (2.0 -meandInputdOutput);
-        fitness /= distance+0.1;
+        fitness /= (distance+0.1)*(distance+0.1);
     }
 
     
@@ -276,7 +283,7 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 
 bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {
-    return bestFitness > 10;
+    return bestFitness > 300;
 }
 
 MachineSystem *AdeolaRotationAlgorithm::bestSystem()

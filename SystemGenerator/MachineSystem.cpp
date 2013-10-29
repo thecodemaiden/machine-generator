@@ -8,6 +8,9 @@
 
 #import "chipmunk.h"
 #include "MachineSystem.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #define WALL_LAYER 1>>2
 #define PEG_LAYER 1>>1
@@ -461,14 +464,108 @@ cpVect MachineSystem::gridPositionToWorld(cpVect gridPosition) {
 
 #pragma mark - save and load
 
-void saveToDisk(std::string filename)
+void MachineSystem::saveToDisk(const char* filename)
 {
-    // machines: body type, height, width
-    // attachments: 
+    /* 1. grid size: x \t y \n
+     2. 'parts'
+     3. list of machines of format:
+        // number \t body type \t height \t width
+     4. 'attachments'
+     5. list of attachments of format:
+         machine1 \t machine2 \t attachment type \t attach point 1 x \t attach point 1 y \t attach point 2 x \t attach point 2 y \t
+            attachment length \t (optional stuff)
+         where optional stuff depends on type:
+            Gear - ratio \t phase
+            Slide - min distance \t max distance
+            Pivot - pivot point
+            Spring - damping \t stiffness
+            Fixed - nothing
+    */
     
+    std::ofstream outputFile;
+    outputFile.open(filename);
+    
+    //first the grid size
+    outputFile << size.x << "\t" << size.y << "\n";
+    outputFile << "parts\n";
+    for (int i=0; i<parts.size(); i++) {
+        MachinePart *p = parts[i];
+        if (p) {
+            outputFile << i << "\t" << p->machineType << "\t" << p->height << "\t" << p->length << "\n";
+        }
+    }
+    outputFile << "attachments\n";
+    for (int i=0; i<attachments.size(); i++) {
+        std::vector<Attachment *> attachmentList= attachments[i];
+        for (int j=i; j<attachmentList.size(); j++) {
+            // only really have to cover a triangle of the attachments
+            Attachment *a = attachmentList[j];
+            if (a) {
+                outputFile << i << "\t" << j << "\t" << a->attachmentType() << "\t" << a->firstAttachPoint.x << "\t";
+                outputFile << a->firstAttachPoint.y << "\t" << a->secondAttachPoint.x << "\t" << a->secondAttachPoint.y << "\t";
+                outputFile << a->attachmentLength;
+                switch (a->attachmentType()) {
+                        case ATTACH_SPRING:
+                        outputFile << "\t" << ((SpringAttachment *)a)->damping << "\t" << ((SpringAttachment *)a)->stiffness <<"\n";
+                        break;
+                    case ATTACH_SLIDE:
+                        outputFile  << "\t" << ((SlideAttachment *)a)->minDistance << "\t" << ((SlideAttachment*)a)->maxDistance << "\n";
+                        break;
+                    case ATTACH_PIVOT:
+                        outputFile << "\t" << ((PivotAttachment *)a)->pivotPosition << "\n";
+                        break;
+                    case ATTACH_GEAR:
+                        outputFile << "\t" << ((GearAttachment *)a)->gearRatio << "\t" << ((GearAttachment *)a)->phase << "\n";
+                        break;
+                    default:
+                        outputFile << "\n";
+                        break;
+                }
+            }
+        }
+    }
+    
+    outputFile.close();
 }
 
-void loadFromDisk(std::string filename)
-{
+static std::vector<std::string> splitString(std::string s, char delim) {
+    std::vector<std::string> parts;
+
+    size_t startPos = 0;
+    size_t nextPos = 0;
+    do {
+        nextPos = s.find(delim, startPos);
+        parts.push_back(s.substr(startPos, nextPos));
+        startPos = nextPos+1;
+    }while(nextPos != s.npos);
     
+    return parts;
+}
+
+MachineSystem * MachineSystem::loadFromDisk(const char* filename, cpFloat wallWidth, cpFloat wallHeight)
+{
+    MachineSystem *sys = NULL;
+    
+    std::ifstream inputFile;
+    inputFile.open(filename);
+    
+    
+    // not currently checking for errorrrssss
+    int hPegs =0;
+    int vPegs =0;
+    
+    std::vector<std::string> lineParts;
+    std::string line;
+    std::getline(inputFile, line);
+    lineParts = splitString(line, '\t');
+    
+    if (lineParts.size() == 2) {
+        hPegs = atoi(lineParts[0].c_str());
+        vPegs = atoi(lineParts[1].c_str());
+    }
+    
+    cpVect     gridSpacing = cpv((float)wallWidth/(hPegs + 1), (float)wallHeight/(vPegs + 1));
+    
+    inputFile.close();
+    return sys;
 }

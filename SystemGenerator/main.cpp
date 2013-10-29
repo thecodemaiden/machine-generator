@@ -266,6 +266,8 @@ int main(int argc, char **argv)
 {
     setupGLFW();
 
+    MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
+    
     while (1) {
         restartAlgorithm = false;
        AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
@@ -286,6 +288,8 @@ int main(int argc, char **argv)
         if (!restartAlgorithm) {
             best = a->bestSystem();
             fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
+            
+            best->saveToDisk("/Users/abannis/temp/test.txt");
             
             cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());

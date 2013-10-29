@@ -9,7 +9,6 @@
 #ifndef __SystemGenerator__MachineSystem__
 #define __SystemGenerator__MachineSystem__
 
-#include <iostream>
 #include "MachinePart.h"
 #include <vector>
 
@@ -49,8 +48,8 @@ public:
     cpVect getSize();
     cpVect getSpacing();
     
-    void saveToDisk(std::string filename);
-    void loadFromDisk(std::string filename);
+    void saveToDisk(const char* filename);
+    static MachineSystem * loadFromDisk(const char* filename, cpFloat wallWidth=100, cpFloat wallHeight = 100);
     
     ~MachineSystem(); // frees machines and attachments too (should it?)
     
