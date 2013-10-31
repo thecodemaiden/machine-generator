@@ -21,6 +21,7 @@ extern "C" {
 #include "AdeolaRotationAlgorithm.h"
 #include "AdeolaDisplacementAlgorithm.h"
 #include "MarkAlgorithm.h"
+#include "AdeolaConstantToSinusoidalAlgorithm.h"
 
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
@@ -274,8 +275,11 @@ int main(int argc, char **argv)
        AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 1000, 15);
+//       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
-
+        AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
+        
+        
         MachineSystem *best = NULL;//s;
         
         while(!restartAlgorithm && !a->tick()) {
@@ -298,17 +302,17 @@ int main(int argc, char **argv)
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
             
             // a motor will drive the angVel of a body even when there are other forces acting on it
-            drivingMotor = cpSimpleMotorNew(staticBody, inputBody, 0);
+            drivingMotor = cpSimpleMotorNew(staticBody, inputBody, M_PI_2);
             cpSpaceAddConstraint(best->getSpace(), drivingMotor);
             cpConstraintSetMaxForce(drivingMotor, 80000);
         }
         
-        cpFloat startTime = glfwGetTime();
+      //  cpFloat startTime = glfwGetTime();
         while(!restartAlgorithm) {
             double now = glfwGetTime();
             //sinusoidal motor!
-            cpFloat motorAngle = 2*M_PI*cos((now-startTime));
-            cpSimpleMotorSetRate(drivingMotor, motorAngle);
+//            cpFloat motorAngle = 2*M_PI*cos((now-startTime));
+//            cpSimpleMotorSetRate(drivingMotor, motorAngle);
             updateWorld(best->getSpace(), best, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
             LastTime = now;
             

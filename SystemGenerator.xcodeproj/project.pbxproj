@@ -30,6 +30,7 @@
 		E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85C1800EBFC003FA4AE /* MachineSystem.cpp */; };
 		E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */; };
 		E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */; };
+		E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +98,8 @@
 		E2A1D8601800EC84003FA4AE /* MachinePart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachinePart.h; sourceTree = "<group>"; };
 		E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaRotationAlgorithm.cpp; sourceTree = "<group>"; };
 		E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaRotationAlgorithm.h; sourceTree = "<group>"; };
+		E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaConstantToSinusoidalAlgorithm.cpp; sourceTree = "<group>"; };
+		E2C315591822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaConstantToSinusoidalAlgorithm.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -243,6 +246,8 @@
 				E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */,
 				4D3E45DB1811B9DB00B9F69D /* MarkAlgorithm.h */,
 				4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */,
+				E2C315591822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.h */,
+				E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */,
 			);
 			name = Algorithms;
 			sourceTree = "<group>";
@@ -397,6 +402,7 @@
 				E2A1D8581800E72D003FA4AE /* ChipmunkDebugDraw.c in Sources */,
 				E27E4698181DDCE300D852BD /* Attachment.cpp in Sources */,
 				E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */,
+				E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */,
 				E29764C11811C49B0004B173 /* AdeolaBaseAlgorithm.cpp in Sources */,
 				E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */,
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,

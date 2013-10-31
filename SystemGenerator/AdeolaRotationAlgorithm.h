@@ -18,8 +18,8 @@ class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
      MachineSystem *mutateSystem(MachineSystem *original);
     void stepSystem(SystemInfo *individual);
 
-    cpFloat evaluateSystem(SystemInfo *sys);    
-    bool goodEnoughFitness(cpFloat bestFitness);
+    virtual cpFloat evaluateSystem(SystemInfo *sys);
+    virtual bool goodEnoughFitness(cpFloat bestFitness);
     
     std::vector<SystemInfo *> population;
     
