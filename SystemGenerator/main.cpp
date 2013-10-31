@@ -20,6 +20,7 @@ extern "C" {
 #include "MachineSystem.h"
 #include "AdeolaRotationAlgorithm.h"
 #include "AdeolaDisplacementAlgorithm.h"
+#include "MarkAlgorithm.h"
 
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
@@ -271,6 +272,8 @@ int main(int argc, char **argv)
     while (1) {
         restartAlgorithm = false;
        AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
+      // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
+      AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 1000, 15);
       //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
 
         MachineSystem *best = NULL;//s;

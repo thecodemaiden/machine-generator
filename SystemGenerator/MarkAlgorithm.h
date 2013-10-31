@@ -11,7 +11,7 @@
 
 #include "Algorithm.h"
 
-struct SystemInfo
+struct MarkSystemInfo
 {
     // a machine system and fitness info
     MachineSystem *system;
@@ -20,17 +20,16 @@ struct SystemInfo
     std::vector<float> inputValues;
     
     // we need to specify how many values this will hold for examination
-    SystemInfo(int steps): outputValues(steps), fitness(0.0),
+    MarkSystemInfo(int steps): outputValues(steps), fitness(0.0),
     inputValues(steps){}
     
-    ~SystemInfo() {
+    ~MarkSystemInfo() {
         delete system;
     }
 };
 
-
 class MarkAlgorithm {
-    std::vector<SystemInfo *> population;
+    std::vector<MarkSystemInfo *> population;
     float p_m;
     float p_c = 0;
     int simSteps = 10;
@@ -40,19 +39,18 @@ class MarkAlgorithm {
     MachineSystem *createInitialSystem();
     MachineSystem *mutateSystem(MachineSystem *original);
     
-    cpFloat evaluateSystem(SystemInfo *sys);
+    cpFloat evaluateSystem(MarkSystemInfo *sys);
     
-    SystemInfo *bestIndividual;
+    MarkSystemInfo *bestIndividual;
     
-    void stepSystem(SystemInfo *individual);
+    void stepSystem(MarkSystemInfo *individual);
     
 public:
     spaceUpdateFunc updateFunction;
-    
-    MarkAlgorithm(int populationSize=5, float p_m=0.02, int maxStagnation=5);
+    MarkAlgorithm(int populationSize=5, int maxGenerations = 100, int maxStagnation=5, float p_m=0.2, float p_c= 0);
     ~MarkAlgorithm();
     
-    bool tick(); // returns true if best fitness has been stagnant
+    bool tick();
     
     MachineSystem *bestSystem();
 };
