@@ -43,6 +43,8 @@ public:
     
     void getRandomAttachment(Attachment **attachment, cpVect *pos1, cpVect *pos2);
     void getRandomPartPosition(cpVect *partPosition);
+    
+    
         
     cpSpace *getSpace();
     cpVect getSize();

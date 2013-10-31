@@ -31,6 +31,7 @@
 		E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */; };
 		E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */; };
 		E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */; };
+		E2C3155F1822E46900774A13 /* simple_fft.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C3155D1822E46900774A13 /* simple_fft.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -100,6 +101,8 @@
 		E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaRotationAlgorithm.h; sourceTree = "<group>"; };
 		E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaConstantToSinusoidalAlgorithm.cpp; sourceTree = "<group>"; };
 		E2C315591822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaConstantToSinusoidalAlgorithm.h; sourceTree = "<group>"; };
+		E2C3155D1822E46900774A13 /* simple_fft.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = simple_fft.cpp; sourceTree = "<group>"; };
+		E2C3155E1822E46900774A13 /* simple_fft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simple_fft.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -273,6 +276,7 @@
 		E2A1D7C61800E33F003FA4AE /* SystemGenerator */ = {
 			isa = PBXGroup;
 			children = (
+				E2C3155B1822E43500774A13 /* Utilities */,
 				E24EC867180CA11500D15C9E /* README.md */,
 				E25FD8811801C2A200566B8D /* Algorithms */,
 				E2A1D85B1800EBE4003FA4AE /* Machine System */,
@@ -330,6 +334,15 @@
 				E27E4697181DDCE300D852BD /* Attachment.h */,
 			);
 			name = "Machine System";
+			sourceTree = "<group>";
+		};
+		E2C3155B1822E43500774A13 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				E2C3155D1822E46900774A13 /* simple_fft.cpp */,
+				E2C3155E1822E46900774A13 /* simple_fft.h */,
+			);
+			name = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -408,6 +421,7 @@
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,
 				4D3E45DD1811BA6500B9F69D /* MarkAlgorithm.cpp in Sources */,
 				E2A1D8591800E730003FA4AE /* ChipmunkDemoTextSupport.c in Sources */,
+				E2C3155F1822E46900774A13 /* simple_fft.cpp in Sources */,
 				E2A1D84E1800E5E3003FA4AE /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

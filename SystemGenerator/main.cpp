@@ -272,11 +272,9 @@ int main(int argc, char **argv)
     
     while (1) {
         restartAlgorithm = false;
-       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
+      // AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
-      AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 1000, 15);
-//       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
-      //  AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
+       // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
         AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         

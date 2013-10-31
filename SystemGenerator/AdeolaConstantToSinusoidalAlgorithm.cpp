@@ -10,6 +10,11 @@
 #include <numeric>
 
 
+MachineSystem *AdeolaConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *original)
+{
+    return  attachmentAnchorMutator(original);
+}
+
 // ----- FANCY (RIDICULOUS) FITNESS FUNCTION BELOW -----
 // ----- SOMETIMES PICKS EXACT OPPOSITE OF WHAT I WANT -----
 // find correlation between input and ouput values
@@ -27,10 +32,10 @@ cpFloat AdeolaConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
     
     cpFloat correlation = 0.0;
  
-    // transform the input to sin(input) and find the correlation with that
-    std::transform(sys->outputValues.begin(), sys->outputValues.end(), sys->outputValues.begin(), asin);
-    cpFloat outputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;    
+    cpFloat outputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;
     
+    // transform the input to sin(input) and find the correlation with that
+    std::transform(sys->inputValues.begin(), sys->inputValues.end(), sys->inputValues.begin(), sin);
     cpFloat inputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;
     
     // correlation = sum[(x - mean(x))*(y - mean(y))] / sqrt(sum[(x - mean(x))^2] * sum[(y- mean(y))^2])

@@ -18,6 +18,8 @@ public:
     :AdeolaRotationAlgorithm(populationSize, maxGenerations, maxStagnation, p_m, p_c){};
 
     // the only real difference is how I evaluate the output - now looking for input = a sin(output + phase) + b
+    
+    MachineSystem *mutateSystem(MachineSystem *original);
     cpFloat evaluateSystem(SystemInfo *sys);
     bool goodEnoughFitness(cpFloat bestFitness);
     

@@ -15,7 +15,7 @@
 class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
     
      MachineSystem *createInitialSystem();
-     MachineSystem *mutateSystem(MachineSystem *original);
+     virtual MachineSystem *mutateSystem(MachineSystem *original);
     void stepSystem(SystemInfo *individual);
 
     virtual cpFloat evaluateSystem(SystemInfo *sys);

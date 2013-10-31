@@ -248,3 +248,69 @@ MachineSystem  *attachmentMutator2(MachineSystem *sys)
     
     return newSystem;
 }
+
+MachineSystem  *attachmentAnchorMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    cpVect partPos = cpv(-1,-1);
+    newSystem->getRandomPartPosition(&partPos);
+    
+    if (partPos.x >= 0) {
+        Attachment *wallAttachment = newSystem->attachmentToWall(partPos);
+       
+        cpVect displacementVector = cpv((float)rand()/(RAND_MAX/2)-1.0,  (float)rand()/(RAND_MAX/2)-1.0);
+        
+        if ((float)rand()/RAND_MAX > 0.5) {
+            cpVect newVector = cpvadd(wallAttachment->firstAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            wallAttachment->firstAttachPoint = newVector;
+            
+        }
+        else {
+            cpVect newVector = cpvadd(wallAttachment->secondAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            wallAttachment->secondAttachPoint = newVector;
+        }
+        
+        newSystem->updateAttachmentToWall(partPos, wallAttachment);
+    }
+    
+    
+    return newSystem;
+}
+
+MachineSystem  *attachmentAnchorMutator2(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    cpVect partPos = cpv(-1,-1);
+    newSystem->getRandomPartPosition(&partPos);
+    
+    if (partPos.x >= 0) {
+        Attachment *wallAttachment = newSystem->attachmentToWall(partPos);
+        AttachmentType oldAttachmentType = wallAttachment->attachmentType();
+        
+        AttachmentType t ;
+        do {
+            t= (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+        } while (t==ATTACH_GEAR && t ==oldAttachmentType);
+        
+        // the wall will delete the old attachment
+        Attachment *newAttachment = Attachment::createAttachmentOfType((AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX));
+        newAttachment->firstAttachPoint = wallAttachment->firstAttachPoint;
+        newAttachment->secondAttachPoint = wallAttachment->secondAttachPoint;
+        newAttachment->attachmentLength = wallAttachment->attachmentLength;
+        
+        newSystem->updateAttachmentToWall(partPos, newAttachment);
+    }
+    
+    
+    return newSystem;
+}

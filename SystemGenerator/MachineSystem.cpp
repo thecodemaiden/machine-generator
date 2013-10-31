@@ -312,7 +312,8 @@ void MachineSystem::updateAttachmentToWall(cpVect gridPosition, Attachment *newA
         
         partToUpdate->detachFromBody(pegBody);
         
-        delete existingAttachment;
+        if (newAttachment != existingAttachment)
+            delete existingAttachment;
         
         partToUpdate->attachToBody(newAttachment, pegBody);
         attachments[machineNum][machineNum] = newAttachment;
