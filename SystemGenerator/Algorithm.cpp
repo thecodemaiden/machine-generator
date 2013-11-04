@@ -98,7 +98,7 @@ void randomGenerator1(MachineSystem *sys)
 
 void randomGenerator2(MachineSystem *sys)
 {
-    int nMachinesToPlace = arc4random_uniform(3)+3; // 3-5 machines to start
+    int nMachinesToPlace = arc4random_uniform(3)+4; // 4-6 machines to start
     
     std::vector<cpVect> placedMachines = std::vector<cpVect>();
     
@@ -287,30 +287,109 @@ MachineSystem  *attachmentAnchorMutator(MachineSystem *sys)
 }
 
 MachineSystem  *attachmentAnchorMutator2(MachineSystem *sys)
+{MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    Attachment *chosenAttachment = NULL;
+    cpVect part1 = cpvzero;
+    cpVect part2 = cpvzero;
+    
+    newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
+    
+    if (chosenAttachment) {
+        // copy for now....
+        chosenAttachment = Attachment::copyAttachment(chosenAttachment);
+        
+        cpVect displacementVector = cpv((float)rand()/(RAND_MAX/2)-1.0,  (float)rand()/(RAND_MAX/2)-1.0);
+        
+        if ((float)rand()/RAND_MAX > 0.5) {
+            cpVect newVector = cpvadd(chosenAttachment->firstAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            chosenAttachment->firstAttachPoint = newVector;
+            
+        }
+        else {
+            cpVect newVector = cpvadd(chosenAttachment->secondAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            chosenAttachment->secondAttachPoint = newVector;
+        }
+        
+        newSystem->updateAttachmentBetween(part1, part2, chosenAttachment);
+    }
+    
+    return newSystem;
+}
+
+MachineSystem *inputMachineMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+
+    sys->getRandomDisjointParts(NULL, NULL);
+    cpVect newInputPos;
+    do {
+        newSystem->getRandomPartPosition(&newInputPos);
+    } while (cpveql(newInputPos, sys->inputMachinePosition) && newInputPos.x != -1);
+    
+    newSystem->inputMachinePosition = newInputPos;
+    return  newSystem;
+}
+
+MachineSystem *outputMachineMutator(MachineSystem *sys)
 {
     MachineSystem *newSystem = new MachineSystem(*sys);
     
-    cpVect partPos = cpv(-1,-1);
-    newSystem->getRandomPartPosition(&partPos);
+    cpVect newOutputPos;
+    do {
+        sys->getRandomPartPosition(&newOutputPos);
+    } while (cpveql(newOutputPos, sys->outputMachinePosition) && newOutputPos.x != -1);
     
-    if (partPos.x >= 0) {
-        Attachment *wallAttachment = newSystem->attachmentToWall(partPos);
-        AttachmentType oldAttachmentType = wallAttachment->attachmentType();
-        
-        AttachmentType t ;
-        do {
-            t= (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
-        } while (t==ATTACH_GEAR && t ==oldAttachmentType);
-        
-        // the wall will delete the old attachment
-        Attachment *newAttachment = Attachment::createAttachmentOfType((AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX));
-        newAttachment->firstAttachPoint = wallAttachment->firstAttachPoint;
-        newAttachment->secondAttachPoint = wallAttachment->secondAttachPoint;
-        newAttachment->attachmentLength = wallAttachment->attachmentLength;
-        
-        newSystem->updateAttachmentToWall(partPos, newAttachment);
+    newSystem->outputMachinePosition = newOutputPos;
+    return  newSystem;
+}
+
+MachineSystem *addAttachmentMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+
+    cpVect p1 = cpv(-1,-1);
+    cpVect p2 = cpv(-1,-1);
+    
+    newSystem->getRandomDisjointParts(&p1, &p2);
+    
+    if (p1.x > -1) {
+        Attachment *a = randomAttachment();
+        newSystem->attachMachines(p1, p2, a);
     }
     
+    return newSystem;
+}
+
+MachineSystem *removeAttachmentMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+
+    // only remove if there are 
     
     return newSystem;
+}
+
+MachineSystem *addPartMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+
+    return newSystem;
+
+}
+
+MachineSystem *removePartMutator(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+
+    return newSystem;
+
 }

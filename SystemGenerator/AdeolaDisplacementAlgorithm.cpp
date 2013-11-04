@@ -146,8 +146,11 @@ bool AdeolaDisplacementAlgorithm::tick()
     return  stop;
 }
 
-
-
+// I started reading the NEAT paper; changes to the individual structure and tick() function will be needed
+//MachineSystem * AdeolaDisplacementAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
+//{
+//    return NULL;
+//}
 
 void AdeolaDisplacementAlgorithm::stepSystem(SystemInfo *individual)
 {

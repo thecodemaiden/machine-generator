@@ -367,7 +367,7 @@ void MachineSystem::getRandomAttachment(Attachment **attachment, cpVect *pos1, c
     // for machine 1 we search attachments to 2..n-1
     // for machine n-1 we don't have to search
     
-    if (!pos1 || !pos2) {
+    if (!pos1 || !pos2 || nAttachments == 0) {
         // I'm not doing work if there's nowhere to put the result
         return;
     }
@@ -408,7 +408,7 @@ void MachineSystem::getRandomAttachment(Attachment **attachment, cpVect *pos1, c
 void MachineSystem::getRandomPartPosition(cpVect *partPosition)
 {
     
-    if (!partPosition) {
+    if (!partPosition || nMachines == 0) {
         // don't do work if there's nowhere to put the result
         return;
     }
@@ -429,6 +429,84 @@ void MachineSystem::getRandomPartPosition(cpVect *partPosition)
                 foundParts++;
             }
                 
+        }
+    }
+    *partPosition = pos;
+}
+
+
+void MachineSystem::getRandomDisjointParts(cpVect *pos1, cpVect *pos2)
+{
+    // attachment matrix is nxn, where n is number of machines.
+    // we can search above or below the diagonal to get an attachment
+    // I chose below, so for machine 0 we search attachments to 1..n-1
+    // for machine 1 we search attachments to 2..n-1
+    // for machine n-1 we don't have to search
+    
+    int possibleParts = size.x*size.y;
+    int emptyAttachments = (possibleParts -1)*possibleParts - nAttachments;
+    
+    if (!pos1 || !pos2 || emptyAttachments == 0) {
+        // I'm not doing work if there's nowhere to put the result
+        return;
+    }
+    
+    cpVect p1 = cpv(-1,-1);
+    cpVect p2 = cpv(-1,-1);
+    
+    // we pick an existing attachment with uniform probability
+    int attachmentToPick = arc4random_uniform(emptyAttachments);
+    
+    int foundAttachments = 0;
+    
+    bool found = false;
+    
+    
+    for (int i=0; i<possibleParts; i++) {
+        for (int j=i+1; j<possibleParts; j++) {
+            if (!attachments[i][j]) {
+                if (foundAttachments == attachmentToPick) {
+                    p1 = machineNumberToPosition(i);
+                    p2 = machineNumberToPosition(j);
+                    found = true;
+                    break;
+                } else {
+                    foundAttachments++;
+                }
+            }
+        }
+        if (found)
+            break;
+    }
+    
+    *pos1 = p1;
+    *pos2 = p2;
+}
+
+void MachineSystem::getRandomEmptySpot(cpVect *partPosition)
+{
+    int possibleParts = size.x*size.y;
+
+    if (!partPosition || possibleParts == nMachines) {
+        // don't do work if there's nowhere to put the result
+        return;
+    }
+    
+    cpVect pos = cpv(-1,-1);
+    // we pick an existing machine with uniform probability
+    int partToPick = arc4random_uniform(possibleParts - nMachines);
+    
+    int foundParts = 0;
+    for (int i=0; i<possibleParts; i++) {
+        if (!parts[i]) {
+            if (partToPick == foundParts) {
+                // we found the nth existing machine
+                pos = machineNumberToPosition(i);
+                break;
+            } else {
+                foundParts++;
+            }
+            
         }
     }
     *partPosition = pos;

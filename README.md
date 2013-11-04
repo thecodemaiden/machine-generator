@@ -3,10 +3,11 @@ machine-generator
 
 TODO
 ----
-	* Clean up main function
-	* Make better random machine generators
+	* Rename algorithms and mutators
+    * Maybe make all possible mutators, then evolve the (choice of) mutations themselves?
+    * Recombination
 
 NEW STUFF
 ---------
-	* Made a complete EA (not that great)
+	* Can mutate the input and output machine positions
     * 

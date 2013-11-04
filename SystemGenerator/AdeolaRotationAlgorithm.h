@@ -15,11 +15,11 @@
 class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
     
      MachineSystem *createInitialSystem();
-     virtual MachineSystem *mutateSystem(MachineSystem *original);
-    void stepSystem(SystemInfo *individual);
+      MachineSystem *mutateSystem(MachineSystem *original);
+     void stepSystem(SystemInfo *individual);
 
-    virtual cpFloat evaluateSystem(SystemInfo *sys);
-    virtual bool goodEnoughFitness(cpFloat bestFitness);
+     cpFloat evaluateSystem(SystemInfo *sys);
+     bool goodEnoughFitness(cpFloat bestFitness);
     
     std::vector<SystemInfo *> population;
     
@@ -34,8 +34,8 @@ public:
     
     MachineSystem *bestSystem();
     
-    char* inputDescription();
-    char* outputDescription();
+     char* inputDescription();
+     char* outputDescription();
 };
 
 #endif /* defined(__SystemGenerator__AdeolaBadAlgorithm__) */

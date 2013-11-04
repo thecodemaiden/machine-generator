@@ -12,6 +12,7 @@
 #include "AdeolaBaseAlgorithm.h"
 
 // ok harder - I am going to rotate the input and I want the output to move, not rotate
+// going to try recombination as well
 
 class AdeolaDisplacementAlgorithm : public AdeolaAlgorithm {
     MachineSystem *createInitialSystem();
@@ -22,7 +23,7 @@ class AdeolaDisplacementAlgorithm : public AdeolaAlgorithm {
     bool goodEnoughFitness(cpFloat bestFitness);
     
     std::vector<SystemInfo *> population;
-    
+        
     SystemInfo *bestIndividual;
     
 public:

@@ -61,7 +61,7 @@ void fft(Iter_T a, Iter_T b, int log2n)
         }
     }
 }
-void test( )
+void fft_test( )
 
 {
     typedef complex<double> cx;
