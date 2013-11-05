@@ -20,7 +20,7 @@ typedef enum {
     ATTACH_FIXED, // the attachment points maintain their distance
     
     // the pivot joint is like a hinge if the attach points don't overlap
-    ATTACH_PIVOT, // the attachment can rotate round a point on the parent
+    ATTACH_PIVOT,
     
     ATTACH_SLIDE, // attachment points have a maximum distance
     ATTACH_GEAR, //
@@ -39,7 +39,7 @@ public:
     
     cpFloat attachmentLength; // distance between parent and child attachment points
     
-    cpConstraint *constraint; // NULL until the attachment is formed
+    cpConstraint *constraint; // NULL until the attachment is formed and enabled
     
     
     // constructor
@@ -51,6 +51,10 @@ public:
     virtual AttachmentType attachmentType()=0;
     
     virtual ~Attachment();
+    
+    // for compatibility with NEAT
+    bool disabled;
+    int innovationNumber;
 };
 
 class GearAttachment : public Attachment

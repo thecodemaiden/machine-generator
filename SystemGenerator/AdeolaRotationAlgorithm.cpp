@@ -48,7 +48,7 @@ static MachineSystem  *gearMutator(MachineSystem *sys)
             // don't change the length - for now
             GearAttachment *newAttachment = new GearAttachment(chosenAttachment->firstAttachPoint, chosenAttachment->secondAttachPoint, chosenAttachment->attachmentLength);
             
-            newSystem->updateAttachmentBetween(part1, part2, newAttachment);
+            newSystem->attachMachines(part1, part2, newAttachment);
         } else  {
             // modify the gear!
             // we *add* a small factor between -1 and 1 to the gear ratio!
@@ -214,7 +214,6 @@ bool AdeolaRotationAlgorithm::tick()
 //}
 
 // ----- FANCY (RIDICULOUS) FITNESS FUNCTION BELOW -----
-// ----- SOMETIMES PICKS EXACT OPPOSITE OF WHAT I WANT -----
 // find correlation between input and ouput values
 // if |correlation| -> 1, that's good (input is linearly related to output)
 // I am looking for inputAngle = outputAngle, so I really want 1 (same sign)

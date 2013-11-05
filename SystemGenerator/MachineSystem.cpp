@@ -47,6 +47,9 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
     cpShapeSetLayers(wallShape, WALL_LAYER);
     cpSpaceAddStaticShape(space, wallShape);
     
+    inputMachinePosition = cpv(-1,-1);
+    outputMachinePosition = cpv(-1,-1);
+    
 }
 
 MachineSystem::MachineSystem(MachineSystem &original, cpVect position)
@@ -129,6 +132,16 @@ cpVect MachineSystem::getSize()
 cpVect MachineSystem::getSpacing()
 {
     return gridSpacing;
+}
+
+int MachineSystem::getNumberOfAttachments()
+{
+    return nAttachments;
+}
+
+int MachineSystem::getNumberOfParts()
+{
+    return nMachines;
 }
 
 // NOTE - don't use a GEAR attachment to attach to the wall - the peg does not rotate, so the body will not rotate
@@ -233,11 +246,17 @@ bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attac
             int machine1Num = machinePositionToNumber(machine1Pos);
             int machine2Num = machinePositionToNumber(machine2Pos);
             Attachment *existingAttachment = attachments[machine1Num][machine2Num];
-            if (!existingAttachment) {
-                machine1->attachToBody(attachment, machine2->body);
+            if (!existingAttachment || existingAttachment->disabled) {
+                if (!attachment->disabled) {
+                    machine1->attachToBody(attachment, machine2->body);
+                    nAttachments++;
+                }
+                if (existingAttachment && existingAttachment != attachment) {
+                    attachment->innovationNumber = existingAttachment->innovationNumber;
+                    delete existingAttachment;
+                }
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = attachment;
                 added = true;
-                nAttachments++;
             }
         }
     }
@@ -258,11 +277,8 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
             if (existingAttachment) {
                 machine1->detachFromBody(machine2->body);
                 machine2->detachFromBody(machine1->body);
-               
                 
-                delete attachments[machine1Num][machine2Num];
-                
-                attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = NULL;
+                attachments[machine1Num][machine2Num]->disabled = true;
                 detached = true;
                 nAttachments--;
             }
@@ -338,11 +354,12 @@ MachineSystem::~MachineSystem()
     int nPegs = size.x * size.y;
     
     for (int i=0; i<nPegs; i++) {
-        for (int j=0; j<nPegs; j++) {
+        for (int j=i; j<nPegs; j++) {
             // CHECK
             // may not be necessary - could have removed attachments when removing parts
             // and only wall attachments remain to be removed
             delete attachments[i][j];
+            attachments[j][i] = NULL;
         }
     }
     
@@ -384,7 +401,7 @@ void MachineSystem::getRandomAttachment(Attachment **attachment, cpVect *pos1, c
     
     for (int i=0; i<possibleParts; i++) {
         for (int j=i+1; j<possibleParts; j++) {
-            if (attachments[i][j]) {
+            if (attachments[i][j] && !attachments[i][j]->disabled) {
                 if (foundAttachments == attachmentToPick) {
                     p1 = machineNumberToPosition(i);
                     p2 = machineNumberToPosition(j);
@@ -540,6 +557,41 @@ cpVect MachineSystem::gridPositionToWorld(cpVect gridPosition) {
     
     return pegPosition;
 }
+
+#pragma mark - for NEAT
+
+static bool compareGenes(const AttachmentInnovation &g1, const AttachmentInnovation &g2)
+{
+    return g1.innovationNumber < g2.innovationNumber;
+}
+
+std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(){
+    std::vector<AttachmentInnovation> genome;
+    
+    for (int i=0; i<attachments.size(); i++) {
+        std::vector<Attachment *> attachmentList= attachments[i];
+        for (int j=i+1; j<attachmentList.size(); j++) {
+            // only really have to cover a triangle of the attachments
+            Attachment *a = attachmentList[j];
+            if (a) {
+                //disabled or not
+                AttachmentInnovation info = AttachmentInnovation();
+                info.pos1 = machineNumberToPosition(i);
+                info.pos2 = machineNumberToPosition(j);
+                
+                info.innovationNumber = a->innovationNumber;
+                
+                genome.push_back(info);
+            }
+        }
+    }
+    
+    // now sort....
+    std::sort(genome.begin(), genome.end(), compareGenes);
+    
+    return genome;
+}
+
 
 #pragma mark - save and load
 

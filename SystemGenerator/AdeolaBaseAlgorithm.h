@@ -12,24 +12,6 @@
 #include "Algorithm.h"
 #include <string>
 
-
-struct SystemInfo
-{
-    // a machine system and fitness info
-    MachineSystem *system;
-    double fitness;
-    std::vector<cpFloat> outputValues;
-    std::vector<cpFloat> inputValues;
-    
-    // we need to specify how many values this will hold for examination
-    SystemInfo(int steps): outputValues(steps), fitness(0.0),
-    inputValues(steps){}
-    
-    ~SystemInfo() {
-        delete system;
-    }
-};
-
 class AdeolaAlgorithm {
 protected:
     

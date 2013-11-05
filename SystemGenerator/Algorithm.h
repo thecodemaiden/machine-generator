@@ -12,12 +12,39 @@
 #include "MachineSystem.h"
 
 
+struct SystemInfo
+{
+    // a machine system and fitness info
+    MachineSystem *system;
+    double fitness;
+    std::vector<cpFloat> outputValues;
+    std::vector<cpFloat> inputValues;
+    
+    // we need to specify how many values this will hold for examination
+    SystemInfo(int steps): outputValues(steps), fitness(0.0),
+    inputValues(steps){}
+    
+    ~SystemInfo() {
+        delete system;
+    }
+};
+
 typedef void (*spaceUpdateFunc)(cpSpace *space, long steps, cpFloat stepTime);
+
+// make random parts of a certain size
+MachinePart *randomPart(cpSpace *space, cpVect size);
 
 // example operators/generators
 void randomGenerator1(MachineSystem *sys);
 void randomGenerator2(MachineSystem *sys);
 void randomGenerator3(MachineSystem *sys);
+
+
+void neatGenerator(MachineSystem *sys); // generates a minimal system of two machines - one input and one ouput
+
+
+// ---- Old mutators, not really for use with NEAT -----
+// Adding some basic ones to the MachineSystem
 
 MachineSystem *attachmentMutator1(MachineSystem *sys); // change attachment between 2 machines
 MachineSystem *attachmentMutator2(MachineSystem *sys); // change attachment to wall
@@ -25,14 +52,11 @@ MachineSystem *attachmentMutator2(MachineSystem *sys); // change attachment to w
 MachineSystem *attachmentAnchorMutator(MachineSystem *sys); // change attachment position of wall attachment
 MachineSystem *attachmentAnchorMutator2(MachineSystem *sys); // change attachment position between parts
 
-//MachineSystem *inputMachineMutator(MachineSystem *sys);
-//MachineSystem *outputMachineMutator(MachineSystem *sys);
-//
-//MachineSystem *addAttachmentMutator(MachineSystem *sys);
-//MachineSystem *removeAttachmentMutator(MachineSystem *sys);
-//
-//MachineSystem *addPartMutator(MachineSystem *sys);
-//MachineSystem *removePartMutator(MachineSystem *sys);
+// -- New mutators --
+Attachment *changeAttachmentType(Attachment *at);
+Attachment *perturbAttachmentAttributes(Attachment *at);
+//void changeMachineShape(MachinePart *part);
+
 
 cpFloat normalize_angle(cpFloat angle); // convert to range (-2pi, +2pi)
 

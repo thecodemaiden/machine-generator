@@ -14,7 +14,8 @@ Attachment::Attachment(cpVect firstAttachPoint, cpVect secondAttachPoint, cpFloa
 secondAttachPoint(secondAttachPoint),
 attachmentLength(attachmentLength)
 {
-    
+    constraint = NULL;
+    disabled = false;
 }
 
 Attachment * Attachment::createAttachmentOfType(AttachmentType t)
@@ -64,6 +65,7 @@ Attachment * Attachment::copyAttachment(Attachment *original)
     if (SlideAttachment *slide = dynamic_cast<SlideAttachment *>(original)) {
         out = new SlideAttachment(slide->firstAttachPoint, slide->secondAttachPoint, slide->attachmentLength, slide->maxDistance, slide->minDistance);
     }
+    out->disabled = original->disabled;
     
     return out;
 }

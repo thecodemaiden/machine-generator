@@ -14,7 +14,7 @@ cpFloat normalize_angle(cpFloat angle)
     return fmodf(angle, 2*M_PI);
 }
 
-static MachinePart *randomPart(cpSpace *space, cpVect size)
+ MachinePart *randomPart(cpSpace *space, cpVect size)
 {
     MachinePart *m = new MachinePart(space);
     m->machineType = (BodyType)arc4random_uniform(MACHINE_TYPE_MAX);
@@ -146,6 +146,8 @@ void randomGenerator2(MachineSystem *sys)
     sys->outputMachinePosition = placedMachines[p2];
     
 }
+
+
 
 MachineSystem  *attachmentMutator1(MachineSystem *sys)
 {
@@ -393,3 +395,121 @@ MachineSystem *removePartMutator(MachineSystem *sys)
     return newSystem;
 
 }
+
+// ADDED FOR NEAT
+// Minimalism of starting solutions is valued - systems only ever grow
+void neatGenerator(MachineSystem *sys) {
+    cpVect inputPos = cpv(arc4random_uniform(sys->getSize().x), arc4random_uniform(sys->getSize().y));
+    cpVect outputPos;
+    do {
+        outputPos = cpv(arc4random_uniform(sys->getSize().x), arc4random_uniform(sys->getSize().y));
+    } while (cpveql(inputPos, outputPos));
+    
+    // put in input machine
+    
+    AttachmentType t ;
+    do {
+        t= (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+    } while (t==ATTACH_GEAR);
+    
+    Attachment *a = Attachment::createAttachmentOfType(t);
+    
+    a->attachmentLength = arc4random_uniform(3)*cpvlength(sys->getSpacing()) + 10;
+    MachinePart *inputPart = randomPart(sys->getSpace(), sys->getSpacing());
+    sys->addPart(inputPart, a, inputPos);
+    
+    //output machine
+    
+    do {
+        t= (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+    } while (t==ATTACH_GEAR);
+    
+    a = Attachment::createAttachmentOfType(t);
+    
+    a->attachmentLength = arc4random_uniform(3)*cpvlength(sys->getSpacing()) + 10;
+    MachinePart *outputPart = randomPart(sys->getSpace(), sys->getSpacing());
+    sys->addPart(outputPart, a, outputPos);
+        
+    a = randomAttachment();
+    
+    sys->attachMachines(inputPos, outputPos, a);
+    sys->inputMachinePosition = inputPos;
+    sys->outputMachinePosition = outputPos;
+    
+}
+
+Attachment *changeAttachmentType(Attachment *at)
+{
+    AttachmentType t;
+    do {
+        t= (AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX);
+    } while (t==at->attachmentType());
+    
+    Attachment *newAt = Attachment::createAttachmentOfType(t);
+    newAt->attachmentLength = at->attachmentLength;
+    newAt->firstAttachPoint = at->firstAttachPoint;
+    newAt->secondAttachPoint = at->secondAttachPoint;
+    
+    return newAt;
+}
+
+Attachment *perturbAttachmentAttributes(Attachment *at)
+{
+    cpFloat factor = (cpFloat)rand()/(RAND_MAX/2) - 1.0; // between -1 and 1
+    int selector = arc4random_uniform(3);
+
+    AttachmentType t = at->attachmentType();
+    bool adjustLength = (t == ATTACH_FIXED) || selector == 2;
+    at = Attachment::copyAttachment(at);
+    if (!adjustLength) {
+        switch (t) {
+            case ATTACH_GEAR:
+                // we can additionally alter ratio or phase
+                if (selector == 0) {
+                    ((GearAttachment *)at)->gearRatio += factor;
+                } else {
+                    ((GearAttachment *)at)->phase += factor;
+                }
+                break;
+            case ATTACH_PIVOT:
+            { // we can alter pivot position
+                cpFloat pivotPos = ((PivotAttachment *)at)->pivotPosition;
+                pivotPos += factor;
+                if (pivotPos > 1.0)
+                    pivotPos = 1.0;
+                
+                if (pivotPos < -1.0)
+                    pivotPos = -1.0;
+                ((PivotAttachment *)at)->pivotPosition = pivotPos;
+            }
+                break;
+            case ATTACH_SLIDE:
+                // we can alter max or min distance
+                if (selector == 0) {
+                    ((SlideAttachment *)at)->maxDistance += factor;
+                } else {
+                    ((SlideAttachment *)at)->minDistance += factor;
+                }
+                break;
+            case ATTACH_SPRING:
+                // we can alter damping or stiffness
+                if (selector == 0) {
+                    ((SpringAttachment *)at)->damping += factor;
+                } else {
+                    ((SpringAttachment *)at)->stiffness += factor;
+                }
+                break;
+            default:
+                break;
+        }
+    } else {
+        at->attachmentLength += factor; // is this a good idea?
+    }
+    return at;
+}
+
+void changeMachineShape(MachinePart *part)
+{
+    
+}
+

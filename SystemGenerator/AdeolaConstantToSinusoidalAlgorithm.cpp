@@ -36,16 +36,19 @@ AdeolaConstantToSinusoidalAlgorithm::~AdeolaConstantToSinusoidalAlgorithm()
 MachineSystem *AdeolaConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *original)
 {
     float selector = (float)rand()/RAND_MAX;
-    
-    if (selector > 0.75) {
-        return  attachmentAnchorMutator(original);
-    } else  if (selector > 0.5) {
-        return  attachmentAnchorMutator2(original);
-    } else if (selector > 0.25) {
-        return addAttachmentMutator(original);
-    } else {
-        return outputMachineMutator(original);
-    }
+    if (selector > 0.5)
+        return attachmentAnchorMutator(original);
+    else
+        return attachmentAnchorMutator2(original);
+//    if (selector > 0.75) {
+//        return  attachmentAnchorMutator(original);
+//    } else  if (selector > 0.5) {
+//        return  attachmentAnchorMutator2(original);
+//    } else if (selector > 0.25) {
+//        return addAttachmentMutator(original);
+//    } else {
+//        return outputMachineMutator(original);
+//    }
 }
 
 MachineSystem * AdeolaConstantToSinusoidalAlgorithm::createInitialSystem()

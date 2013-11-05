@@ -18,10 +18,7 @@ extern "C" {
 
 #include "MachinePart.h"
 #include "MachineSystem.h"
-#include "AdeolaRotationAlgorithm.h"
-#include "AdeolaDisplacementAlgorithm.h"
-#include "MarkAlgorithm.h"
-#include "AdeolaConstantToSinusoidalAlgorithm.h"
+#include "AlgorithmList.h"
 
 static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
@@ -87,6 +84,8 @@ DrawInstructions()
 	ChipmunkDemoTextDrawString(cpv(-300, 220),
                                "Controls:\n"
                                "x - restart EA\n"
+                               "` - pause\n"
+                               "1 - step once\n"
                                );
 }
 
@@ -275,20 +274,27 @@ int main(int argc, char **argv)
       // AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
       // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
        // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
-        AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
+     //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
+        // sorry about the name, this is actually the rotation algorithm
+        NEATDisplacementToX *a = new NEATDisplacementToX(10, 1000, 150);
         
         MachineSystem *best = NULL;//s;
         
-        while(!restartAlgorithm && !a->tick()) {
+        while(!restartAlgorithm) {
             double now = glfwGetTime();
-            if (now - LastTime > 0.5) {
+            if ((!paused && now - LastTime > 0.3) || (paused && step)) { // slow your roll...
+                step = false;
+                if (a->tick())
+                    break;
                 LastTime = now;
                 best = a->bestSystem();
-                
-                updateWorld(best->getSpace(), best, cpvzero, 0.0);
             }
+            if (best)
+                updateWorld(best->getSpace(), best, cpvzero, 0.0);
         }
+        LastTime = glfwGetTime();
+        paused = false;
         cpConstraint *drivingMotor = NULL;
         if (!restartAlgorithm) {
             best = a->bestSystem();
