@@ -115,6 +115,7 @@ nAttachments(0)
                 cpVect machine2Pos = machineNumberToPosition(j);
                 
                 attachMachines(machine1Pos, machine2Pos, attachmentCopy);
+                attachmentCopy->innovationNumber = attachmentToCopy->innovationNumber;
             }
         }
     }
@@ -298,6 +299,7 @@ void MachineSystem::updateAttachmentBetween(cpVect machine1Pos, cpVect machine2P
             int machine2Num = machinePositionToNumber(machine2Pos);
             Attachment *existingAttachment = attachments[machine1Num][machine2Num];
             if (existingAttachment) {
+                newAttachment->innovationNumber = existingAttachment->innovationNumber;
                 detachMachines(machine1Pos, machine2Pos);
                 attachMachines(machine1Pos, machine2Pos, newAttachment);
             }
@@ -351,10 +353,9 @@ MachineSystem::~MachineSystem()
         
     }
     
-    int nPegs = size.x * size.y;
     
-    for (int i=0; i<nPegs; i++) {
-        for (int j=i; j<nPegs; j++) {
+    for (int i=0; i<attachments.size(); i++) {
+        for (int j=i; j<attachments[i].size(); j++) {
             // CHECK
             // may not be necessary - could have removed attachments when removing parts
             // and only wall attachments remain to be removed
@@ -597,7 +598,7 @@ std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(){
 
 
 
-void outputAttachment(std::ofstream & o, Attachment *a, int part1, int part2)
+void outputAttachment(std::ostream & o, Attachment *a, int part1, int part2)
 {
     o << part1 << "\t" << part2 << "\t" << a->attachmentType() << "\t" << a->firstAttachPoint.x << "\t";
     o << a->firstAttachPoint.y << "\t" << a->secondAttachPoint.x << "\t" << a->secondAttachPoint.y << "\t";
@@ -621,7 +622,7 @@ void outputAttachment(std::ofstream & o, Attachment *a, int part1, int part2)
     }
 }
 
-void outputMachine(std::ofstream & outputStream, MachinePart *p, int machinePos)
+void outputMachine(std::ostream & outputStream, MachinePart *p, int machinePos)
 {
     outputStream << machinePos << "\t" << p->machineType << "\t" << p->height << "\t" << p->length << "\n";
 }

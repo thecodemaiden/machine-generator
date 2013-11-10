@@ -16,6 +16,7 @@ attachmentLength(attachmentLength)
 {
     constraint = NULL;
     disabled = false;
+    innovationNumber = 0;
 }
 
 Attachment * Attachment::createAttachmentOfType(AttachmentType t)
@@ -66,7 +67,6 @@ Attachment * Attachment::copyAttachment(Attachment *original)
         out = new SlideAttachment(slide->firstAttachPoint, slide->secondAttachPoint, slide->attachmentLength, slide->maxDistance, slide->minDistance);
     }
     out->disabled = original->disabled;
-    
     return out;
 }
 

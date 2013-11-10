@@ -12,10 +12,7 @@
 NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
 :NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_node, p_m_conn),
 p_m_attach(p_m_attach)
-{
-    // if i do this in the superclass, I can't access my subclasses mutation from the constructor!
-    // BOOOO C++!!!
-    
+{ 
     MachineSystem *initialSystem = createInitialSystem();
     // mutate the initial system to get an initial population
     while (population.size() < populationSize) {
@@ -25,9 +22,6 @@ p_m_attach(p_m_attach)
         info->system = newSystem;
         population.push_back(info);
     }
-    
-    // evaluate initial fitnesses so we can pick parents
-    evaluatePopulationFitnesses();
 }
 
 void NEATDisplacementToX::stepSystem(SystemInfo *individual)
@@ -36,11 +30,9 @@ void NEATDisplacementToX::stepSystem(SystemInfo *individual)
     cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
     cpSpace *systemSpace = individual->system->getSpace();
     
-    
     cpConstraint *motor = cpSimpleMotorNew(cpSpaceGetStaticBody(systemSpace), inputBody, M_PI);
     cpSpaceAddConstraint(systemSpace, motor);
     cpConstraintSetMaxForce(motor, 50000);
-    
     
     for (int i=0; i<simSteps; i++) {
         individual->inputValues[i] = (cpBodyGetAngle(inputBody));
@@ -48,7 +40,10 @@ void NEATDisplacementToX::stepSystem(SystemInfo *individual)
         cpSpaceStep(systemSpace, 0.1);
         individual->outputValues[i] = (cpBodyGetAngle(outputBody));
     }
+    
     cpSpaceRemoveConstraint(systemSpace, motor);
+    cpBodySetAngVel(inputBody, 0);
+    cpBodySetAngVel(outputBody, 0);
 }
 
 cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
@@ -97,15 +92,18 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
         meandInputdOutput /= nSteps;
     }
     
-    fitness = correlation;
+    fitness = 1.0+correlation;
     
     if (outputVariance > 0) {
         cpFloat distance = fabs (2.0 -meandInputdOutput);
         fitness /= (distance+0.1)*(distance+0.1);
     }
+
+    fitness = fitness*inputVariance*outputVariance;
+    if (fitness == 0)
+        fitness = 1e-8;
     
-    
-    return fitness*inputVariance*outputVariance/sys->system->getNumberOfParts(); // penalize too many parts
+    return fitness;
 }
 
 bool NEATDisplacementToX::goodEnoughFitness(cpFloat bestFitness)

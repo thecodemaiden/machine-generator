@@ -277,7 +277,7 @@ int main(int argc, char **argv)
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-        NEATDisplacementToX *a = new NEATDisplacementToX(10, 1000, 150);
+        NEATDisplacementToX *a = new NEATDisplacementToX(3, 1000, 150);
         
         MachineSystem *best = NULL;//s;
         
@@ -311,16 +311,13 @@ int main(int argc, char **argv)
             cpConstraintSetMaxForce(drivingMotor, 80000);
         }
         
-      //  cpFloat startTime = glfwGetTime();
         while(!restartAlgorithm) {
             double now = glfwGetTime();
             //sinusoidal motor!
-//            cpFloat motorAngle = 2*M_PI*cos((now-startTime));
-//            cpSimpleMotorSetRate(drivingMotor, motorAngle);
             updateWorld(best->getSpace(), best, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
             LastTime = now;
-            
         }
+        
         if (drivingMotor)
             cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
         delete a;

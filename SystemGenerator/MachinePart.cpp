@@ -135,9 +135,6 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     cpConstraint *mainConstraint = NULL;
     
     if (SpringAttachment *spring = dynamic_cast<SpringAttachment *>(attachment)) {
-//        if (spring->attachmentLength <= 0) {
-//            spring->attachmentLength = bodyDistance;
-//        }
         
         mainConstraint = cpDampedSpringNew(otherBody, body, otherAttachPoint, localAttachPoint, spring->attachmentLength, spring->stiffness, spring->damping);
         cpSpaceAddConstraint(space, mainConstraint);
@@ -161,6 +158,8 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     
     if (PivotAttachment *pivot = dynamic_cast<PivotAttachment *>(attachment)) {
         // get the world coords of the attach points and interpolate between them
+        pivot->attachmentLength = bodyDistance;
+        
         cpVect worldAttachPoint1 = cpBodyLocal2World(body, localAttachPoint);
         cpVect worldAttachPoint2 = cpBodyLocal2World(otherBody, otherAttachPoint);
         cpVect pivotAttachPoint = cpvlerp(worldAttachPoint1, worldAttachPoint2, pivot->pivotPosition);
@@ -169,7 +168,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     }
     
     if (GearAttachment *gear = dynamic_cast<GearAttachment *>(attachment)) {
-       
+        gear->attachmentLength = bodyDistance;
         // also make sure they don't move relative to each other - with a pin joint in their centers
         cpConstraint *distanceConstraint = cpPinJointNew(body, otherBody, cpvzero, cpvzero);
         cpSpaceAddConstraint(space, distanceConstraint);
@@ -187,6 +186,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
             slide->minDistance = slide->maxDistance;
             slide->maxDistance = temp;
         }
+        slide->attachmentLength = (slide->minDistance + slide->maxDistance)/2;
         
         mainConstraint = cpSlideJointNew(otherBody, body, otherAttachPoint, localAttachPoint, slide->minDistance,slide->maxDistance);
         cpSpaceAddConstraint(space, mainConstraint);

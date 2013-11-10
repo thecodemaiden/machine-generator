@@ -12,17 +12,22 @@
 #include <vector>
 #include "Algorithm.h"
 
-// the members are cleared out, repopulated, and the representative is updated from the new generation
+// each generation the members are cleared out, repopulated, and the representative is updated
 struct NEATSpecies {
-    std::vector<AttachmentInnovation> representativeGenome;
+    MachineSystem *representative;
     std::vector<SystemInfo *>members;
+    double totalSharedFitness;
+    
+    ~NEATSpecies() {
+        delete representative;
+    }
 };
 
 class NEATAlgorithm {
 protected:
     std::vector<AttachmentInnovation> newConnections;
     std::vector<SystemInfo *> population;
-    
+    std::vector<NEATSpecies *>speciesList;
 
     // recombination probability
     cpFloat p_c;
@@ -31,15 +36,19 @@ protected:
     cpFloat p_m_node;
     cpFloat p_m_conn;
     
+    // threshold distance - a difference bigger than this will exclude an individual from a species
+    
+    cpFloat d_threshold = 1.0;
+    
     // weights for excess, disjoint, and average matching (attachment) gene distance
     // how do we define distance between 2 different attachments?
         // propose:
         // start at 4.0 if they are different types,
         // else start with sum of ratios between attributes (i.e. smaller damping/smaller damping, smaller gearRatio/larger gearRatio etc
         // and add ratio between attachment lengths?
-    cpFloat w_excess;
-    cpFloat w_disjoint;
-    cpFloat w_matching;
+    cpFloat w_excess = 0.5;
+    cpFloat w_disjoint = 0.25;
+    cpFloat w_matching = 0.25;
 
     int simSteps = 10;
     int populationSize;
@@ -52,7 +61,7 @@ protected:
     cpFloat allTimeBestFitness;
     
     int nextInnovationNumber;
-    bool insertRandomAttachments = false;   // if true, make up attachments when we insert a new node between two nodes
+    bool insertRandomAttachments = true;   // if true, make up attachments when we insert a new node between two nodes
                                             // default is to use the original attachment type
 
     virtual void mutateSystem(MachineSystem *original); // does not make a copy
@@ -66,13 +75,13 @@ protected:
     virtual cpFloat evaluateSystem(SystemInfo *sys);
     virtual bool goodEnoughFitness(cpFloat bestFitness);
     
-    void evaluatePopulationFitnesses();
-
+    virtual cpFloat genomeDistance(MachineSystem *sys1, MachineSystem *sys2);
+    
 public:
     NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c=0.5, float p_m_node=0.5, float p_m_conn=0.5);
     ~NEATAlgorithm();
     
-    bool tick();
+    bool tick(); // should not need to be overridden
     
     // override if needed 
     virtual MachineSystem *bestSystem(); // please override according to the representation for your algorithm
@@ -84,8 +93,7 @@ public:
     
 private:
     void selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum);
+    void speciate(); // divide everything into species
 };
-
-// add a method to MachineSystem?
 
 #endif /* defined(__SystemGenerator__NEATAlgorithm__) */

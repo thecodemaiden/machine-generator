@@ -16,7 +16,7 @@ NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStag
     nextInnovationNumber = 1;
     allTimeBestFitness = -FLT_MAX;
     generations = 0;
-    
+    stagnantGenerations = 0;
 }
 
 NEATAlgorithm::~NEATAlgorithm()
@@ -34,80 +34,103 @@ static bool compareIndividuals(const SystemInfo *sys1, const SystemInfo *sys2)
     return sys1->fitness > sys2->fitness;
 }
 
+//static int indexOfInnovationNumberInGenome(std::vector<AttachmentInnovation> genome, int in, int start) {
+//    int loc = -1;
+//    
+//    std::vector<AttachmentInnovation>::iterator it = genome.begin()+start;
+//    
+//    while (it != genome.end()) {
+//        if (it->innovationNumber == in) {
+//            loc = int(it - genome.begin());
+//            break;
+//        }
+//        it++;
+//    }
+//    
+//    return loc;
+//}
+
+static bool compareInnovationNumbers(const AttachmentInnovation a1, const AttachmentInnovation a2)
+{
+    return a1.innovationNumber < a2.innovationNumber;
+}
+
+static void addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation gene, MachineSystem *newChild)
+{
+    cpVect pos1 = gene.pos1;
+    cpVect pos2 = gene.pos2;
+    
+    
+    if (!newChild->partAtPosition(pos1)) {
+        MachinePart *newPart = new MachinePart(*parent->partAtPosition(pos1), newChild->getSpace());
+        Attachment *wallAttachment = Attachment::copyAttachment(parent->attachmentToWall(pos1));
+        newChild->addPart(newPart, wallAttachment, pos1);
+    }
+    
+    if (!newChild->partAtPosition(pos2)) {
+        MachinePart *newPart = new MachinePart(*parent->partAtPosition(pos2), newChild->getSpace());
+        Attachment *wallAttachment = Attachment::copyAttachment(parent->attachmentToWall(pos2));
+        newChild->addPart(newPart, wallAttachment, pos2);
+    }
+    
+    // now attach
+    Attachment *attachmentToCopy = parent->attachmentBetween(pos1, pos2);
+    Attachment *copy = Attachment::copyAttachment(attachmentToCopy);
+    copy->innovationNumber = gene.innovationNumber;
+    newChild->attachMachines(pos1, pos2, copy);
+}
+
 MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
 {
     MachineSystem *newChild = new MachineSystem(300, 300, 5, 5, cpvzero);
     std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
     std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
     
-    int i = 0; // position in genome1 we're examining
-    int j = 0; // the position in genome2 we're examning
-    while (i < genome1.size()) {
-        AttachmentInnovation a1 = genome1[i];
-        
-        cpVect pos1 = a1.pos1;
-        cpVect pos2 = a1.pos2;
-        
-        MachineSystem *parent = sys1;
+    
+    // holy crap, c++ has some good standard methods, like *set difference*
+    std::vector<AttachmentInnovation> matchingGenes1;
+    std::vector<AttachmentInnovation> matchingGenes2;
+    std::vector<AttachmentInnovation> disjointandExcess;
+    
+    // set intersection takes from the first range given - I do it twice so I have the matches from parent 1 and from parent 2.
+    std::set_intersection(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(matchingGenes1), compareInnovationNumbers);
+    std::set_intersection(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(),std::back_inserter(matchingGenes2), compareInnovationNumbers);
+    
+    // difference takes things in the first range that are not in the second - perfect if we assume parent 1 is more fit
+    std::set_difference(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(disjointandExcess), compareInnovationNumbers);
+    
 
-        // we never examine things at the end of a2 that aren't in a1
-        if (j < genome2.size()) {
-            AttachmentInnovation a2 = genome2[j];
-            
-            if (a1.innovationNumber == a2.innovationNumber) {
-                
+    // first we handle the matching genes
+    for (int i=0; i<matchingGenes1.size(); i++){
+            AttachmentInnovation gene = matchingGenes1[i];
+            MachineSystem *parent = sys1;
                 // randomly choose 1 to add to the child
                 float selector = (cpFloat)rand()/RAND_MAX;
-               
-                if (selector <= p_c) {
-                    parent = sys2;
-                    pos1 = a2.pos1;
-                    pos2 = a2.pos2;
-                }
-                
-                // move both to next
-                j++;
-                i++;
-            } else if (a1.innovationNumber < a2.innovationNumber) {
-                //disjoint, belongs to a1, no need to increment a2 pointer yet - add to our child
-                // move a1 along - maybe a2 will match up
-                i++;
-            } else if (a1.innovationNumber > a2.innovationNumber) {
-                // skip this one of a2, don't evaluate a1 yet - we don't know if it's disjoint or if there is a match later in a2
-                j++;
-                continue;
+            
+            if (selector <= p_c) {
+                parent = sys2;
+                gene = matchingGenes2[i];
             }
-        } else {
-            // more left in a1 not in a2? excess - add to child as well
-            // move along a1
-            i++;
-        }
-        
-        if (!newChild->partAtPosition(pos1)) {
-            MachinePart *newPart = new MachinePart(*parent->partAtPosition(pos1), newChild->getSpace());
-            Attachment *wallAttachment = Attachment::copyAttachment(parent->attachmentToWall(pos1));
-            newChild->addPart(newPart, wallAttachment, pos1);
-        }
-        
-        if (!newChild->partAtPosition(pos2)) {
-            MachinePart *newPart = new MachinePart(*parent->partAtPosition(pos2), newChild->getSpace());
-            Attachment *wallAttachment = Attachment::copyAttachment(parent->attachmentToWall(pos2));
-            newChild->addPart(newPart, wallAttachment, pos2);
-        }
-        
-        // now attach
-        Attachment *attachmentToCopy = parent->attachmentBetween(pos1, pos2);
-        newChild->attachMachines(pos1, pos2, Attachment::copyAttachment(attachmentToCopy));
-        
-        // child needs input and ouput part... random?
-        cpVect pos;
-        newChild->getRandomPartPosition(&pos);
-        newChild->inputMachinePosition = pos;
-        do {
-            newChild->getRandomPartPosition(&pos);
-        } while (cpveql(pos, newChild->inputMachinePosition));
-        newChild->outputMachinePosition = pos;
+        addGeneFromParentSystem(parent, gene, newChild);
     }
+    
+    // then the disjoint genes
+    for (int i=0; i<disjointandExcess.size(); i++) {
+        addGeneFromParentSystem(sys1, disjointandExcess[i], newChild);
+    }
+    
+                // child needs input and ouput part... copy from parent 1
+    newChild->inputMachinePosition = sys1->inputMachinePosition;
+    newChild->outputMachinePosition = sys1->outputMachinePosition;
+    
+//        cpVect pos;
+//        newChild->getRandomPartPosition(&pos);
+//        newChild->inputMachinePosition = pos;
+//        do {
+//            newChild->getRandomPartPosition(&pos);
+//        } while (cpveql(pos, newChild->inputMachinePosition));
+//        newChild->outputMachinePosition = pos;
+    
     
     return newChild;
 }
@@ -186,14 +209,234 @@ void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cp
     *parent2 = chosen;
 }
 
-void NEATAlgorithm::evaluatePopulationFitnesses() {
+void NEATAlgorithm::speciate()
+{
+    std::vector<SystemInfo *>::iterator populationIter = population.begin();
+    
+    while (populationIter != population.end()) {
+        // assign to species
+        bool added= false;
+        
+        std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+        while (speciesIterator != speciesList.end()) {
+            double distance = genomeDistance((*populationIter)->system, (*speciesIterator)->representative);
+            if (fabs(distance) < d_threshold) {
+                added = true;
+                (*speciesIterator)->members.push_back(*populationIter);
+                break;
+            }
+            speciesIterator++;
+        }
+      
+        if (!added) {
+            // new species!!
+            NEATSpecies *s = new NEATSpecies();
+            s->representative = new MachineSystem(*(*populationIter)->system);
+            s->members.push_back(*populationIter);
+            speciesList.push_back(s);
+        }
+        
+        populationIter++;
+    }
+    fprintf(stderr, "%ld species\n", speciesList.size());
+    
+    // for each species, copy a random current member to be the representative for the next generation, and adjust the fitnesses for sharing
+    // kill off a species with no members
+    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    while (speciesIterator != speciesList.end()) {
+        // pick a new rep
+        std::vector<SystemInfo *> members = (*speciesIterator)->members;
+        if (members.size() == 0) {
+            NEATSpecies *extinctSpecies = *speciesIterator;
+            speciesIterator = speciesList.erase(speciesIterator);
+            delete extinctSpecies;
+        } else {
+            
+            int index = arc4random_uniform(members.size());
+            MachineSystem *rep = new MachineSystem(*(members[index]->system));
+            delete (*speciesIterator)->representative;
+            (*speciesIterator)->representative = rep;
+            
+           // fprintf(stderr, "\tSpecies %d: %ld members\n", ++i, members.size());
+            
+            // update the fitnesses
+            double totalFitness = 0.0;
+            std::vector<SystemInfo *>::iterator memberIterator = members.begin();
+            while (memberIterator != members.end()) {
+                (*memberIterator)->fitness /= members.size();
+                totalFitness += (*memberIterator)->fitness;
+                memberIterator++;
+            }
+            (*speciesIterator)->totalSharedFitness = totalFitness;
+            speciesIterator++;
+        }
+    }
+}
+
+static double normalize(double x1, double x2)
+{
+    if (x1==0 && x2== 0)
+        return 0.0;
+    return (x1-x2)/(x1+x2);
+}
+
+static double smallerToLarger(double x1, double x2)
+{
+    if (x1 > x2)
+        return x2/x1;
+    return x1/x2;
+}
+
+// compute difference
+// propose:
+// start at 4.0 if they are different types,
+// else start with sum of ratios between attributes
+// and add ratio between attachment lengths?
+static double attachmentDifference(Attachment *a1, Attachment *a2)
+{
+
+    double diff = normalize(a1->attachmentLength, a2->attachmentLength);
+    
+    if (a1->attachmentType() == a2->attachmentType()) {
+        switch (a1->attachmentType()) {
+            case ATTACH_GEAR:
+            {
+                diff += normalize(((GearAttachment *)a1)->gearRatio, ((GearAttachment *)a2)->gearRatio);
+                
+                diff += normalize(((GearAttachment *)a1)->phase, ((GearAttachment *)a2)->phase);
+                
+                break;
+            }
+            case ATTACH_PIVOT:
+            {
+                diff += normalize(((PivotAttachment *)a1)->pivotPosition, ((PivotAttachment *)a2)->pivotPosition);
+                break;
+            }
+            case ATTACH_SLIDE:
+            {
+                diff += normalize(((SlideAttachment *)a1)->minDistance, ((SlideAttachment *)a2)->minDistance);
+        
+                diff += normalize(((SlideAttachment *)a1)->maxDistance, ((SlideAttachment *)a2)->maxDistance);
+                break;
+            }
+            case ATTACH_SPRING:
+            {
+                diff += normalize(((SpringAttachment *)a1)->damping, ((SpringAttachment *)a2)->damping);
+                
+                diff += normalize(((SpringAttachment *)a1)->stiffness, ((SpringAttachment *)a2)->stiffness);
+                break;
+            }
+            case ATTACH_FIXED:
+                // nothing to do, fall through
+            default:
+                break;
+        }
+    } else {
+        diff = diff + 4.0;
+    }
+
+    return diff;
+}
+
+
+cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
+{
+    std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
+    std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
+    
+    // find the longer one
+    size_t longerSize = (genome1.size() > genome2.size() ? genome1.size()  : genome2.size());
+    
+    size_t nDisjoint = 0;
+    size_t nExcess = 0;
+    size_t nMatching = 0;
+    size_t matchingDiff = 0;
+
+    // yay stdlib!
+    std::vector<AttachmentInnovation> matchingGenes1;
+    std::vector<AttachmentInnovation> matchingGenes2;
+    std::vector<AttachmentInnovation> disjointFromSys1;
+    std::vector<AttachmentInnovation> disjointFromSys2;
+    
+
+    // set intersection takes from the first range given - I do it twice so I have the matches from parent 1 and from parent 2.
+    std::set_intersection(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(matchingGenes1), compareInnovationNumbers);
+    std::set_intersection(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(),std::back_inserter(matchingGenes2), compareInnovationNumbers);
+    
+    // difference takes things in the first range that are not in the second - we will have to check for excess ourself
+    std::set_difference(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(disjointFromSys1), compareInnovationNumbers);
+    std::set_difference(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(), std::back_inserter(disjointFromSys2), compareInnovationNumbers);
+
+    
+    nMatching = matchingGenes2.size();
+    // first find the distance between matching genes
+    for (int i=0; i<nMatching; i++) {
+        AttachmentInnovation a1 = matchingGenes1[i];
+        AttachmentInnovation a2 = matchingGenes2[i];
+        
+        Attachment *attachment1 = sys1->attachmentBetween(a1.pos1, a1.pos2);
+        Attachment *attachment2 = sys2->attachmentBetween(a2.pos1, a2.pos2);
+  
+        matchingDiff += attachmentDifference(attachment1, attachment2);
+    }
+    
+    // now determine the excess vs disjoint
+    // if one of the disjoint sets is empty, then it's all excess
+    if (disjointFromSys2.size() == 0 || disjointFromSys1.size() == 0) {
+        nExcess = disjointFromSys1.size() + disjointFromSys2.size();
+    } else {
+        // else chalk everything up to disjoint
+        nDisjoint = disjointFromSys1.size() + disjointFromSys2.size();
+        
+        // then find the number of excess genes
+        int last1 = disjointFromSys1.back().innovationNumber;
+        int last2 = disjointFromSys2.back().innovationNumber;
+        
+        std::vector<AttachmentInnovation> shorter;
+        std::vector<AttachmentInnovation> longer;
+        
+        if (last1 != last2) {
+            if (last1 > last2) {
+                // genome 1 has excess
+                shorter = disjointFromSys2;
+                longer = disjointFromSys1;
+            } else if (last1 < last2) {
+                // genome 2 has excess, switch last1 and last2
+                shorter=disjointFromSys1;
+                longer = disjointFromSys2;
+                
+                int temp = last1;
+                last1 = last2;
+                last2 = temp;
+            }
+            // go back from end of longer until we run into a value <= the end of shorter
+            size_t i;
+            for (i=longer.size(); i; i--) {
+                if (longer[i].innovationNumber < shorter.back().innovationNumber)
+                    break;
+            }
+            nExcess = i;
+            nDisjoint -= nExcess;
+        }
+    }
+
+    
+
+    double d = w_disjoint*nDisjoint/longerSize + w_excess*nExcess/longerSize + w_matching*matchingDiff/nMatching;
+
+    return d;
+}
+
+bool NEATAlgorithm::tick()
+{
+    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : allTimeBestFitness;
+    
     cpFloat bestFitness = -INFINITY; // we want zero fitness
     cpFloat worstFitness = INFINITY;
     
-
+    
     size_t bestPos = -1;
     size_t worstPos = -1;
-    
     
     for (size_t popIter = 0; popIter <population.size(); popIter++) {
         SystemInfo *individual = population[popIter];
@@ -216,36 +459,62 @@ void NEATAlgorithm::evaluatePopulationFitnesses() {
     if (bestFitness > allTimeBestFitness)
         allTimeBestFitness = bestFitness;
     
-    fprintf(stderr, "BEST FITNESS: %f (%lu)\n", bestFitness, bestPos);
-    fprintf(stderr, "WORST FITNESS: %f (%lu)\n", worstFitness, worstPos);
-}
+    speciate();
+    
+    // figure out how many of each species to save
+    double sharedFitnessSum = 0.0;
+    for (int i=0; i<speciesList.size(); i++) {
+        sharedFitnessSum += speciesList[i]->totalSharedFitness;
+    }
+    
+    std::vector<SystemInfo *> individualsToSave;
+    
+    for (int i=0; i<speciesList.size(); i++) {
+        double proportionToSave = (speciesList[i]->totalSharedFitness)/sharedFitnessSum;
+        int numToSave = MIN((proportionToSave*populationSize), (int)speciesList[i]->members.size());
+        numToSave = MAX(numToSave, 1); // save 1 of each species
+        std::sort(speciesList[i]->members.begin(), speciesList[i]->members.end(), compareIndividuals);
 
-bool NEATAlgorithm::tick()
-{
-    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : allTimeBestFitness;
+        fprintf(stderr, "Species %d: %d/%ld\n", i, numToSave, speciesList[i]->members.size());
+
+        
+        for (int j=0; j<numToSave; j++) {
+            individualsToSave.push_back(speciesList[i]->members[j]);
+        }
+        
+        for (int j=numToSave; j<speciesList[i]->members.size(); j++) {
+            delete speciesList[i]->members[j];
+        }
+
+    }
     
-    spawnNextGeneration();
-    evaluatePopulationFitnesses();
-    
-    // sort by fitness again before we truncate
-    std::sort(population.begin(), population.end(), compareIndividuals);
-    
-    population.resize(populationSize);
-    cpFloat bestFitness = bestIndividual->fitness;
+    population = individualsToSave;
     
     if (lastBestFitness == bestFitness)
         stagnantGenerations++;
     else
         stagnantGenerations = 0;
     
+    generations++;
+    
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
-    generations++;
-    newConnections.clear();
-
+    
     if (stop) {
         fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
+    } else {
+        spawnNextGeneration();
     }
+    
+    // empty the innovation list and clear the non-representative members from the species list
+    newConnections.clear();
+    
+    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    while (speciesIterator != speciesList.end()) {
+       (*speciesIterator)->members.clear();
+        speciesIterator++;
+    }
+
     
     return  stop;
 }
@@ -320,10 +589,7 @@ MachineSystem *NEATAlgorithm::createInitialSystem(){
             cpVect pos2;
             
             original->getRandomAttachment(&a, &pos1, &pos2);
-            if (!a) {
-                int x = 1;
-                original->getRandomAttachment(&a, &pos1, &pos2);
-            }
+         
             //assert(a);
             if (a) {
                 Attachment *new1;
