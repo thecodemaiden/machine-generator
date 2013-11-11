@@ -33,8 +33,9 @@ protected:
     cpFloat p_c;
     
     // mutation probabilities
-    cpFloat p_m_node;
-    cpFloat p_m_conn;
+    cpFloat p_m_node; // how likely we are to add a new node
+    cpFloat p_m_conn;   // how likely we are to add a new connection
+    cpFloat p_m_attach; // how likely are we to mutate each existing attachment
     
     // threshold distance - a difference bigger than this will exclude an individual from a species
     
@@ -59,16 +60,18 @@ protected:
     long generations;
     SystemInfo *bestIndividual;
     cpFloat allTimeBestFitness;
-    
-    int nextInnovationNumber;
-    bool insertRandomAttachments = true;   // if true, make up attachments when we insert a new node between two nodes
+ 
+    bool insertRandomAttachments;   // if true, make up attachments when we insert a new node between two nodes
                                             // default is to use the original attachment type
 
-    virtual void mutateSystem(MachineSystem *original); // does not make a copy
+    void mutateSystem(MachineSystem *original); // does not make a copy
     MachineSystem *combineSystems(MachineSystem *sys1, MachineSystem *sys2); // assumes the fitter individual is first
+    void spawnNextGeneration(); // recombine species to get enough children then mutate each one
+
+#pragma mark - Override these functions if needed
+    // you can override this to do attachment mutation differently
+    virtual void mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo);
     
-    // functions to override in subclasses
-    virtual void spawnNextGeneration(); // usually recombine to get enough children then mutate them alllllll - could also add the original population to the list
     virtual MachineSystem *createInitialSystem();
     virtual void stepSystem(SystemInfo *individual);
     
@@ -77,11 +80,15 @@ protected:
     
     virtual cpFloat genomeDistance(MachineSystem *sys1, MachineSystem *sys2);
     
+    // overriden functions cannot be called in constructors, so this is called on the first tick();
+    virtual void prepareInitialPopulation();
+    
 public:
-    NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c=0.5, float p_m_node=0.5, float p_m_conn=0.5);
+    NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn);
     ~NEATAlgorithm();
     
-    bool tick(); // should not need to be overridden
+    // notice that this cannot be overriden.
+    bool tick();
     
     // override if needed 
     virtual MachineSystem *bestSystem(); // please override according to the representation for your algorithm
@@ -92,6 +99,9 @@ public:
     virtual  char* outputDescription();
     
 private:
+    cpFloat lastBestFitness; // before sharing
+    int nextInnovationNumber;
+    
     void selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum);
     void speciate(); // divide everything into species
 };

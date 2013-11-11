@@ -277,7 +277,7 @@ int main(int argc, char **argv)
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-        NEATDisplacementToX *a = new NEATDisplacementToX(3, 1000, 150);
+        NEATDisplacementToX *a = new NEATDisplacementToX(50, 1000, 150);
         
         MachineSystem *best = NULL;//s;
         

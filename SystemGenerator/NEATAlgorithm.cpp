@@ -9,12 +9,14 @@
 #include "NEATAlgorithm.h"
 #include <algorithm>
 
-NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_node, float p_m_conn)
-:populationSize(populationSize), maxStagnation(maxStagnation), maxGenerations(maxGenerations), p_c(p_c), p_m_node(p_m_node), p_m_conn(p_m_conn)
+NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
+:populationSize(populationSize), maxStagnation(maxStagnation), maxGenerations(maxGenerations), p_c(p_c),
+p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach)
+
 {
     bestIndividual = NULL;
     nextInnovationNumber = 1;
-    allTimeBestFitness = -FLT_MAX;
+    allTimeBestFitness = lastBestFitness = -FLT_MAX;
     generations = 0;
     stagnantGenerations = 0;
 }
@@ -82,6 +84,12 @@ static void addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation 
 
 MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
 {
+    
+    if (sys1 == sys2) {
+        // breeding with myself?
+        return new MachineSystem(*sys1);
+    }
+    
     MachineSystem *newChild = new MachineSystem(300, 300, 5, 5, cpvzero);
     std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
     std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
@@ -119,32 +127,20 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
         addGeneFromParentSystem(sys1, disjointandExcess[i], newChild);
     }
     
-                // child needs input and ouput part... copy from parent 1
+    // child needs input and ouput part... copy from parent 1
     newChild->inputMachinePosition = sys1->inputMachinePosition;
     newChild->outputMachinePosition = sys1->outputMachinePosition;
-    
-//        cpVect pos;
-//        newChild->getRandomPartPosition(&pos);
-//        newChild->inputMachinePosition = pos;
-//        do {
-//            newChild->getRandomPartPosition(&pos);
-//        } while (cpveql(pos, newChild->inputMachinePosition));
-//        newChild->outputMachinePosition = pos;
-    
-    
+        
     return newChild;
 }
 
 //fitness proportionate selection
 void  NEATAlgorithm::spawnNextGeneration()
 {
-    // sort the population by fitness
-    std::sort(population.begin(), population.end(), compareIndividuals);
-    
-    cpFloat fitnessSum = 0.0;
+    cpFloat sharedFitnessSum = 0.0;
     std::vector<SystemInfo *>::iterator it = population.begin();
     while (it != population.end()) {
-        fitnessSum += (*it)->fitness;
+        sharedFitnessSum += (*it)->fitness;
         it++;
     }
     
@@ -154,7 +150,7 @@ void  NEATAlgorithm::spawnNextGeneration()
     do {
         SystemInfo *p1 = NULL;
         SystemInfo *p2 = NULL;
-        selectParents(&p1, &p2, fitnessSum);
+        selectParents(&p1, &p2, sharedFitnessSum);
         
         MachineSystem *child = combineSystems(p1->system, p2->system);
         // mutate the new individual (maybe)
@@ -165,8 +161,13 @@ void  NEATAlgorithm::spawnNextGeneration()
         newGeneration.push_back(i);
     } while (newGeneration.size() < populationSize);
     
-    // add the original population too
-    population.insert(population.end(), newGeneration.begin(), newGeneration.end());
+    // throw out the old population (prevent a growth explosion)
+    std::vector<SystemInfo *>::iterator deleteIt = population.begin();
+    while (deleteIt != population.end()) {
+        delete *deleteIt;
+        deleteIt = population.erase(deleteIt);
+    }
+    population = newGeneration;
 }
 
 void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum)
@@ -174,39 +175,40 @@ void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cp
     if (!parent1 || !parent2)
         return; // don't waste my time
     
+    // choose a species according to species fitness
+    // then chose parents at random from within that species
+    NEATSpecies *breedingSpecies = NULL;
+    
     // Assume sorted population
     float selector = ((cpFloat)rand()/RAND_MAX);
     
-    //pick parent 1
-    std::vector<SystemInfo *>::iterator it = population.begin();
-    SystemInfo *chosen = population.back();
+    std::vector<NEATSpecies *>::iterator it = speciesList.begin();
+    breedingSpecies = speciesList.back(); // in case something goes wrong with selection below
     cpFloat cumulativeFitness = 0.0;
-    while (it != population.end()) {
-        cumulativeFitness += (*it)->fitness/fitnessSum;
+    while (it != speciesList.end()) {
+        cumulativeFitness += (*it)->totalSharedFitness/fitnessSum;
         if (cumulativeFitness >= selector) {
-            chosen = *it;
+            breedingSpecies = *it;
             break;
         }
         it++;
     }
-    
-    *parent1 = chosen;
-    
-    selector = ((cpFloat)rand()/RAND_MAX);
-    
-    //pick parent 2
-     it = population.begin();
-    chosen = population.back();
-     cumulativeFitness = 0.0;
-    while (it != population.end()) {
-        cumulativeFitness += (*it)->fitness/fitnessSum;
-        if (cumulativeFitness >= selector) {
-            chosen = *it;
-            break;
-        }
-        it++;
+    // if there is only 1 individual in that species... breed it with itself... (like a plant)
+    std::vector<SystemInfo *>individuals = breedingSpecies->members;
+ 
+    if (individuals.size() > 1) {
+        int parentPosition = arc4random_uniform(individuals.size());
+        *parent1 = individuals[parentPosition];
+        
+        int parentPosition2;
+        do {
+            parentPosition2 = arc4random_uniform(individuals.size());
+        } while (parentPosition2 == parentPosition);
+        *parent2 = individuals[parentPosition2];
+    } else {
+        *parent2 = *parent1 = individuals[0];
     }
-    *parent2 = chosen;
+    
 }
 
 void NEATAlgorithm::speciate()
@@ -427,9 +429,23 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
     return d;
 }
 
+void NEATAlgorithm::prepareInitialPopulation()
+{
+    MachineSystem *initialSystem = createInitialSystem();
+    // mutate the initial system to get an initial population
+    while (population.size() < populationSize) {
+        MachineSystem *newSystem = new MachineSystem(*initialSystem);
+        mutateSystem(newSystem);
+        SystemInfo *info = new SystemInfo(simSteps);
+        info->system = newSystem;
+        population.push_back(info);
+    }
+}
+
 bool NEATAlgorithm::tick()
 {
-    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : allTimeBestFitness;
+    if (population.size() == 0)
+        prepareInitialPopulation();
     
     cpFloat bestFitness = -INFINITY; // we want zero fitness
     cpFloat worstFitness = INFINITY;
@@ -456,10 +472,12 @@ bool NEATAlgorithm::tick()
         }
     }
     
+ 
+    speciate();
+    bestFitness = bestIndividual->fitness;
     if (bestFitness > allTimeBestFitness)
         allTimeBestFitness = bestFitness;
     
-    speciate();
     
     // figure out how many of each species to save
     double sharedFitnessSum = 0.0;
@@ -482,33 +500,39 @@ bool NEATAlgorithm::tick()
             individualsToSave.push_back(speciesList[i]->members[j]);
         }
         
-        for (int j=numToSave; j<speciesList[i]->members.size(); j++) {
-            delete speciesList[i]->members[j];
+        std::vector<SystemInfo *>::iterator deleteIt = speciesList[i]->members.begin()+numToSave;
+        while (deleteIt != speciesList[i]->members.end()) {
+            assert(*deleteIt != bestIndividual);
+            delete *(deleteIt);
+            deleteIt = speciesList[i]->members.erase(deleteIt);
         }
 
     }
     
     population = individualsToSave;
     
-    if (lastBestFitness == bestFitness)
+    if (fabs(lastBestFitness - bestFitness) < 1e-10)
         stagnantGenerations++;
     else
         stagnantGenerations = 0;
+    
+    lastBestFitness = bestFitness;
     
     generations++;
     
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
     
+    // empty the innovation list before spawning more
+    newConnections.clear();
+    
     if (stop) {
         fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
     } else {
         spawnNextGeneration();
     }
-    
-    // empty the innovation list and clear the non-representative members from the species list
-    newConnections.clear();
-    
+   
+    // empty the species lists
     std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
     while (speciesIterator != speciesList.end()) {
        (*speciesIterator)->members.clear();
@@ -545,9 +569,38 @@ MachineSystem *NEATAlgorithm::createInitialSystem(){
     return newSystem;
 }
 
+ void NEATAlgorithm::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo)
+{
+    float selector = (cpFloat)rand()/RAND_MAX;
+    Attachment *old = NULL;
+    cpVect p1 = attachmentInfo.pos1;
+    cpVect p2 = attachmentInfo.pos2;
+    old = sys->attachmentBetween(p1, p2);
+    if (old) {
+        Attachment *newAt;
+        if (selector < 0.5) {
+            newAt = changeAttachmentType(old);
+        } else {
+            newAt = perturbAttachmentAttributes(old);
+        }
+        sys->updateAttachmentBetween(p1, p2, newAt);
+    }
+}
+
+
  void NEATAlgorithm::mutateSystem(MachineSystem *original)
 {
-    // mutate attachment or add node - or both
+    
+    std::vector<AttachmentInnovation> allAttachments = original->attachmentGenome(false);
+    std::vector<AttachmentInnovation>::iterator it = allAttachments.begin();
+    while (it != allAttachments.end()) {
+        float selector = (cpFloat)rand()/RAND_MAX;
+        if (selector < p_m_attach)
+            mutateAttachmentWeight(original, *it);
+        it++;
+    }
+    
+    // add attachment or add node - or both
     float selector1 = (cpFloat)rand()/RAND_MAX;
     if (selector1 < p_m_conn) {
         // insert a new connection 

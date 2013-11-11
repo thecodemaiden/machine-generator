@@ -78,7 +78,7 @@ public:
     ~MachineSystem(); // frees machines and attachments too (should it?)
     
     // for NEAT
-    std::vector<AttachmentInnovation> attachmentGenome();
+    std::vector<AttachmentInnovation> attachmentGenome(bool sorted=true);
     
 private:
     cpBody *body;

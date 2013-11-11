@@ -10,18 +10,13 @@
 #include <numeric>
 
 NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
-:NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_node, p_m_conn),
-p_m_attach(p_m_attach)
+:NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_attach, p_m_node, p_m_conn)
 { 
-    MachineSystem *initialSystem = createInitialSystem();
-    // mutate the initial system to get an initial population
-    while (population.size() < populationSize) {
-        MachineSystem *newSystem = new MachineSystem(*initialSystem);
-        mutateSystem(newSystem);
-        SystemInfo *info = new SystemInfo(simSteps);
-        info->system = newSystem;
-        population.push_back(info);
-    }
+    d_threshold = 2.5;
+    w_excess = 1.0;
+    w_disjoint = 1.0;
+    w_matching = 0.5;
+    insertRandomAttachments = true;
 }
 
 void NEATDisplacementToX::stepSystem(SystemInfo *individual)
@@ -109,29 +104,6 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
 bool NEATDisplacementToX::goodEnoughFitness(cpFloat bestFitness)
 {
     return false;
-}
-
-void NEATDisplacementToX::mutateSystem(MachineSystem *original)
-{
-    // change an attachment to another type
-    float selector = (cpFloat)rand()/RAND_MAX;
-    if (selector < p_m_attach) {
-        Attachment *old = NULL;
-        cpVect p1;
-        cpVect p2;
-        original->getRandomAttachment(&old, &p1, &p2);
-        if (old) {
-            Attachment *newAt;
-            if (selector < p_m_attach/2) {
-                 newAt = changeAttachmentType(old);
-            } else {
-                newAt = perturbAttachmentAttributes(old);
-            }
-            original->updateAttachmentBetween(p1, p2, newAt);
-        }
-    }
-    
-    NEATAlgorithm::mutateSystem(original);
 }
 
 char* NEATDisplacementToX::inputDescription()

@@ -566,7 +566,7 @@ static bool compareGenes(const AttachmentInnovation &g1, const AttachmentInnovat
     return g1.innovationNumber < g2.innovationNumber;
 }
 
-std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(){
+std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(bool sorted){
     std::vector<AttachmentInnovation> genome;
     
     for (int i=0; i<attachments.size(); i++) {
@@ -588,7 +588,8 @@ std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(){
     }
     
     // now sort....
-    std::sort(genome.begin(), genome.end(), compareGenes);
+    if (sorted)
+        std::sort(genome.begin(), genome.end(), compareGenes);
     
     return genome;
 }

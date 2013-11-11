@@ -13,17 +13,13 @@
 
 class NEATDisplacementToX : public NEATAlgorithm {
     
-    cpFloat p_m_attach; // how likely are we to mutate a random attachment
-    
     void stepSystem(SystemInfo *individual);
     
     cpFloat evaluateSystem(SystemInfo *sys);
     bool goodEnoughFitness(cpFloat bestFitness);
-    
-    void mutateSystem(MachineSystem *original); // also mutates the attachments themselves
-    
+        
 public:
-    NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c=0.5, float p_m_attach=0.25, float p_m_node=0.5, float p_m_conn=0.5);
+    NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c=0.3, float p_m_attach=0.2, float p_m_node=0.1, float p_m_conn=0.1);
     
     virtual  char* inputDescription();
     virtual  char* outputDescription();
