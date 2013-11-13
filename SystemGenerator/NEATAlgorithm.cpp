@@ -16,7 +16,7 @@ p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach)
 {
     bestIndividual = NULL;
     nextInnovationNumber = 1;
-    allTimeBestFitness = lastBestFitness = -FLT_MAX;
+    allTimeBestFitness = -FLT_MAX;
     generations = 0;
     stagnantGenerations = 0;
 }
@@ -94,7 +94,6 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
     std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
     std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
     
-    
     // holy crap, c++ has some good standard methods, like *set difference*
     std::vector<AttachmentInnovation> matchingGenes1;
     std::vector<AttachmentInnovation> matchingGenes2;
@@ -161,13 +160,11 @@ void  NEATAlgorithm::spawnNextGeneration()
         newGeneration.push_back(i);
     } while (newGeneration.size() < populationSize);
     
-    // throw out the old population (prevent a growth explosion)
-    std::vector<SystemInfo *>::iterator deleteIt = population.begin();
-    while (deleteIt != population.end()) {
-        delete *deleteIt;
-        deleteIt = population.erase(deleteIt);
-    }
-    population = newGeneration;
+    // add the original population too
+    population.insert(population.end(), newGeneration.begin(), newGeneration.end());
+    
+    // TODO: throw out the original population instead(?)
+
 }
 
 void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum)
@@ -442,42 +439,42 @@ void NEATAlgorithm::prepareInitialPopulation()
     }
 }
 
+// descending, not ascending, order
+static bool compareSpeciesFitness(const NEATSpecies *s1, const NEATSpecies *s2)
+{
+    return s1->totalSharedFitness > s2->totalSharedFitness;
+}
+
 bool NEATAlgorithm::tick()
 {
     if (population.size() == 0)
         prepareInitialPopulation();
     
     cpFloat bestFitness = -INFINITY; // we want zero fitness
-    cpFloat worstFitness = INFINITY;
-    
-    
-    size_t bestPos = -1;
-    size_t worstPos = -1;
     
     for (size_t popIter = 0; popIter <population.size(); popIter++) {
         SystemInfo *individual = population[popIter];
         
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
-        
-        if (individual->fitness > bestFitness) {
-            bestFitness = individual->fitness;
-            bestIndividual = individual;
-            bestPos = popIter;
-        }
-        
-        if (individual -> fitness <= worstFitness) {
-            worstFitness = individual->fitness;
-            worstPos = popIter;
-        }
+//        MachineSystem *oldSystem = individual->system;
+//        individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
+//        delete oldSystem;
+//        if (individual->fitness > bestFitness) {
+//            bestFitness = individual->fitness;
+//            bestIndividual = individual;
+//            bestPos = popIter;
+//        }
+//        
+//        if (individual -> fitness <= worstFitness) {
+//            worstFitness = individual->fitness;
+//            worstPos = popIter;
+//        }
     }
     
  
     speciate();
-    bestFitness = bestIndividual->fitness;
-    if (bestFitness > allTimeBestFitness)
-        allTimeBestFitness = bestFitness;
-    
+
     
     // figure out how many of each species to save
     double sharedFitnessSum = 0.0;
@@ -486,39 +483,63 @@ bool NEATAlgorithm::tick()
     }
     
     std::vector<SystemInfo *> individualsToSave;
+    // sort the species to ensure we keep the best
+    std::sort(speciesList.begin(), speciesList.end(), compareSpeciesFitness);
     
-    for (int i=0; i<speciesList.size(); i++) {
-        double proportionToSave = (speciesList[i]->totalSharedFitness)/sharedFitnessSum;
-        int numToSave = MIN((proportionToSave*populationSize), (int)speciesList[i]->members.size());
+    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    
+    int i = 0;
+    while (speciesIterator != speciesList.end()) {
+        size_t numMembers = (*speciesIterator)->members.size();
+        
+        double proportionToSave = ((*speciesIterator)->totalSharedFitness)/sharedFitnessSum;
+        int numToSave = MIN((proportionToSave*populationSize), (int)numMembers);
         numToSave = MAX(numToSave, 1); // save 1 of each species
-        std::sort(speciesList[i]->members.begin(), speciesList[i]->members.end(), compareIndividuals);
+        std::sort((*speciesIterator)->members.begin(), (*speciesIterator)->members.end(), compareIndividuals);
+        
 
-        fprintf(stderr, "Species %d: %d/%ld\n", i, numToSave, speciesList[i]->members.size());
+        // don't let population grow unchecked
+        if (individualsToSave.size() > populationSize)
+            numToSave = 0;
+        
+        fprintf(stderr, "Species %d: %d/%ld\n", i++, numToSave,  (*speciesIterator)->members.size());
 
         
         for (int j=0; j<numToSave; j++) {
-            individualsToSave.push_back(speciesList[i]->members[j]);
+            SystemInfo *individual = (*speciesIterator)->members[j];
+            if (individual->fitness > bestFitness) {
+                bestFitness = individual->fitness;
+                bestIndividual = individual;
+            }
+            individualsToSave.push_back(individual);
         }
         
-        std::vector<SystemInfo *>::iterator deleteIt = speciesList[i]->members.begin()+numToSave;
-        while (deleteIt != speciesList[i]->members.end()) {
-            assert(*deleteIt != bestIndividual);
+        std::vector<SystemInfo *>::iterator deleteIt =  (*speciesIterator)->members.begin()+numToSave;
+        while (deleteIt !=  (*speciesIterator)->members.end()) {
             delete *(deleteIt);
-            deleteIt = speciesList[i]->members.erase(deleteIt);
+            deleteIt =  (*speciesIterator)->members.erase(deleteIt);
         }
-
+        
+        if (numToSave == 0)
+            speciesIterator = speciesList.erase(speciesIterator);
+        else
+            speciesIterator++;
     }
     
     population = individualsToSave;
+    
+    if (bestFitness > allTimeBestFitness)
+        allTimeBestFitness = bestFitness;
+    
     
     if (fabs(lastBestFitness - bestFitness) < 1e-10)
         stagnantGenerations++;
     else
         stagnantGenerations = 0;
     
-    lastBestFitness = bestFitness;
-    
     generations++;
+    
+    lastBestFitness = bestFitness;
     
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
@@ -531,9 +552,10 @@ bool NEATAlgorithm::tick()
     } else {
         spawnNextGeneration();
     }
+    
    
     // empty the species lists
-    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    speciesIterator = speciesList.begin();
     while (speciesIterator != speciesList.end()) {
        (*speciesIterator)->members.clear();
         speciesIterator++;

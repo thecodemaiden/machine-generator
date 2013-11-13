@@ -12,7 +12,6 @@
 NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
 :NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_attach, p_m_node, p_m_conn)
 { 
-    d_threshold = 2.5;
     w_excess = 1.0;
     w_disjoint = 1.0;
     w_matching = 0.5;
@@ -21,9 +20,13 @@ NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations,
 
 void NEATDisplacementToX::stepSystem(SystemInfo *individual)
 {
-    cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
-    cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
-    cpSpace *systemSpace = individual->system->getSpace();
+    MachineSystem *sys = new MachineSystem(*individual->system);
+    delete individual->system;
+    individual->system = sys;
+    
+    cpBody *inputBody = sys->partAtPosition(individual->system->inputMachinePosition)->body;
+    cpBody *outputBody = sys->partAtPosition(individual->system->outputMachinePosition)->body;
+    cpSpace *systemSpace = sys->getSpace();
     
     cpConstraint *motor = cpSimpleMotorNew(cpSpaceGetStaticBody(systemSpace), inputBody, M_PI);
     cpSpaceAddConstraint(systemSpace, motor);
@@ -37,8 +40,6 @@ void NEATDisplacementToX::stepSystem(SystemInfo *individual)
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
-    cpBodySetAngVel(inputBody, 0);
-    cpBodySetAngVel(outputBody, 0);
 }
 
 cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
@@ -98,7 +99,27 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
     if (fitness == 0)
         fitness = 1e-8;
     
+    assert(fitness == fitness);
+    assert(fabs(fitness) != INFINITY);
+    
     return fitness;
+}
+
+void NEATDisplacementToX::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo) {
+    float selector = (cpFloat)rand()/RAND_MAX;
+    Attachment *old = NULL;
+    cpVect p1 = attachmentInfo.pos1;
+    cpVect p2 = attachmentInfo.pos2;
+    old = sys->attachmentBetween(p1, p2);
+    if (old) {
+        Attachment *newAt;
+        if (selector < 0.5) {
+            newAt = changeAttachmentType(old);
+        } else {
+            newAt = perturbAttachmentAttributes(old);
+        }
+        sys->updateAttachmentBetween(p1, p2, newAt);
+    }
 }
 
 bool NEATDisplacementToX::goodEnoughFitness(cpFloat bestFitness)
