@@ -9,9 +9,9 @@
 #include "NEATAlgorithm.h"
 #include <algorithm>
 
-NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
+NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn, int systemWidth, int systemHeight)
 :populationSize(populationSize), maxStagnation(maxStagnation), maxGenerations(maxGenerations), p_c(p_c),
-p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach)
+p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach), sys_w(systemWidth), sys_h(systemHeight)
 
 {
     bestIndividual = NULL;
@@ -19,6 +19,7 @@ p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach)
     allTimeBestFitness = -FLT_MAX;
     generations = 0;
     stagnantGenerations = 0;
+    simSteps = 50;
 }
 
 NEATAlgorithm::~NEATAlgorithm()
@@ -57,7 +58,7 @@ static bool compareInnovationNumbers(const AttachmentInnovation a1, const Attach
     return a1.innovationNumber < a2.innovationNumber;
 }
 
-static void addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation gene, MachineSystem *newChild)
+void NEATAlgorithm::addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation gene, MachineSystem *newChild)
 {
     cpVect pos1 = gene.pos1;
     cpVect pos2 = gene.pos2;
@@ -79,7 +80,12 @@ static void addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation 
     Attachment *attachmentToCopy = parent->attachmentBetween(pos1, pos2);
     Attachment *copy = Attachment::copyAttachment(attachmentToCopy);
     copy->innovationNumber = gene.innovationNumber;
+    int oldN = newChild->getNumberOfAttachments();
+    if (oldN == 0) {
+        assert(newChild->getNumberOfParts() == 2);
+    }
     newChild->attachMachines(pos1, pos2, copy);
+  
 }
 
 MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
@@ -90,7 +96,7 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
         return new MachineSystem(*sys1);
     }
     
-    MachineSystem *newChild = new MachineSystem(300, 300, 5, 5, cpvzero);
+    MachineSystem *newChild = createInitialSystem();
     std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
     std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
     
@@ -162,8 +168,6 @@ void  NEATAlgorithm::spawnNextGeneration()
     
     // add the original population too
     population.insert(population.end(), newGeneration.begin(), newGeneration.end());
-    
-    // TODO: throw out the original population instead(?)
 
 }
 
@@ -290,11 +294,13 @@ static double smallerToLarger(double x1, double x2)
 // propose:
 // start at 4.0 if they are different types,
 // else start with sum of ratios between attributes
-// and add ratio between attachment lengths?
+// and also include distance between attachment points
+// forget attachment length
 static double attachmentDifference(Attachment *a1, Attachment *a2)
 {
 
-    double diff = normalize(a1->attachmentLength, a2->attachmentLength);
+    double diff = cpvdistsq(a1->firstAttachPoint, a2->firstAttachPoint);
+    diff += cpvdistsq(a1->secondAttachPoint, a2->secondAttachPoint);
     
     if (a1->attachmentType() == a2->attachmentType()) {
         switch (a1->attachmentType()) {
@@ -426,9 +432,16 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
     return d;
 }
 
+MachineSystem *NEATAlgorithm::createInitialSystem()
+{
+    return new MachineSystem(300, 300, 5, 5, cpvzero);
+}
+
 void NEATAlgorithm::prepareInitialPopulation()
 {
     MachineSystem *initialSystem = createInitialSystem();
+    neatGenerator(initialSystem);
+    
     // mutate the initial system to get an initial population
     while (population.size() < populationSize) {
         MachineSystem *newSystem = new MachineSystem(*initialSystem);
@@ -437,6 +450,7 @@ void NEATAlgorithm::prepareInitialPopulation()
         info->system = newSystem;
         population.push_back(info);
     }
+    delete initialSystem;
 }
 
 // descending, not ascending, order
@@ -502,13 +516,14 @@ bool NEATAlgorithm::tick()
         if (individualsToSave.size() > populationSize)
             numToSave = 0;
         
-        fprintf(stderr, "Species %d: %d/%ld\n", i++, numToSave,  (*speciesIterator)->members.size());
+       // fprintf(stderr, "Species %d: %d/%ld\n", i++, numToSave,  (*speciesIterator)->members.size());
 
         
         for (int j=0; j<numToSave; j++) {
             SystemInfo *individual = (*speciesIterator)->members[j];
-            if (individual->fitness > bestFitness) {
-                bestFitness = individual->fitness;
+            cpFloat rawFitness = individual->fitness * numMembers;
+            if (rawFitness > bestFitness) {
+                bestFitness = rawFitness;
                 bestIndividual = individual;
             }
             individualsToSave.push_back(individual);
@@ -532,7 +547,7 @@ bool NEATAlgorithm::tick()
         allTimeBestFitness = bestFitness;
     
     
-    if (fabs(lastBestFitness - bestFitness) < 1e-10)
+    if (fabs(lastBestFitness - bestFitness) < 1e-5)
         stagnantGenerations++;
     else
         stagnantGenerations = 0;
@@ -546,7 +561,7 @@ bool NEATAlgorithm::tick()
     
     // empty the innovation list before spawning more
     newConnections.clear();
-    
+    fprintf(stderr, "BEST FITNESS: %f\n", bestFitness);
     if (stop) {
         fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
     } else {
@@ -585,12 +600,6 @@ char* NEATAlgorithm::outputDescription()
     return "";
 }
 
-MachineSystem *NEATAlgorithm::createInitialSystem(){
-    MachineSystem *newSystem = new MachineSystem(300, 300, 5, 5, cpvzero);
-    neatGenerator(newSystem);
-    return newSystem;
-}
-
  void NEATAlgorithm::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo)
 {
     float selector = (cpFloat)rand()/RAND_MAX;
@@ -600,15 +609,30 @@ MachineSystem *NEATAlgorithm::createInitialSystem(){
     old = sys->attachmentBetween(p1, p2);
     if (old) {
         Attachment *newAt;
-        if (selector < 0.5) {
+        if (selector < 0.33) {
             newAt = changeAttachmentType(old);
-        } else {
+        } else if (selector < 0.67) {
             newAt = perturbAttachmentAttributes(old);
+        } else {
+            newAt = changeAttachmentAnchorPoints(old);
         }
         sys->updateAttachmentBetween(p1, p2, newAt);
     }
 }
 
+
+void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info)
+{
+    // have we already created this 'innovation' in this generation?
+    std::vector<AttachmentInnovation>::iterator it = std::find(newConnections.begin(), newConnections.end(), info);
+    if (it!= newConnections.end()) {
+        att->innovationNumber = it->innovationNumber;
+    } else {
+        att->innovationNumber = nextInnovationNumber;
+        info.innovationNumber = nextInnovationNumber++;
+        newConnections.push_back(info);
+    }
+}
 
  void NEATAlgorithm::mutateSystem(MachineSystem *original)
 {
@@ -639,16 +663,7 @@ MachineSystem *NEATAlgorithm::createInitialSystem(){
             AttachmentInnovation created = AttachmentInnovation();
             created.pos1 = pos1;
             created.pos2 = pos2;
-            
-            // have we already created this 'innovation' in this generation?
-            std::vector<AttachmentInnovation>::iterator it = std::find(newConnections.begin(), newConnections.end(), created);
-            if (it!= newConnections.end()) {
-                a->innovationNumber = (*it).innovationNumber;
-            } else {
-                a->innovationNumber = nextInnovationNumber;
-                created.innovationNumber = nextInnovationNumber++;
-                newConnections.push_back(created);
-            }
+            assignInnovationNumberToAttachment(a, created);
         }
     }
     
@@ -694,32 +709,19 @@ MachineSystem *NEATAlgorithm::createInitialSystem(){
                 created.pos1 = pos1;
                 created.pos2 = newPosition;
                 
-                // have we already created this 'innovation' in this generation?
-                std::vector<AttachmentInnovation>::iterator it = std::find(newConnections.begin(), newConnections.end(), created);
-                if (it != newConnections.end()) {
-                    new1->innovationNumber = it->innovationNumber;
-                } else {
-                    new1->innovationNumber = nextInnovationNumber;
-                    created.innovationNumber = nextInnovationNumber++;
-                    newConnections.push_back(created);
-                }
+                assignInnovationNumberToAttachment(new1, created);
                 
                 // now the second attachment
                 created.pos1 = pos2;
                 created.pos2 = newPosition;
 
-                it = std::find(newConnections.begin(), newConnections.end(), created);
-                if (it != newConnections.end()) {
-                    new2->innovationNumber = it->innovationNumber;
-                } else {
-                    new2->innovationNumber = nextInnovationNumber;
-                    created.innovationNumber = nextInnovationNumber++;
-                    newConnections.push_back(created);
-                }
+                assignInnovationNumberToAttachment(new2, created);
                 
             }
         }
     }
+    assert(original->getNumberOfAttachments() > 0);
+
  
 }
 

@@ -24,7 +24,7 @@ static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
 
 static cpBool restartAlgorithm = cpFalse;
-
+static cpBool terminateAlgorithm = cpFalse;
 // for time step
 static double LastTime = 0.0;
 
@@ -83,9 +83,10 @@ DrawInstructions()
 {
 	ChipmunkDemoTextDrawString(cpv(-300, 220),
                                "Controls:\n"
-                               "x - restart EA\n"
+                               "r - restart EA\n"
                                "` - pause\n"
-                               "1 - step once\n"
+                               "s - step once\n"
+                               "x - stop at current generation\n"
                                );
 }
 
@@ -132,13 +133,15 @@ Keyboard(int key, int state)
 	
     if(key == '`'){
 		paused = !paused;
-    } else if(key == '1'){
+    } else if(key == 's'){
 		step = cpTrue;
 	} else if(key == '\\'){
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
-    } else if(key == 'x') {
+    } else if(key == 'r') {
         restartAlgorithm = true;
+    } else if (key == 'x') {
+        terminateAlgorithm = true;
     }
 }
 
@@ -277,13 +280,16 @@ int main(int argc, char **argv)
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-        NEATDisplacementToX *a = new NEATDisplacementToX(50, 1000, 150);
-        
+      // NEATDisplacementToX *a = new NEATDisplacementToX(50, 500, 50);
+        NEATSpatialRotation *a = new NEATSpatialRotation(50, 500, 75);
         MachineSystem *best = NULL;//s;
         
-        while(!restartAlgorithm) {
+        paused = false;
+        terminateAlgorithm = false;
+        
+        while(!restartAlgorithm && !terminateAlgorithm) {
             double now = glfwGetTime();
-            if ((!paused && now - LastTime > 0.3) || (paused && step)) { // slow your roll...
+            if ((!paused && now - LastTime > 0.1) || (paused && step)) { // slow your roll...
                 step = false;
                 if (a->tick())
                     break;
@@ -294,7 +300,6 @@ int main(int argc, char **argv)
                 updateWorld(best->getSpace(), best, cpvzero, 0.0);
         }
         LastTime = glfwGetTime();
-        paused = false;
         cpConstraint *drivingMotor = NULL;
         if (!restartAlgorithm) {
             best = a->bestSystem();

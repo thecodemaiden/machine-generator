@@ -12,8 +12,7 @@
 #include "NEATAlgorithm.h"
 
 class NEATDisplacementToX : public NEATAlgorithm {
-    void mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo);
-    
+    void prepareInitialPopulation();
     void stepSystem(SystemInfo *individual);
     
     cpFloat evaluateSystem(SystemInfo *sys);

@@ -5,9 +5,10 @@ TODO
 ----
 	* Rename algorithms and mutators
     * Maybe make all possible mutators, then evolve the (choice of) mutations themselves?
-    * Add fitness sharing to NEAT algorithm for speciation
 
 NEW STUFF
 ---------
-	* Can mutate the input and output machine positions
+	* Spatial NEAT variant completely removes attachments rather than disabling them
+    * There is only a 1/p_c chance that excess or disjoint attachments are added... BUT it causes inconsistency sometimes
+	* Increasing simulation steps (simSteps) seems to make the algorithms behave a LOT better
 

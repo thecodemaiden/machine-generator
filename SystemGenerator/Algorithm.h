@@ -55,6 +55,7 @@ MachineSystem *attachmentAnchorMutator2(MachineSystem *sys); // change attachmen
 // -- New mutators --
 Attachment *changeAttachmentType(Attachment *at);
 Attachment *perturbAttachmentAttributes(Attachment *at);
+Attachment *changeAttachmentAnchorPoints(Attachment *at);
 //void changeMachineShape(MachinePart *part);
 
 

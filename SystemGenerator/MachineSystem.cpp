@@ -23,7 +23,8 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
   attachments((hPegs*vPegs), std::vector<Attachment *>(hPegs*vPegs, NULL)),
   space(cpSpaceNew()),
   nMachines(0),
-  nAttachments(0)
+  nAttachments(0),
+  destroyAttachments(false)
 {
     cpSpaceSetIterations(space, 20);
     gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
@@ -59,7 +60,8 @@ gridSpacing(original.gridSpacing),
 inputMachinePosition(original.inputMachinePosition),
 outputMachinePosition(original.outputMachinePosition),
 nMachines(0),
-nAttachments(0)
+nAttachments(0),
+destroyAttachments(original.destroyAttachments)
 {
     cpFloat width = (original.size.x +1)*original.gridSpacing.x;
     cpFloat height = (original.size.y +1)*original.gridSpacing.y;
@@ -248,9 +250,12 @@ bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attac
             int machine2Num = machinePositionToNumber(machine2Pos);
             Attachment *existingAttachment = attachments[machine1Num][machine2Num];
             if (!existingAttachment || existingAttachment->disabled) {
+                assert(!(attachment->disabled && destroyAttachments));
                 if (!attachment->disabled) {
                     machine1->attachToBody(attachment, machine2->body);
                     nAttachments++;
+                } else {
+                    assert(1);
                 }
                 if (existingAttachment && existingAttachment != attachment) {
                     attachment->innovationNumber = existingAttachment->innovationNumber;
@@ -278,13 +283,19 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
             if (existingAttachment) {
                 machine1->detachFromBody(machine2->body);
                 machine2->detachFromBody(machine1->body);
-                
-                attachments[machine1Num][machine2Num]->disabled = true;
+                if (!destroyAttachments) {
+                    attachments[machine1Num][machine2Num]->disabled = true;
+                } else {
+                    delete attachments[machine1Num][machine2Num];
+                    attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = NULL;
+                }
                 detached = true;
-                nAttachments--;
+                if (!existingAttachment->disabled)
+                    nAttachments--;
             }
         }
     }
+    assert(nAttachments >=0);
     return detached;
 }
 

@@ -1,0 +1,25 @@
+//
+//  NEATSpatialAlgorithm.h
+//  SystemGenerator
+//
+//  Created by Adeola Bannis on 11/15/13.
+//
+//
+
+#ifndef __SystemGenerator__NEATSpatialAlgorithm__
+#define __SystemGenerator__NEATSpatialAlgorithm__
+
+#include "NEATAlgorithm.h"
+
+class NEATSpatialAlgorithm : public NEATAlgorithm {
+    void assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info);
+    
+    // in this variant, each disjoint or excess gene has a 1/p_c chance of being added to the child
+    MachineSystem *combineSystems(MachineSystem *sys1, MachineSystem *sys2); // assumes the fitter individual is first
+
+public:
+    NEATSpatialAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn, int systemWidth=5, int systemHeight=5);
+    
+};
+
+#endif /* defined(__SystemGenerator__NEATSpatialAlgorithm__) */

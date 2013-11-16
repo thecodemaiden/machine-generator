@@ -14,6 +14,6 @@
 #include "MarkAlgorithm.h"
 #include "AdeolaConstantToSinusoidalAlgorithm.h"
 #include "NEATDisplacementToX.h"
-
+#include "NEATSpatialRotation.h"
 
 #endif
