@@ -1,25 +1,25 @@
 //
-//  NEATDisplacementToX.cpp
+//  NEATRotation.cpp
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 11/4/13.
 //
 //
 
-#include "NEATDisplacementToX.h"
+#include "NEATRotation.h"
 #include <numeric>
 
-NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
+NEATRotation::NEATRotation(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
 :NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_attach, p_m_node, p_m_conn)
 { 
     w_excess = 1.0;
     w_disjoint = 1.0;
     w_matching = 0.5;
-    insertRandomAttachments = true;
-    simSteps = 100;
+    insertRandomAttachments = false;
+    simSteps = 300;
 }
 
-void NEATDisplacementToX::stepSystem(SystemInfo *individual)
+void NEATRotation::stepSystem(SystemInfo *individual)
 {
     MachineSystem *sys = new MachineSystem(*individual->system);
     delete individual->system;
@@ -47,7 +47,7 @@ static bool isUnreasonable(double n) {
     return fabs(n) == INFINITY || n != n;
 }
 
-cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
+cpFloat NEATRotation::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
@@ -110,12 +110,12 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
     return fitness;
 }
 
-bool NEATDisplacementToX::goodEnoughFitness(cpFloat bestFitness)
+bool NEATRotation::goodEnoughFitness(cpFloat bestFitness)
 {
     return false;
 }
 
-char* NEATDisplacementToX::inputDescription()
+char* NEATRotation::inputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -128,7 +128,7 @@ char* NEATDisplacementToX::inputDescription()
     return buffer;
 }
 
-char* NEATDisplacementToX::outputDescription()
+char* NEATRotation::outputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -141,7 +141,7 @@ char* NEATDisplacementToX::outputDescription()
     return buffer;
 }
 
-void NEATDisplacementToX::prepareInitialPopulation()
+void NEATRotation::prepareInitialPopulation()
 {
     MachineSystem *initialSystem = new MachineSystem(300, 300, 5, 5, cpvzero);
     neatGenerator(initialSystem);

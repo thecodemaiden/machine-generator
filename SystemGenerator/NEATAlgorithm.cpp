@@ -80,10 +80,7 @@ void NEATAlgorithm::addGeneFromParentSystem(MachineSystem *parent, AttachmentInn
     Attachment *attachmentToCopy = parent->attachmentBetween(pos1, pos2);
     Attachment *copy = Attachment::copyAttachment(attachmentToCopy);
     copy->innovationNumber = gene.innovationNumber;
-    int oldN = newChild->getNumberOfAttachments();
-    if (oldN == 0) {
-        assert(newChild->getNumberOfParts() == 2);
-    }
+
     newChild->attachMachines(pos1, pos2, copy);
   
 }
@@ -720,8 +717,6 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
             }
         }
     }
-    assert(original->getNumberOfAttachments() > 0);
-
  
 }
 

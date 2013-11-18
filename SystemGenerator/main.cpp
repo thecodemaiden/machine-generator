@@ -6,7 +6,10 @@
 //
 //
 
+#define CP_ALLOW_PRIVATE_ACCESS 1
+
 extern "C" {
+    
 #include <cstdio>
 #include "chipmunk.h"
 #include "GL/glew.h"
@@ -280,8 +283,8 @@ int main(int argc, char **argv)
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-      // NEATDisplacementToX *a = new NEATDisplacementToX(50, 500, 50);
-        NEATSpatialRotation *a = new NEATSpatialRotation(50, 500, 75);
+      // NEATRotation *a = new NEATRotation(100, 300, 25);
+       NEATSpatialRotation *a = new NEATSpatialRotation(50, 300, 25);
         MachineSystem *best = NULL;//s;
         
         paused = false;

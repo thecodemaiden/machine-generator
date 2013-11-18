@@ -79,11 +79,7 @@ MachineSystem * NEATSpatialAlgorithm::combineSystems(MachineSystem *sys1, Machin
     
     // then the disjoint genes
     for (int i=0; i<disjointandExcess.size(); i++) {
-        float selector = (cpFloat)rand()/RAND_MAX;
-        
-        if (selector <= p_c) {
-            addGeneFromParentSystem(sys1, disjointandExcess[i], newChild);
-        }
+        addGeneFromParentSystem(sys1, disjointandExcess[i], newChild);
     }
     
     // child needs input and ouput part... copy from parent 1

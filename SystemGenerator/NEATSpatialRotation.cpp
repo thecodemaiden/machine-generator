@@ -17,7 +17,7 @@ NEATSpatialRotation::NEATSpatialRotation(int populationSize, int maxGenerations,
     w_disjoint = 1.0;
     w_matching = 0.5;
     insertRandomAttachments = true;
-    simSteps = 150;
+    simSteps = 250;
 }
 
 void NEATSpatialRotation::stepSystem(SystemInfo *individual)
