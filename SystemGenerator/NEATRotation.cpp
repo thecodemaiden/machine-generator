@@ -123,7 +123,7 @@ char* NEATRotation::inputDescription()
     static char buffer[100];
     cpBody *inputBody = bestIndividual->system->partAtPosition(bestIndividual->system->inputMachinePosition)->body;
     
-    snprintf(buffer, 100, "Input angle : %.3f", cpBodyGetAngle(inputBody));
+    snprintf(buffer, 100, "Input angle : %.3f",  cpBodyGetAngle(inputBody));
     
     return buffer;
 }

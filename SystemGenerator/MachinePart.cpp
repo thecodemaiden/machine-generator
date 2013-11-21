@@ -18,7 +18,8 @@ space(space),
 machineType(MACHINE_BOX),
 body(NULL)
 {
-    
+    height = 0.0;
+    length = 0.0;
 }
 
 MachinePart::MachinePart(BodyType machineType, cpVect position, cpFloat length, cpFloat height, cpSpace *space)

@@ -22,9 +22,7 @@ NEATSpatialRotation::NEATSpatialRotation(int populationSize, int maxGenerations,
 
 void NEATSpatialRotation::stepSystem(SystemInfo *individual)
 {
-    MachineSystem *sys = new MachineSystem(*individual->system);
-    delete individual->system;
-    individual->system = sys;
+    MachineSystem *sys = individual->system;
     
     cpBody *inputBody = sys->partAtPosition(sys->inputMachinePosition)->body;
     cpBody *outputBody = sys->partAtPosition(sys->outputMachinePosition)->body;
@@ -42,6 +40,7 @@ void NEATSpatialRotation::stepSystem(SystemInfo *individual)
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
+
 }
 
 cpFloat NEATSpatialRotation::evaluateSystem(SystemInfo *sys)
@@ -122,7 +121,7 @@ char* NEATSpatialRotation::inputDescription()
     static char buffer[100];
     cpBody *inputBody = bestIndividual->system->partAtPosition(bestIndividual->system->inputMachinePosition)->body;
     
-    snprintf(buffer, 100, "Input angle : %.3f", cpBodyGetAngle(inputBody));
+    snprintf(buffer, 100, "Input angle : %.3f", normalize_angle(cpBodyGetAngle(inputBody)));
     
     return buffer;
 }
@@ -135,7 +134,7 @@ char* NEATSpatialRotation::outputDescription()
     static char buffer[100];
     cpBody *outputBody = bestIndividual->system->partAtPosition(bestIndividual->system->outputMachinePosition)->body;
     
-    snprintf(buffer, 100, "Output angle : %.3f", cpBodyGetAngle(outputBody));
+    snprintf(buffer, 100, "Output angle : %.3f", normalize_angle(cpBodyGetAngle(outputBody)));
     
     return buffer;
 }

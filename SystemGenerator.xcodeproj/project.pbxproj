@@ -101,6 +101,8 @@
 		E2A1D85D1800EBFC003FA4AE /* MachineSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineSystem.h; sourceTree = "<group>"; };
 		E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachinePart.cpp; sourceTree = "<group>"; };
 		E2A1D8601800EC84003FA4AE /* MachinePart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachinePart.h; sourceTree = "<group>"; };
+		E2ACE3EA183E74CA00C30FA2 /* NEATMOS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATMOS.cpp; sourceTree = "<group>"; };
+		E2ACE3EB183E74CA00C30FA2 /* NEATMOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATMOS.h; sourceTree = "<group>"; };
 		E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialAlgorithm.cpp; sourceTree = "<group>"; };
 		E2B07F2A1836B4E7008110E7 /* NEATSpatialAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialAlgorithm.h; sourceTree = "<group>"; };
 		E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialRotation.cpp; sourceTree = "<group>"; };
@@ -261,6 +263,18 @@
 			name = Algorithms;
 			sourceTree = "<group>";
 		};
+		E27F54BB183AD25C00195598 /* Spatial Variant */ = {
+			isa = PBXGroup;
+			children = (
+				E2ACE3E9183E748300C30FA2 /* MultiObjective */,
+				E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */,
+				E2B07F2D1836B553008110E7 /* NEATSpatialRotation.h */,
+				E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */,
+				E2B07F2A1836B4E7008110E7 /* NEATSpatialAlgorithm.h */,
+			);
+			name = "Spatial Variant";
+			sourceTree = "<group>";
+		};
 		E2A1D7BB1800E33F003FA4AE = {
 			isa = PBXGroup;
 			children = (
@@ -342,6 +356,15 @@
 			name = "Machine System";
 			sourceTree = "<group>";
 		};
+		E2ACE3E9183E748300C30FA2 /* MultiObjective */ = {
+			isa = PBXGroup;
+			children = (
+				E2ACE3EA183E74CA00C30FA2 /* NEATMOS.cpp */,
+				E2ACE3EB183E74CA00C30FA2 /* NEATMOS.h */,
+			);
+			name = MultiObjective;
+			sourceTree = "<group>";
+		};
 		E2C3155B1822E43500774A13 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -371,14 +394,11 @@
 		E2DFFC6418286FFB0025A554 /* NEAT */ = {
 			isa = PBXGroup;
 			children = (
-				E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */,
-				E2B07F2A1836B4E7008110E7 /* NEATSpatialAlgorithm.h */,
+				E27F54BB183AD25C00195598 /* Spatial Variant */,
 				E2DFFC651828700C0025A554 /* NEATAlgorithm.cpp */,
 				E2DFFC661828700C0025A554 /* NEATAlgorithm.h */,
 				E2DFFC681828A2D00025A554 /* NEATRotation.cpp */,
 				E2DFFC691828A2D00025A554 /* NEATRotation.h */,
-				E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */,
-				E2B07F2D1836B553008110E7 /* NEATSpatialRotation.h */,
 			);
 			name = NEAT;
 			sourceTree = "<group>";

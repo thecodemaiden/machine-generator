@@ -142,6 +142,8 @@ bool AdeolaConstantToSinusoidalAlgorithm::tick()
     
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
+    logPopulationStatistics();
+    
     generations++;
     if (stop) {
         fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);

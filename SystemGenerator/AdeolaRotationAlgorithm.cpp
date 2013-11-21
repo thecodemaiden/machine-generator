@@ -188,9 +188,10 @@ bool AdeolaRotationAlgorithm::tick()
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
     generations++;
+    logPopulationStatistics();
+
     if (stop) {
         fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
-
     }
     return  stop;
 }

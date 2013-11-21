@@ -1,3 +1,4 @@
+
 //
 //  main.cpp
 //  SystemGenerator
@@ -10,7 +11,6 @@
 
 extern "C" {
     
-#include <cstdio>
 #include "chipmunk.h"
 #include "GL/glew.h"
 #include "GL/glfw.h"
@@ -19,6 +19,9 @@ extern "C" {
 #include "ChipmunkDemoTextSupport.h"
 }
 
+#include <cstdio>
+#include <wordexp.h>
+#include <sstream>
 #include "MachinePart.h"
 #include "MachineSystem.h"
 #include "AlgorithmList.h"
@@ -271,20 +274,22 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
 
 int main(int argc, char **argv)
 {
-    setupGLFW();
-
-   // MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
+    time_t now = time(NULL);
+    int run_number = 1;
+    wordexp_t directory;
+    wordexp("~/temp/machines/", &directory, 0);
     
+    setupGLFW();
     while (1) {
         restartAlgorithm = false;
-      // AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
+     //  AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(50, 100, 150);
       // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
        // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-      // NEATRotation *a = new NEATRotation(100, 300, 25);
-       NEATSpatialRotation *a = new NEATSpatialRotation(50, 300, 25);
+       NEATRotation *a = new NEATRotation(100, 300, 25);
+      // NEATSpatialRotation *a = new NEATSpatialRotation(50, 300, 25);
         MachineSystem *best = NULL;//s;
         
         paused = false;
@@ -308,7 +313,13 @@ int main(int argc, char **argv)
             best = a->bestSystem();
             fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
             
-            best->saveToDisk("/Users/abannis/temp/test.txt");
+            std::stringstream s;
+          
+            s << directory.we_wordv[0];
+            s << "best" << now << "-" << run_number++ << ".machine";
+            std::string filename = s.str();
+            
+            best->saveToDisk(filename.c_str()); // expands the tilde
             
             cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
@@ -326,8 +337,10 @@ int main(int argc, char **argv)
             LastTime = now;
         }
         
-        if (drivingMotor)
+        if (drivingMotor) {
             cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
+            drivingMotor = NULL;
+        }
         delete a;
         a = NULL;
     }

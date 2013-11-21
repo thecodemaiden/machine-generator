@@ -21,7 +21,6 @@ class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
      cpFloat evaluateSystem(SystemInfo *sys);
      bool goodEnoughFitness(cpFloat bestFitness);
     
-    std::vector<SystemInfo *> population;
     
     SystemInfo *bestIndividual;
     
