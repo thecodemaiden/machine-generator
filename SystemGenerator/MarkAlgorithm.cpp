@@ -2,14 +2,21 @@
 //  MarkAlgorithm.cpp
 //  SystemGenerator
 //
-//  Created by Mark Whiting on 10/18/13, based onf a file by Adeola Bannis.
-//
+//  Created by Mark Whiting on 10/18/13.
 //
 
 #include "MarkAlgorithm.h"
 #include <numeric>
 
-// basic implementation of constructor and destructor for subclasses to build on
+
+// Take a state. Save the systems. Mutate or Crossover. Load the systems. Evaluate.
+
+// Loading the state
+// MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
+
+
+
+//Make a population
 MarkAlgorithm::MarkAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c):population(populationSize), p_m(p_m), maxStagnation(maxStagnation), p_c(p_c)
 {
     for (int i=0; i<populationSize; i++) {
@@ -19,6 +26,7 @@ MarkAlgorithm::MarkAlgorithm(int populationSize, int maxGenerations, int maxStag
     bestIndividual = NULL;
 };
 
+//Remove everyone from populations
 MarkAlgorithm::~MarkAlgorithm(){
     // free the space
     for (int i=0; i<population.size(); i++) {
@@ -44,6 +52,7 @@ void MarkAlgorithm::stepSystem(MarkSystemInfo *individual)
     }
 }
 
+//A counter
 bool MarkAlgorithm::tick()
 {
     size_t populationSize = population.size();
@@ -189,3 +198,25 @@ MachineSystem *MarkAlgorithm::bestSystem()
 {
     return bestIndividual->system;
 }
+
+long MarkAlgorithm::getNumberOfIterations()
+{
+    return generations;
+}
+
+char* MarkAlgorithm::inputDescription()
+{
+    return "";
+}
+
+char* MarkAlgorithm::outputDescription()
+{
+    return "";
+}
+
+// generations = 0;
+// a->inputDescription(), a->outputDescription());
+
+//// almost certainly override
+//virtual  char* inputDescription();
+//virtual  char* outputDescription();

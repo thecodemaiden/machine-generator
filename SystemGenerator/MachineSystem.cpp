@@ -472,7 +472,7 @@ void MachineSystem::getRandomDisjointParts(cpVect *pos1, cpVect *pos2)
     cpVect p1 = cpv(-1,-1);
     cpVect p2 = cpv(-1,-1);
     
-    // we pick an existing attachment with uniform probability
+    // We pick an existing attachment with uniform probability
     int attachmentToPick = arc4random_uniform(emptyAttachments);
     
     int foundAttachments = 0;
@@ -630,17 +630,18 @@ void outputMachine(std::ostream & outputStream, MachinePart *p, int machinePos)
 
 void MachineSystem::saveToDisk(const char* filename)
 {
-    /* 1. grid size: x \t y \n
+    /* 
+     1. grid size: x \t y \n
      2. n (number of defined parts)
      3. list of machines of format:
-        // number \t body type \t height \t width
+        // name (number) \t type \t height \t width
         // attachment (output format below)
      4. n (number of defined attachments)
      5. list of (other) attachments of format:
          machine1 \t machine2 \t attachment type \t attach point 1 x \t attach point 1 y \t attach point 2 x \t attach point 2 y \t
-            attachment length [\t optional stuff]
+            attachment length [\t optional properties of the attachment]
      
-         where optional stuff depends on type:
+         where optional properties, depending on type, include:
             Gear - ratio \t phase
             Slide - max distance \t min distance
             Pivot - pivot point
@@ -666,7 +667,7 @@ void MachineSystem::saveToDisk(const char* filename)
     for (int i=0; i<attachments.size(); i++) {
         std::vector<Attachment *> attachmentList= attachments[i];
         for (int j=i+1; j<attachmentList.size(); j++) {
-            // only really have to cover a triangle of the attachments
+            // only really have to cover the upper triangle of the attachments
             Attachment *a = attachmentList[j];
             if (a) {
                 outputAttachment(outputFile, a, i, j);
@@ -736,6 +737,7 @@ MachineSystem * MachineSystem::loadFromDisk(const char* filename, cpFloat wallWi
         // read attachmentInfo
         std::getline(inputFile, line);
         lineParts = splitString(line, '\t');
+        
         // ignore the machine numbers, should both be this machine
         Attachment *a = NULL;
         AttachmentType t = (AttachmentType)atoi(lineParts[2].c_str());

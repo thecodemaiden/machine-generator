@@ -2,8 +2,7 @@
 //  MarkAlgorithm.h
 //  SystemGenerator
 //
-//  Created by Mark Whiting on 10/18/13, based onf a file by Adeola Bannis.
-//
+//  Created by Mark Whiting on 10/18/13.
 //
 
 #ifndef __SystemGenerator__MarkAlgorithm__
@@ -35,6 +34,7 @@ class MarkAlgorithm {
     int simSteps = 10;
     int stagnantGenerations = 0;
     int maxStagnation;
+    int generations;
     
     MachineSystem *createInitialSystem();
     MachineSystem *mutateSystem(MachineSystem *original);
@@ -45,12 +45,19 @@ class MarkAlgorithm {
     
     void stepSystem(MarkSystemInfo *individual);
     
+    
 public:
     spaceUpdateFunc updateFunction;
     MarkAlgorithm(int populationSize=5, int maxGenerations = 100, int maxStagnation=5, float p_m=0.2, float p_c= 0);
     ~MarkAlgorithm();
     
     bool tick();
+    
+    virtual long getNumberOfIterations();
+    
+    // usually overridden
+    virtual  char* inputDescription();
+    virtual  char* outputDescription();
     
     MachineSystem *bestSystem();
 };

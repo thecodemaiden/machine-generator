@@ -272,12 +272,12 @@ int main(int argc, char **argv)
     while (1) {
         restartAlgorithm = false;
       // AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
-      // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
+      MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
        // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
      //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
         
         // sorry about the name, this is actually the rotation algorithm
-        NEATDisplacementToX *a = new NEATDisplacementToX(50, 1000, 150);
+        //NEATDisplacementToX *a = new NEATDisplacementToX(50, 1000, 150);
         
         MachineSystem *best = NULL;//s;
         
