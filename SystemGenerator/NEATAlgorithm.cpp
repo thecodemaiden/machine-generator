@@ -453,7 +453,7 @@ void NEATAlgorithm::prepareInitialPopulation()
         info->system = newSystem;
         population.push_back(info);
     }
-    delete initialSystem;
+    ancestor = initialSystem;
 }
 
 // descending, not ascending, order
@@ -466,7 +466,8 @@ bool NEATAlgorithm::tick()
 {
     if (population.size() == 0) {
         prepareInitialPopulation();
-        ancestor = new MachineSystem(*(population.front()->system));
+        if (!ancestor)
+            ancestor = new MachineSystem(*(population.front()->system));
     }
     
     cpFloat bestFitness = -INFINITY; // we want zero fitness
