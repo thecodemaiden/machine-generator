@@ -11,6 +11,7 @@
 
 #include "Algorithm.h"
 #include <string>
+#include <fstream>
 
 class AdeolaAlgorithm {
 protected:
@@ -24,9 +25,12 @@ protected:
     
     long generations;
     
+    std::ofstream currentLogFile;
+    std::vector<SystemInfo *> population;
+    
 public:
     AdeolaAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c);
-    virtual ~AdeolaAlgorithm() {};
+    virtual ~AdeolaAlgorithm();
     
     virtual bool tick() = 0; // returns true if we should stop iterating - please override
     
@@ -36,6 +40,8 @@ public:
     // more functions to override
     virtual  char* inputDescription();
     virtual  char* outputDescription();
+    
+    void logPopulationStatistics();
 };
 
 #endif /* defined(__SystemGenerator__AdeolaBaseAlgorithm__) */

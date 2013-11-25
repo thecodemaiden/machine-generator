@@ -18,7 +18,8 @@ space(space),
 machineType(MACHINE_BOX),
 body(NULL)
 {
-    
+    height = 0.0;
+    length = 0.0;
 }
 
 MachinePart::MachinePart(BodyType machineType, cpVect position, cpFloat length, cpFloat height, cpSpace *space)
@@ -104,11 +105,18 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
         bodyShape = shape;
     });
     
+    // the attach coordinates have to be adjusted for a circle, else we can attach off the edge
     if (bodyShape) {
+        cpVect temp = attachment->secondAttachPoint;
+        if (bodyShape->klass_private->type == CP_CIRCLE_SHAPE) {
+            temp = cpv(temp.x*sqrt(1 - (temp.y * temp.y)/2), temp.y*sqrt(1 - (temp.x * temp.x)/2));
+        }
+        
         cpBB boundingBox = cpShapeGetBB(bodyShape);
         cpFloat length = boundingBox.r - boundingBox.l;
         cpFloat height = boundingBox.t - boundingBox.b;
-        localAttachPoint = cpv(length*attachment->secondAttachPoint.x/2, height*attachment->secondAttachPoint.y/2);
+        
+        localAttachPoint = cpv(length*temp.x/2, height*temp.y/2);
     }
     
     if (otherBody) {
@@ -117,12 +125,19 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
         });
         
         if (otherShape) {
+            cpVect temp = attachment->firstAttachPoint;
+            if (otherShape->klass_private->type == CP_CIRCLE_SHAPE) {
+                temp = cpv(temp.x*sqrt(1 - (temp.y * temp.y)/2), temp.y*sqrt(1 - (temp.x * temp.x)/2));
+            }
+
             cpBB boundingBox = cpShapeGetBB(otherShape);
             cpFloat length = boundingBox.r - boundingBox.l;
             cpFloat height = boundingBox.t - boundingBox.b;
-            otherAttachPoint = cpv(length*attachment->firstAttachPoint.x/2, height*attachment->firstAttachPoint.y/2);
+            otherAttachPoint = cpv(length*temp.x/2, height*temp.y/2);
         }
     }
+    
+
     
     // find attach point for other body in local coordinates
     cpVect otherAttachLocal = cpBodyLocal2World(otherBody, otherAttachPoint);
@@ -194,19 +209,19 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     
     attachment->constraint = mainConstraint;
     mainConstraint->data = attachment;
-    
-    cpGroup smallestGroup = MIN(cpShapeGetGroup(otherShape), cpShapeGetGroup(bodyShape));
-    smallestGroup = MIN(smallestGroup, 1);
-    
-    if (attachmentType == ATTACH_PIVOT) {
-        // make them the same group so they don't collide
-        cpShapeSetGroup(otherShape, smallestGroup);
-        cpShapeSetGroup(bodyShape, smallestGroup);
-    } else {
-        // we increase the availableGroup so that new machines will collide with this one
-        cpShapeSetGroup(bodyShape, availableGroup++);
-        
-    }
+//    
+//    cpGroup smallestGroup = MIN(cpShapeGetGroup(otherShape), cpShapeGetGroup(bodyShape));
+//    smallestGroup = MIN(smallestGroup, 1);
+//    
+//    if (attachmentType == ATTACH_PIVOT) {
+//        // make them the same group so they don't collide
+//        cpShapeSetGroup(otherShape, smallestGroup);
+//        cpShapeSetGroup(bodyShape, smallestGroup);
+//    } else {
+//        // we increase the availableGroup so that new machines will collide with this one
+//        cpShapeSetGroup(bodyShape, availableGroup++);
+//        
+//    }
     
 }
 

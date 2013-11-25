@@ -23,6 +23,8 @@ struct AttachmentInnovation {
     bool operator==(const AttachmentInnovation& other)const {
         return (cpveql(pos1, other.pos1) && cpveql(pos2, other.pos2)) || (cpveql(pos1, other.pos2) && cpveql(pos2, other.pos1));
     }
+    
+    
     bool operator!=(const AttachmentInnovation& other)const {
         return !(*this==other);
     }
@@ -53,7 +55,7 @@ public:
     Attachment *attachmentToWall(cpVect gridPosition);
     
     bool attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attachment *attachment);
-    bool detachMachines(cpVect machine1Pos, cpVect machine2Pos);
+    bool detachMachines(cpVect machine1Pos, cpVect machine2Pos); // if true, destroy the attachment, else disable
     
     void updateAttachmentToWall(cpVect gridPosition, Attachment *newAttachment);
     
@@ -79,6 +81,7 @@ public:
     
     // for NEAT
     std::vector<AttachmentInnovation> attachmentGenome(bool sorted=true);
+    bool destroyAttachments; // if true, destroy attachments instead of disabling them
     
 private:
     cpBody *body;

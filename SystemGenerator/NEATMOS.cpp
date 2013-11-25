@@ -1,18 +1,15 @@
 //
-//  NEATAlgorithm.cpp
+//  NEATMOS.cpp
 //  SystemGenerator
 //
-//  Created by Adeola Bannis on 11/4/13.
+//  Created by Adeola Bannis on 11/21/13.
 //
 //
 
-#include "NEATAlgorithm.h"
+#include "NEATMOS.h"
 #include <algorithm>
-#include <numeric>
-#include <sstream>
-#include <wordexp.h>
 
-NEATAlgorithm::NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn, int systemWidth, int systemHeight)
+NEATMOS::NEATMOS(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn, int systemWidth, int systemHeight)
 :populationSize(populationSize), maxStagnation(maxStagnation), maxGenerations(maxGenerations), p_c(p_c),
 p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach), sys_w(systemWidth), sys_h(systemHeight)
 
@@ -23,31 +20,28 @@ p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach), sys_w(systemWidt
     generations = 0;
     stagnantGenerations = 0;
     simSteps = 50;
-    ancestor = NULL;
 }
 
-NEATAlgorithm::~NEATAlgorithm()
+NEATMOS::~NEATMOS()
 {
-    std::vector<SystemInfo *>::iterator it = population.begin();
+    std::vector<MOSystemInfo *>::iterator it = population.begin();
     while (it != population.end()) {
         delete *it;
         it++;
     }
-    delete ancestor;
-    currentLogFile.close();
 }
 
 // return true if sys1 comes before sys2
-static bool compareIndividuals(const SystemInfo *sys1, const SystemInfo *sys2)
+static bool compareIndividuals(const MOSystemInfo *sys1, const MOSystemInfo *sys2)
 {
-    return sys1->fitness > sys2->fitness;
+    return sys1->frontRank < sys2->frontRank;
 }
 
 //static int indexOfInnovationNumberInGenome(std::vector<AttachmentInnovation> genome, int in, int start) {
 //    int loc = -1;
-//    
+//
 //    std::vector<AttachmentInnovation>::iterator it = genome.begin()+start;
-//    
+//
 //    while (it != genome.end()) {
 //        if (it->innovationNumber == in) {
 //            loc = int(it - genome.begin());
@@ -55,7 +49,7 @@ static bool compareIndividuals(const SystemInfo *sys1, const SystemInfo *sys2)
 //        }
 //        it++;
 //    }
-//    
+//
 //    return loc;
 //}
 
@@ -64,7 +58,7 @@ static bool compareInnovationNumbers(const AttachmentInnovation a1, const Attach
     return a1.innovationNumber < a2.innovationNumber;
 }
 
-void NEATAlgorithm::addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation gene, MachineSystem *newChild)
+void NEATMOS::addGeneFromParentSystem(MachineSystem *parent, AttachmentInnovation gene, MachineSystem *newChild)
 {
     cpVect pos1 = gene.pos1;
     cpVect pos2 = gene.pos2;
@@ -86,12 +80,12 @@ void NEATAlgorithm::addGeneFromParentSystem(MachineSystem *parent, AttachmentInn
     Attachment *attachmentToCopy = parent->attachmentBetween(pos1, pos2);
     Attachment *copy = Attachment::copyAttachment(attachmentToCopy);
     copy->innovationNumber = gene.innovationNumber;
-
+    
     newChild->attachMachines(pos1, pos2, copy);
-  
+    
 }
 
-MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
+MachineSystem *NEATMOS::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
 {
     
     if (sys1 == sys2) {
@@ -115,18 +109,18 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
     // difference takes things in the first range that are not in the second - perfect if we assume parent 1 is more fit
     std::set_difference(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(disjointandExcess), compareInnovationNumbers);
     
-
+    
     // first we handle the matching genes
     for (int i=0; i<matchingGenes1.size(); i++){
-            AttachmentInnovation gene = matchingGenes1[i];
-            MachineSystem *parent = sys1;
-                // randomly choose 1 to add to the child
-                float selector = (cpFloat)rand()/RAND_MAX;
-            
-            if (selector <= p_c) {
-                parent = sys2;
-                gene = matchingGenes2[i];
-            }
+        AttachmentInnovation gene = matchingGenes1[i];
+        MachineSystem *parent = sys1;
+        // randomly choose 1 to add to the child
+        float selector = (cpFloat)rand()/RAND_MAX;
+        
+        if (selector <= p_c) {
+            parent = sys2;
+            gene = matchingGenes2[i];
+        }
         addGeneFromParentSystem(parent, gene, newChild);
     }
     
@@ -138,55 +132,55 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
     // child needs input and ouput part... copy from parent 1
     newChild->inputMachinePosition = sys1->inputMachinePosition;
     newChild->outputMachinePosition = sys1->outputMachinePosition;
-        
+    
     return newChild;
 }
 
 //fitness proportionate selection
-void  NEATAlgorithm::spawnNextGeneration()
+void  NEATMOS::spawnNextGeneration()
 {
     cpFloat sharedFitnessSum = 0.0;
-    std::vector<SystemInfo *>::iterator it = population.begin();
+    std::vector<MOSystemInfo *>::iterator it = population.begin();
     while (it != population.end()) {
-        sharedFitnessSum += (*it)->fitness;
+        sharedFitnessSum += 1/((*it)->frontRank +1);
         it++;
     }
     
     // create population/2 children through recombination
-    std::vector<SystemInfo *>newGeneration;
-
+    std::vector<MOSystemInfo *>newGeneration;
+    
     do {
-        SystemInfo *p1 = NULL;
-        SystemInfo *p2 = NULL;
+        MOSystemInfo *p1 = NULL;
+        MOSystemInfo *p2 = NULL;
         selectParents(&p1, &p2, sharedFitnessSum);
         
         MachineSystem *child = combineSystems(p1->system, p2->system);
         // mutate the new individual (maybe)
         mutateSystem(child);
         
-        SystemInfo *i = new SystemInfo(simSteps);
+        MOSystemInfo *i = new MOSystemInfo();
         i->system = child;
         newGeneration.push_back(i);
     } while (newGeneration.size() < populationSize);
     
     // add the original population too
     population.insert(population.end(), newGeneration.begin(), newGeneration.end());
-
+    
 }
 
-void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum)
+void NEATMOS::selectParents(MOSystemInfo **parent1, MOSystemInfo **parent2, cpFloat fitnessSum)
 {
     if (!parent1 || !parent2)
         return; // don't waste my time
     
     // choose a species according to species fitness
     // then chose parents at random from within that species
-    NEATSpecies *breedingSpecies = NULL;
+    NEATMOSpecies *breedingSpecies = NULL;
     
     // Assume sorted population
     float selector = ((cpFloat)rand()/RAND_MAX);
     
-    std::vector<NEATSpecies *>::iterator it = speciesList.begin();
+    std::vector<NEATMOSpecies *>::iterator it = speciesList.begin();
     breedingSpecies = speciesList.back(); // in case something goes wrong with selection below
     cpFloat cumulativeFitness = 0.0;
     while (it != speciesList.end()) {
@@ -198,8 +192,8 @@ void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cp
         it++;
     }
     // if there is only 1 individual in that species... breed it with itself... (like a plant)
-    std::vector<SystemInfo *>individuals = breedingSpecies->members;
- 
+    std::vector<MOSystemInfo *>individuals = breedingSpecies->members;
+    
     if (individuals.size() > 1) {
         int parentPosition = arc4random_uniform(individuals.size());
         *parent1 = individuals[parentPosition];
@@ -215,15 +209,15 @@ void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cp
     
 }
 
-void NEATAlgorithm::speciate()
+void NEATMOS::speciate()
 {
-    std::vector<SystemInfo *>::iterator populationIter = population.begin();
+    std::vector<MOSystemInfo *>::iterator populationIter = population.begin();
     
     while (populationIter != population.end()) {
         // assign to species
         bool added= false;
         
-        std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+        std::vector<NEATMOSpecies *>::iterator speciesIterator = speciesList.begin();
         while (speciesIterator != speciesList.end()) {
             double distance = genomeDistance((*populationIter)->system, (*speciesIterator)->representative);
             if (fabs(distance) < d_threshold) {
@@ -233,10 +227,10 @@ void NEATAlgorithm::speciate()
             }
             speciesIterator++;
         }
-      
+        
         if (!added) {
             // new species!!
-            NEATSpecies *s = new NEATSpecies();
+            NEATMOSpecies *s = new NEATMOSpecies();
             s->representative = new MachineSystem(*(*populationIter)->system);
             s->members.push_back(*populationIter);
             speciesList.push_back(s);
@@ -248,12 +242,12 @@ void NEATAlgorithm::speciate()
     
     // for each species, copy a random current member to be the representative for the next generation, and adjust the fitnesses for sharing
     // kill off a species with no members
-    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    std::vector<NEATMOSpecies *>::iterator speciesIterator = speciesList.begin();
     while (speciesIterator != speciesList.end()) {
         // pick a new rep
-        std::vector<SystemInfo *> members = (*speciesIterator)->members;
+        std::vector<MOSystemInfo *> members = (*speciesIterator)->members;
         if (members.size() == 0) {
-            NEATSpecies *extinctSpecies = *speciesIterator;
+            NEATMOSpecies *extinctSpecies = *speciesIterator;
             speciesIterator = speciesList.erase(speciesIterator);
             delete extinctSpecies;
         } else {
@@ -263,11 +257,11 @@ void NEATAlgorithm::speciate()
             delete (*speciesIterator)->representative;
             (*speciesIterator)->representative = rep;
             
-           // fprintf(stderr, "\tSpecies %d: %ld members\n", ++i, members.size());
+            // fprintf(stderr, "\tSpecies %d: %ld members\n", ++i, members.size());
             
             // update the fitnesses
             double totalFitness = 0.0;
-            std::vector<SystemInfo *>::iterator memberIterator = members.begin();
+            std::vector<MOSystemInfo *>::iterator memberIterator = members.begin();
             while (memberIterator != members.end()) {
                 (*memberIterator)->fitness /= members.size();
                 totalFitness += (*memberIterator)->fitness;
@@ -301,7 +295,7 @@ static double smallerToLarger(double x1, double x2)
 // forget attachment length
 static double attachmentDifference(Attachment *a1, Attachment *a2)
 {
-
+    
     double diff = cpvdistsq(a1->firstAttachPoint, a2->firstAttachPoint);
     diff += cpvdistsq(a1->secondAttachPoint, a2->secondAttachPoint);
     
@@ -323,7 +317,7 @@ static double attachmentDifference(Attachment *a1, Attachment *a2)
             case ATTACH_SLIDE:
             {
                 diff += normalize(((SlideAttachment *)a1)->minDistance, ((SlideAttachment *)a2)->minDistance);
-        
+                
                 diff += normalize(((SlideAttachment *)a1)->maxDistance, ((SlideAttachment *)a2)->maxDistance);
                 break;
             }
@@ -342,12 +336,12 @@ static double attachmentDifference(Attachment *a1, Attachment *a2)
     } else {
         diff = diff + 4.0;
     }
-
+    
     return diff;
 }
 
 
-cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
+cpFloat NEATMOS::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
 {
     std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
     std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
@@ -359,14 +353,14 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
     size_t nExcess = 0;
     size_t nMatching = 0;
     size_t matchingDiff = 0;
-
+    
     // yay stdlib!
     std::vector<AttachmentInnovation> matchingGenes1;
     std::vector<AttachmentInnovation> matchingGenes2;
     std::vector<AttachmentInnovation> disjointFromSys1;
     std::vector<AttachmentInnovation> disjointFromSys2;
     
-
+    
     // set intersection takes from the first range given - I do it twice so I have the matches from parent 1 and from parent 2.
     std::set_intersection(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(matchingGenes1), compareInnovationNumbers);
     std::set_intersection(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(),std::back_inserter(matchingGenes2), compareInnovationNumbers);
@@ -374,7 +368,7 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
     // difference takes things in the first range that are not in the second - we will have to check for excess ourself
     std::set_difference(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(disjointFromSys1), compareInnovationNumbers);
     std::set_difference(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(), std::back_inserter(disjointFromSys2), compareInnovationNumbers);
-
+    
     
     nMatching = matchingGenes2.size();
     // first find the distance between matching genes
@@ -384,7 +378,7 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
         
         Attachment *attachment1 = sys1->attachmentBetween(a1.pos1, a1.pos2);
         Attachment *attachment2 = sys2->attachmentBetween(a2.pos1, a2.pos2);
-  
+        
         matchingDiff += attachmentDifference(attachment1, attachment2);
     }
     
@@ -427,20 +421,20 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
             nDisjoint -= nExcess;
         }
     }
-
     
-
+    
+    
     double d = w_disjoint*nDisjoint/longerSize + w_excess*nExcess/longerSize + w_matching*matchingDiff/nMatching;
-
+    
     return d;
 }
 
-MachineSystem *NEATAlgorithm::createInitialSystem()
+MachineSystem *NEATMOS::createInitialSystem()
 {
     return new MachineSystem(300, 300, 5, 5, cpvzero);
 }
 
-void NEATAlgorithm::prepareInitialPopulation()
+void NEATMOS::prepareInitialPopulation()
 {
     MachineSystem *initialSystem = createInitialSystem();
     neatGenerator(initialSystem);
@@ -449,7 +443,7 @@ void NEATAlgorithm::prepareInitialPopulation()
     while (population.size() < populationSize) {
         MachineSystem *newSystem = new MachineSystem(*initialSystem);
         mutateSystem(newSystem);
-        SystemInfo *info = new SystemInfo(simSteps);
+        MOSystemInfo *info = new MOSystemInfo(simSteps);
         info->system = newSystem;
         population.push_back(info);
     }
@@ -457,43 +451,41 @@ void NEATAlgorithm::prepareInitialPopulation()
 }
 
 // descending, not ascending, order
-static bool compareSpeciesFitness(const NEATSpecies *s1, const NEATSpecies *s2)
+static bool compareSpeciesFitness(const NEATMOSpecies *s1, const NEATMOSpecies *s2)
 {
     return s1->totalSharedFitness > s2->totalSharedFitness;
 }
 
-bool NEATAlgorithm::tick()
+bool NEATMOS::tick()
 {
-    if (population.size() == 0) {
+    if (population.size() == 0)
         prepareInitialPopulation();
-        ancestor = new MachineSystem(*(population.front()->system));
-    }
     
     cpFloat bestFitness = -INFINITY; // we want zero fitness
     
     for (size_t popIter = 0; popIter <population.size(); popIter++) {
-        SystemInfo *individual = population[popIter];
+        MOSystemInfo *individual = population[popIter];
         
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
-//        MachineSystem *oldSystem = individual->system;
-//        individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
-//        delete oldSystem;
-//        if (individual->fitness > bestFitness) {
-//            bestFitness = individual->fitness;
-//            bestIndividual = individual;
-//            bestPos = popIter;
-//        }
-//        
-//        if (individual -> fitness <= worstFitness) {
-//            worstFitness = individual->fitness;
-//            worstPos = popIter;
-//        }
+        //        MachineSystem *oldSystem = individual->system;
+        //        individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
+        //        delete oldSystem;
+        //        if (individual->fitness > bestFitness) {
+        //            bestFitness = individual->fitness;
+        //            bestIndividual = individual;
+        //            bestPos = popIter;
+        //        }
+        //
+        //        if (individual -> fitness <= worstFitness) {
+        //            worstFitness = individual->fitness;
+        //            worstPos = popIter;
+        //        }
     }
     
- 
+    
     speciate();
-
+    
     
     // figure out how many of each species to save
     double sharedFitnessSum = 0.0;
@@ -501,11 +493,11 @@ bool NEATAlgorithm::tick()
         sharedFitnessSum += speciesList[i]->totalSharedFitness;
     }
     
-    std::vector<SystemInfo *> individualsToSave;
+    std::vector<MOSystemInfo *> individualsToSave;
     // sort the species to ensure we keep the best
     std::sort(speciesList.begin(), speciesList.end(), compareSpeciesFitness);
     
-    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    std::vector<NEATMOSpecies *>::iterator speciesIterator = speciesList.begin();
     
     int i = 0;
     while (speciesIterator != speciesList.end()) {
@@ -516,16 +508,16 @@ bool NEATAlgorithm::tick()
         numToSave = MAX(numToSave, 1); // save 1 of each species
         std::sort((*speciesIterator)->members.begin(), (*speciesIterator)->members.end(), compareIndividuals);
         
-
+        
         // don't let population grow unchecked
         if (individualsToSave.size() > populationSize)
             numToSave = 0;
         
-       // fprintf(stderr, "Species %d: %d/%ld\n", i++, numToSave,  (*speciesIterator)->members.size());
-
+        // fprintf(stderr, "Species %d: %d/%ld\n", i++, numToSave,  (*speciesIterator)->members.size());
+        
         
         for (int j=0; j<numToSave; j++) {
-            SystemInfo *individual = (*speciesIterator)->members[j];
+            MOSystemInfo *individual = (*speciesIterator)->members[j];
             cpFloat rawFitness = individual->fitness * numMembers;
             if (rawFitness > bestFitness) {
                 bestFitness = rawFitness;
@@ -534,7 +526,7 @@ bool NEATAlgorithm::tick()
             individualsToSave.push_back(individual);
         }
         
-        std::vector<SystemInfo *>::iterator deleteIt =  (*speciesIterator)->members.begin()+numToSave;
+        std::vector<MOSystemInfo *>::iterator deleteIt =  (*speciesIterator)->members.begin()+numToSave;
         while (deleteIt !=  (*speciesIterator)->members.end()) {
             delete *(deleteIt);
             deleteIt =  (*speciesIterator)->members.erase(deleteIt);
@@ -563,7 +555,6 @@ bool NEATAlgorithm::tick()
     
     bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
     
-    logPopulationStatistics();
     
     // empty the innovation list before spawning more
     newConnections.clear();
@@ -574,39 +565,39 @@ bool NEATAlgorithm::tick()
         spawnNextGeneration();
     }
     
-   
+    
     // empty the species lists
     speciesIterator = speciesList.begin();
     while (speciesIterator != speciesList.end()) {
-       (*speciesIterator)->members.clear();
+        (*speciesIterator)->members.clear();
         speciesIterator++;
     }
-
+    
     
     return  stop;
 }
 
-MachineSystem *NEATAlgorithm::bestSystem()
+MachineSystem *NEATMOS::bestSystem()
 {
     return bestIndividual->system;
 }
 
- long NEATAlgorithm::getNumberOfIterations()
+long NEATMOS::getNumberOfIterations()
 {
     return generations;
 }
 
-  char* NEATAlgorithm::inputDescription()
+char* NEATMOS::inputDescription()
 {
     return "";
 }
 
-char* NEATAlgorithm::outputDescription()
+char* NEATMOS::outputDescription()
 {
     return "";
 }
 
- void NEATAlgorithm::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo)
+void NEATMOS::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo)
 {
     float selector = (cpFloat)rand()/RAND_MAX;
     Attachment *old = NULL;
@@ -627,7 +618,7 @@ char* NEATAlgorithm::outputDescription()
 }
 
 
-void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info)
+void NEATMOS::assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info)
 {
     // have we already created this 'innovation' in this generation?
     std::vector<AttachmentInnovation>::iterator it = std::find(newConnections.begin(), newConnections.end(), info);
@@ -640,7 +631,7 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
     }
 }
 
- void NEATAlgorithm::mutateSystem(MachineSystem *original)
+void NEATMOS::mutateSystem(MachineSystem *original)
 {
     
     std::vector<AttachmentInnovation> allAttachments = original->attachmentGenome(false);
@@ -655,7 +646,7 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
     // add attachment or add node - or both
     float selector1 = (cpFloat)rand()/RAND_MAX;
     if (selector1 < p_m_conn) {
-        // insert a new connection 
+        // insert a new connection
         cpVect pos1;
         cpVect pos2;
         original->getRandomDisjointParts(&pos1, &pos2);
@@ -685,12 +676,12 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
             cpVect pos2;
             
             original->getRandomAttachment(&a, &pos1, &pos2);
-         
+            
             //assert(a);
             if (a) {
                 Attachment *new1;
                 Attachment *new2;
-
+                
                 if (insertRandomAttachments) {
                     new1 = Attachment::createAttachmentOfType((AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX));
                     new2 = Attachment::createAttachmentOfType((AttachmentType)arc4random_uniform(ATTACH_TYPE_MAX));
@@ -720,82 +711,26 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
                 // now the second attachment
                 created.pos1 = pos2;
                 created.pos2 = newPosition;
-
+                
                 assignInnovationNumberToAttachment(new2, created);
                 
             }
         }
     }
- 
+    
 }
 
- void NEATAlgorithm::stepSystem(SystemInfo *individual)
+void NEATMOS::stepSystem(MOSystemInfo *individual)
 {
     
 }
 
- cpFloat NEATAlgorithm::evaluateSystem(SystemInfo *sys)
+cpFloat NEATMOS::evaluateSystem(MOSystemInfo *sys)
 {
     return 1.0;
 }
 
- bool NEATAlgorithm::goodEnoughFitness(cpFloat bestFitness)
+bool NEATMOS::goodEnoughFitness(cpFloat bestFitness)
 {
     return false;
-}
-
-
-
-static double subtractFromFitness(SystemInfo *individual, double fitness)
-{
-    return individual->fitness - fitness;
-}
-
-void NEATAlgorithm::logPopulationStatistics()
-{
-    if (!currentLogFile.is_open()) {
-        time_t now = time(NULL);
-        std::stringstream s;
-        wordexp_t directory;
-        wordexp("~/temp/machines/", &directory, 0);
-        s << directory.we_wordv[0];
-        s << "neat-log" << now << ".log";
-        std::string filename = s.str();
-        currentLogFile.open(filename.c_str());
-    }
-    
-    // 1 species per line : # in species, best fitness, worst fitness, mean fitness, std. dev, distance to starting genome
-    // then an empty line
-    
-    std::vector<NEATSpecies *>::iterator speciesIter = speciesList.begin();
-    
-    while (speciesIter != speciesList.end()) {
-        std::vector<SystemInfo *>members = (*speciesIter)->members;
-        size_t n = members.size();
-        currentLogFile << n << " ";
-        SystemInfo *best = members.front();
-        currentLogFile << best->fitness << " ";
-        SystemInfo *worst = members.back();
-        currentLogFile << worst->fitness << " ";
-        double meanFitness =(*speciesIter)->totalSharedFitness/n;
-        currentLogFile << meanFitness << " ";
-        // standard dev - from http://stackoverflow.com/questions/7616511/calculate-mean-and-standard-deviation-from-a-vector-of-samples-in-c-using-boos
-  
-        double sq_sum = 0;
-        std::vector<SystemInfo *>::iterator it = members.begin();
-        while (it != members.end()) {
-            sq_sum += ((*it)->fitness - meanFitness)*((*it)->fitness - meanFitness);
-            it++;
-        }
-        
-        double stdev = sqrt(sq_sum /n);
-        currentLogFile << stdev << " ";
-        
-        double speciesDist = genomeDistance((*speciesIter)->representative, ancestor);
-        currentLogFile << speciesDist << "\n";
-        speciesIter++;
-        
-    }
-    currentLogFile << "\n";
-    currentLogFile.flush();
 }

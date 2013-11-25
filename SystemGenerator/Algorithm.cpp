@@ -508,8 +508,29 @@ Attachment *perturbAttachmentAttributes(Attachment *at)
     return at;
 }
 
-void changeMachineShape(MachinePart *part)
-{
+Attachment *changeAttachmentAnchorPoints(Attachment *at) {
+    
+    Attachment *newAttachment = Attachment::copyAttachment(at);
+        cpVect displacementVector = cpv((float)rand()/(RAND_MAX/2)-1.0,  (float)rand()/(RAND_MAX/2)-1.0);
+        
+        if ((float)rand()/RAND_MAX > 0.5) {
+            cpVect newVector = cpvadd(newAttachment->firstAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            newAttachment->firstAttachPoint = newVector;
+            
+        }
+        else {
+            cpVect newVector = cpvadd(newAttachment->secondAttachPoint, displacementVector);
+            newVector.x = MAX(newVector.x, -1.0);
+            newVector.x = MIN(newVector.x, 1.0);
+            newVector.y = MAX(newVector.y, -1.0);
+            newVector.y = MIN(newVector.y, 1.0);
+            newAttachment->secondAttachPoint = newVector;
+        }
+        
+    return newAttachment;
     
 }
-

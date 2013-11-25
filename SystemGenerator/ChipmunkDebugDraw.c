@@ -43,7 +43,7 @@
 */
 
 const Color LINE_COLOR = {200.0f/255.0f, 210.0f/255.0f, 230.0f/255.0f, 1.0f};
-const Color GEAR_COLOR = {0.75f, 0.75f, 0.00f, 1.0f};
+const Color GEAR_COLOR = {0.75f, 0.75f, 0.00f, 0.5f};
 const Color PIVOT_COLOR = {0.0f, 0.75f, 0.75f, .5f};
 const Color SPRING_COLOR = {0.0f, 0.75f, 0.0f, .5f};
 const Color FIXED_COLOR = {0.75f, 0.0f, 0.75f, .5f};
@@ -516,13 +516,10 @@ drawConstraint(cpConstraint *constraint, void *unused)
         cpVect a = body_a->p;
 		cpVect b = body_b->p;
 	
-        static char gearRatioStr[8];
+        cpFloat gearRatio = cpGearJointGetRatio(constraint);
         
-        sprintf(gearRatioStr, "%.3f", cpGearJointGetRatio(constraint));
-        
-		ChipmunkDebugDrawDot(5, a, GEAR_COLOR);
-		ChipmunkDebugDrawDot(5, b, GEAR_COLOR);
-		ChipmunkDebugDrawSegment(a, b, GEAR_COLOR);
+        char gearRatioStr[8];
+        sprintf(gearRatioStr, "%.3f", gearRatio);
         
         ChipmunkDemoTextPushRenderer();
         cpVect pos = cpvlerp(a, b, 0.5);
@@ -536,6 +533,44 @@ drawConstraint(cpConstraint *constraint, void *unused)
             ChipmunkDemoTextFlushRenderer();
             ChipmunkDemoTextPopRenderer();
         } glPopMatrix();
+	
+        // draw a quadrilateral to represent the gear ratio
+        const cpFloat unitSize = 16.0;
+        cpVect vertices[4];
+
+      //  cpFloat a_to_b = cpvtoangle(cpvsub(a, b));
+        cpFloat a_ratio;
+        cpFloat b_ratio;
+        
+        if (fabs(gearRatio) < 1) {
+            a_ratio = 1.0;
+            b_ratio = fabs(gearRatio);
+        } else {
+            b_ratio = 1.0;
+            a_ratio = fabs(1.0/gearRatio);
+        }
+        cpVect a_disp;
+        cpVect b_disp;
+        
+        if (fabs(a.x-b.x) < fabs(a.y - b.y)) {
+            a_disp = cpv(unitSize*a_ratio/2, 0);
+            b_disp = cpv(unitSize*b_ratio/2, 0);
+            
+        } else {
+            a_disp = cpv(0, unitSize*a_ratio/2);
+            b_disp = cpv(0, unitSize*b_ratio/2);
+        }
+        
+//         a_disp = cpvmult(cpv(fabs(cos(a_to_b)), fabs(sin(a_to_b))), unitSize*a_ratio/2);
+//        
+//         b_disp = cpvmult(cpv(fabs(cos(a_to_b)), fabs(sin(a_to_b))), unitSize*b_ratio/2);
+//    
+        vertices[0] = cpvsub(a, a_disp);
+        vertices[1] = cpvsub(b, b_disp);
+        vertices[2] = cpvadd(b, b_disp);
+        vertices[3] = cpvadd(a, a_disp);
+        
+        ChipmunkDebugDrawPolygon(4, vertices, 0.0f, GEAR_COLOR, GEAR_COLOR);
 
         
     }

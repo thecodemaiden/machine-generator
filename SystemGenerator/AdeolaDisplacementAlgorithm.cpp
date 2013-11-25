@@ -143,6 +143,8 @@ bool AdeolaDisplacementAlgorithm::tick()
     
     generations++;
     
+    logPopulationStatistics();
+    
     return  stop;
 }
 

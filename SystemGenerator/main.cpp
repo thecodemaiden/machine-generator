@@ -1,3 +1,4 @@
+
 //
 //  main.cpp
 //  SystemGenerator
@@ -6,8 +7,10 @@
 //
 //
 
+#define CP_ALLOW_PRIVATE_ACCESS 1
+
 extern "C" {
-#include <cstdio>
+    
 #include "chipmunk.h"
 #include "GL/glew.h"
 #include "GL/glfw.h"
@@ -16,6 +19,9 @@ extern "C" {
 #include "ChipmunkDemoTextSupport.h"
 }
 
+#include <cstdio>
+#include <wordexp.h>
+#include <sstream>
 #include "MachinePart.h"
 #include "MachineSystem.h"
 #include "AlgorithmList.h"
@@ -24,7 +30,7 @@ static cpBool paused = cpFalse;
 static cpBool step = cpFalse;
 
 static cpBool restartAlgorithm = cpFalse;
-
+static cpBool terminateAlgorithm = cpFalse;
 // for time step
 static double LastTime = 0.0;
 
@@ -83,9 +89,10 @@ DrawInstructions()
 {
 	ChipmunkDemoTextDrawString(cpv(-300, 220),
                                "Controls:\n"
-                               "x - restart EA\n"
+                               "r - restart EA\n"
                                "` - pause\n"
-                               "1 - step once\n"
+                               "s - step once\n"
+                               "x - stop at current generation\n"
                                );
 }
 
@@ -132,13 +139,15 @@ Keyboard(int key, int state)
 	
     if(key == '`'){
 		paused = !paused;
-    } else if(key == '1'){
+    } else if(key == 's'){
 		step = cpTrue;
 	} else if(key == '\\'){
 		glDisable(GL_LINE_SMOOTH);
 		glDisable(GL_POINT_SMOOTH);
-    } else if(key == 'x') {
+    } else if(key == 'r') {
         restartAlgorithm = true;
+    } else if (key == 'x') {
+        terminateAlgorithm = true;
     }
 }
 
@@ -265,10 +274,12 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
 
 int main(int argc, char **argv)
 {
-    setupGLFW();
-
-   // MachineSystem *s = MachineSystem::loadFromDisk("/Users/abannis/temp/test.txt");
+    time_t now = time(NULL);
+    int run_number = 1;
+    wordexp_t directory;
+    wordexp("~/temp/machines/", &directory, 0);
     
+    setupGLFW();
     while (1) {
         restartAlgorithm = false;
       // AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(5, 10000, 150);
@@ -281,9 +292,12 @@ int main(int argc, char **argv)
         
         MachineSystem *best = NULL;//s;
         
-        while(!restartAlgorithm) {
+        paused = false;
+        terminateAlgorithm = false;
+        
+        while(!restartAlgorithm && !terminateAlgorithm) {
             double now = glfwGetTime();
-            if ((!paused && now - LastTime > 0.3) || (paused && step)) { // slow your roll...
+            if ((!paused && now - LastTime > 0.1) || (paused && step)) { // slow your roll...
                 step = false;
                 if (a->tick())
                     break;
@@ -294,13 +308,18 @@ int main(int argc, char **argv)
                 updateWorld(best->getSpace(), best, cpvzero, 0.0);
         }
         LastTime = glfwGetTime();
-        paused = false;
         cpConstraint *drivingMotor = NULL;
         if (!restartAlgorithm) {
             best = a->bestSystem();
             fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
             
-            best->saveToDisk("/Users/abannis/temp/test.txt");
+            std::stringstream s;
+          
+            s << directory.we_wordv[0];
+            s << "best" << now << "-" << run_number++ << ".machine";
+            std::string filename = s.str();
+            
+            best->saveToDisk(filename.c_str()); // expands the tilde
             
             cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
@@ -318,8 +337,10 @@ int main(int argc, char **argv)
             LastTime = now;
         }
         
-        if (drivingMotor)
+        if (drivingMotor) {
             cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
+            drivingMotor = NULL;
+        }
         delete a;
         a = NULL;
     }

@@ -1,31 +1,31 @@
 //
-//  NEATDisplacementToX.cpp
+//  NEATSpatialRotation.cpp
 //  SystemGenerator
 //
-//  Created by Adeola Bannis on 11/4/13.
+//  Created by Adeola Bannis on 11/15/13.
 //
 //
 
-#include "NEATDisplacementToX.h"
+#include "NEATSpatialRotation.h"
+
 #include <numeric>
 
-NEATDisplacementToX::NEATDisplacementToX(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
-:NEATAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_attach, p_m_node, p_m_conn)
-{ 
+NEATSpatialRotation::NEATSpatialRotation(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn)
+: NEATSpatialAlgorithm(populationSize, maxGenerations, maxStagnation, p_c, p_m_attach, p_m_node, p_m_conn)
+{
     w_excess = 1.0;
     w_disjoint = 1.0;
     w_matching = 0.5;
     insertRandomAttachments = true;
+    simSteps = 250;
 }
 
-void NEATDisplacementToX::stepSystem(SystemInfo *individual)
+void NEATSpatialRotation::stepSystem(SystemInfo *individual)
 {
-    MachineSystem *sys = new MachineSystem(*individual->system);
-    delete individual->system;
-    individual->system = sys;
+    MachineSystem *sys = individual->system;
     
-    cpBody *inputBody = sys->partAtPosition(individual->system->inputMachinePosition)->body;
-    cpBody *outputBody = sys->partAtPosition(individual->system->outputMachinePosition)->body;
+    cpBody *inputBody = sys->partAtPosition(sys->inputMachinePosition)->body;
+    cpBody *outputBody = sys->partAtPosition(sys->outputMachinePosition)->body;
     cpSpace *systemSpace = sys->getSpace();
     
     cpConstraint *motor = cpSimpleMotorNew(cpSpaceGetStaticBody(systemSpace), inputBody, M_PI);
@@ -40,10 +40,12 @@ void NEATDisplacementToX::stepSystem(SystemInfo *individual)
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
+
 }
 
-cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
+cpFloat NEATSpatialRotation::evaluateSystem(SystemInfo *sys)
 {
+    
     cpFloat fitness = 0.0;
     
     size_t nSteps = sys->inputValues.size();
@@ -94,10 +96,11 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
         cpFloat distance = fabs (2.0 -meandInputdOutput);
         fitness /= (distance+0.1)*(distance+0.1);
     }
-
-    fitness = fitness*inputVariance*outputVariance;
-    if (fitness == 0)
+    
+    if (fitness == 0 || inputVariance < 5e-1 || outputVariance < 5e-1)
         fitness = 1e-8;
+    
+    
     
     assert(fitness == fitness);
     assert(fabs(fitness) != INFINITY);
@@ -105,29 +108,12 @@ cpFloat NEATDisplacementToX::evaluateSystem(SystemInfo *sys)
     return fitness;
 }
 
-void NEATDisplacementToX::mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo) {
-    float selector = (cpFloat)rand()/RAND_MAX;
-    Attachment *old = NULL;
-    cpVect p1 = attachmentInfo.pos1;
-    cpVect p2 = attachmentInfo.pos2;
-    old = sys->attachmentBetween(p1, p2);
-    if (old) {
-        Attachment *newAt;
-        if (selector < 0.5) {
-            newAt = changeAttachmentType(old);
-        } else {
-            newAt = perturbAttachmentAttributes(old);
-        }
-        sys->updateAttachmentBetween(p1, p2, newAt);
-    }
-}
-
-bool NEATDisplacementToX::goodEnoughFitness(cpFloat bestFitness)
+bool NEATSpatialRotation::goodEnoughFitness(cpFloat bestFitness)
 {
     return false;
 }
 
-char* NEATDisplacementToX::inputDescription()
+char* NEATSpatialRotation::inputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -135,12 +121,12 @@ char* NEATDisplacementToX::inputDescription()
     static char buffer[100];
     cpBody *inputBody = bestIndividual->system->partAtPosition(bestIndividual->system->inputMachinePosition)->body;
     
-    snprintf(buffer, 100, "Input angle : %.3f", cpBodyGetAngle(inputBody));
+    snprintf(buffer, 100, "Input angle : %.3f", normalize_angle(cpBodyGetAngle(inputBody)));
     
     return buffer;
 }
 
-char* NEATDisplacementToX::outputDescription()
+char* NEATSpatialRotation::outputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -148,7 +134,30 @@ char* NEATDisplacementToX::outputDescription()
     static char buffer[100];
     cpBody *outputBody = bestIndividual->system->partAtPosition(bestIndividual->system->outputMachinePosition)->body;
     
-    snprintf(buffer, 100, "Output angle : %.3f", cpBodyGetAngle(outputBody));
+    snprintf(buffer, 100, "Output angle : %.3f", normalize_angle(cpBodyGetAngle(outputBody)));
     
     return buffer;
+}
+MachineSystem * NEATSpatialRotation::createInitialSystem()
+{
+    MachineSystem *s = new MachineSystem(300, 300, 5, 5, cpvzero);
+    s->destroyAttachments = true;
+    return s;
+}
+
+void NEATSpatialRotation::prepareInitialPopulation()
+{
+    MachineSystem *initialSystem = createInitialSystem();
+    neatGenerator(initialSystem);
+    // create one of each attachment type, allow destruction of attachments instead of disabling
+    for (int i=0; i< ATTACH_TYPE_MAX; i++) {
+        MachineSystem *newSys = new MachineSystem(*initialSystem);
+        
+        Attachment *newAtt = Attachment::createAttachmentOfType((AttachmentType)i);
+        newSys->updateAttachmentBetween(newSys->inputMachinePosition, newSys->outputMachinePosition, newAtt);
+        SystemInfo *s = new SystemInfo(simSteps);
+        s->system = newSys;
+        population.push_back(s);
+    }
+    delete initialSystem;
 }
