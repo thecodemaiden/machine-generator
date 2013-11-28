@@ -19,7 +19,7 @@ NEATRotation::NEATRotation(int populationSize, int maxGenerations, int maxStagna
     simSteps = 300;
 }
 
-void NEATRotation::stepSystem(SystemInfo *individual)
+void NEATRotation::stepSystem(ExtendedSystemInfo *individual)
 {
     MachineSystem *sys = new MachineSystem(*individual->system);
     delete individual->system;
@@ -34,10 +34,10 @@ void NEATRotation::stepSystem(SystemInfo *individual)
     cpConstraintSetMaxForce(motor, 50000);
     
     for (int i=0; i<simSteps; i++) {
-        individual->inputValues[i] = (cpBodyGetAngle(inputBody));
+        individual->inputRotationAngle[i] = (cpBodyGetAngle(inputBody));
         
         cpSpaceStep(systemSpace, 0.1);
-        individual->outputValues[i] = (cpBodyGetAngle(outputBody));
+        individual->outputRotationAngle[i] = (cpBodyGetAngle(outputBody));
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
@@ -47,16 +47,16 @@ static bool isUnreasonable(double n) {
     return fabs(n) == INFINITY || n != n;
 }
 
-cpFloat NEATRotation::evaluateSystem(SystemInfo *sys)
+cpFloat NEATRotation::evaluateSystem(ExtendedSystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
-    size_t nSteps = sys->inputValues.size();
+    size_t nSteps = sys->inputRotationAngle.size();
     
     cpFloat correlation = 0.0;
     
-    cpFloat inputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;
-    cpFloat outputMean = std::accumulate(sys->outputValues.begin(), sys->outputValues.end(), 0.0)/nSteps;
+    cpFloat inputMean = std::accumulate(sys->inputRotationAngle.begin(), sys->inputRotationAngle.end(), 0.0)/nSteps;;
+    cpFloat outputMean = std::accumulate(sys->outputRotationAngle.begin(), sys->outputRotationAngle.end(), 0.0)/nSteps;
     
     // correlation = sum[(x - mean(x))*(y - mean(y))] / sqrt(sum[(x - mean(x))^2] * sum[(y- mean(y))^2])
     
@@ -67,14 +67,14 @@ cpFloat NEATRotation::evaluateSystem(SystemInfo *sys)
     cpFloat meandInputdOutput = 0.0;
     
     for (int i=0; i<nSteps; i++) {
-        float xDiff = (sys->inputValues[i]-inputMean);
-        float yDiff = (sys->outputValues[i]-outputMean);
+        float xDiff = (sys->inputRotationAngle[i]-inputMean);
+        float yDiff = (sys->outputRotationAngle[i]-outputMean);
         numerator += xDiff*yDiff;
         sqrXDiffSum += xDiff*xDiff;
         sqrYDiffSum += yDiff*yDiff;
         
         if (i>0)
-            meandInputdOutput += (sys->inputValues[i] - sys->inputValues[i-1])/(sys->outputValues[i]-sys->outputValues[i-1]);
+            meandInputdOutput += (sys->inputRotationAngle[i] - sys->inputRotationAngle[i-1])/(sys->outputRotationAngle[i]-sys->outputRotationAngle[i-1]);
     }
     correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
     //
@@ -151,7 +151,7 @@ void NEATRotation::prepareInitialPopulation()
         MachineSystem *newSys = new MachineSystem(*initialSystem);
         Attachment *newAtt = Attachment::createAttachmentOfType((AttachmentType)i);
         newSys->updateAttachmentBetween(newSys->inputMachinePosition, newSys->outputMachinePosition, newAtt);
-        SystemInfo *s = new SystemInfo(simSteps);
+        ExtendedSystemInfo *s = new ExtendedSystemInfo(simSteps);
         s->system = newSys;
         population.push_back(s);
     }

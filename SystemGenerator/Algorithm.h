@@ -29,6 +29,35 @@ struct SystemInfo
     }
 };
 
+struct ExtendedSystemInfo
+{
+    // a machine system and fitness info
+    MachineSystem *system;
+    double fitness;
+    std::vector<cpFloat> outputXDisplacement;
+    std::vector<cpFloat> inputXDisplacement;
+    
+    std::vector<cpFloat> outputYDisplacement;
+    std::vector<cpFloat> inputYDisplacement;
+    
+    std::vector<cpFloat> outputRotationAngle;
+    std::vector<cpFloat> inputRotationAngle;
+    
+    // we need to specify how many values this will hold for examination
+    ExtendedSystemInfo(int steps)
+    : outputXDisplacement(steps),
+      inputXDisplacement(steps),
+      outputYDisplacement(steps),
+      inputYDisplacement(steps),
+      outputRotationAngle(steps),
+      inputRotationAngle(steps),
+      fitness(0.0) {}
+    
+    ~ExtendedSystemInfo() {
+        delete system;
+    }
+};
+
 typedef void (*spaceUpdateFunc)(cpSpace *space, long steps, cpFloat stepTime);
 
 // make random parts of a certain size

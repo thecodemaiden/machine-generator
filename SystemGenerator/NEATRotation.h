@@ -13,9 +13,9 @@
 
 class NEATRotation : public NEATAlgorithm {
     void prepareInitialPopulation();
-    void stepSystem(SystemInfo *individual);
+    void stepSystem(ExtendedSystemInfo *individual);
     
-    cpFloat evaluateSystem(SystemInfo *sys);
+    cpFloat evaluateSystem(ExtendedSystemInfo *sys);
     bool goodEnoughFitness(cpFloat bestFitness);
         
 public:

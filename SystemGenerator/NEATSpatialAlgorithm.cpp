@@ -14,6 +14,30 @@ NEATSpatialAlgorithm::NEATSpatialAlgorithm(int populationSize, int maxGeneration
     simSteps = 100;
 }
 
+MachineSystem * NEATSpatialAlgorithm::createInitialSystem()
+{
+    MachineSystem *s = new MachineSystem(300, 300, 5, 5, cpvzero);
+    s->destroyAttachments = true;
+    return s;
+}
+
+void NEATSpatialAlgorithm::prepareInitialPopulation()
+{
+    MachineSystem *initialSystem = createInitialSystem();
+    neatGenerator(initialSystem);
+    // create one of each attachment type, allow destruction of attachments instead of disabling
+    for (int i=0; i< ATTACH_TYPE_MAX; i++) {
+        MachineSystem *newSys = new MachineSystem(*initialSystem);
+        
+        Attachment *newAtt = Attachment::createAttachmentOfType((AttachmentType)i);
+        newSys->updateAttachmentBetween(newSys->inputMachinePosition, newSys->outputMachinePosition, newAtt);
+        ExtendedSystemInfo *s = new ExtendedSystemInfo(simSteps);
+        s->system = newSys;
+        population.push_back(s);
+    }
+    delete initialSystem;
+}
+
 void NEATSpatialAlgorithm::assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info)
 {
          // create a number - the first part number + size*secondPartNumber

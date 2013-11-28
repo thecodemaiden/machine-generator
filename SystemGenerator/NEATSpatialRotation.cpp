@@ -20,7 +20,7 @@ NEATSpatialRotation::NEATSpatialRotation(int populationSize, int maxGenerations,
     simSteps = 250;
 }
 
-void NEATSpatialRotation::stepSystem(SystemInfo *individual)
+void NEATSpatialRotation::stepSystem(ExtendedSystemInfo *individual)
 {
     MachineSystem *sys = individual->system;
     
@@ -33,27 +33,27 @@ void NEATSpatialRotation::stepSystem(SystemInfo *individual)
     cpConstraintSetMaxForce(motor, 50000);
     
     for (int i=0; i<simSteps; i++) {
-        individual->inputValues[i] = (cpBodyGetAngle(inputBody));
+        individual->inputRotationAngle[i] = (cpBodyGetAngle(inputBody));
         
         cpSpaceStep(systemSpace, 0.1);
-        individual->outputValues[i] = (cpBodyGetAngle(outputBody));
+        individual->outputRotationAngle[i] = (cpBodyGetAngle(outputBody));
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
 
 }
 
-cpFloat NEATSpatialRotation::evaluateSystem(SystemInfo *sys)
+cpFloat NEATSpatialRotation::evaluateSystem(ExtendedSystemInfo *sys)
 {
     
     cpFloat fitness = 0.0;
     
-    size_t nSteps = sys->inputValues.size();
+    size_t nSteps = sys->inputRotationAngle.size();
     
     cpFloat correlation = 0.0;
     
-    cpFloat inputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;
-    cpFloat outputMean = std::accumulate(sys->outputValues.begin(), sys->outputValues.end(), 0.0)/nSteps;
+    cpFloat inputMean = std::accumulate(sys->inputRotationAngle.begin(), sys->inputRotationAngle.end(), 0.0)/nSteps;;
+    cpFloat outputMean = std::accumulate(sys->outputRotationAngle.begin(), sys->outputRotationAngle.end(), 0.0)/nSteps;
     
     // correlation = sum[(x - mean(x))*(y - mean(y))] / sqrt(sum[(x - mean(x))^2] * sum[(y- mean(y))^2])
     
@@ -64,14 +64,14 @@ cpFloat NEATSpatialRotation::evaluateSystem(SystemInfo *sys)
     cpFloat meandInputdOutput = 0.0;
     
     for (int i=0; i<nSteps; i++) {
-        float xDiff = (sys->inputValues[i]-inputMean);
-        float yDiff = (sys->outputValues[i]-outputMean);
+        float xDiff = (sys->inputRotationAngle[i]-inputMean);
+        float yDiff = (sys->outputRotationAngle[i]-outputMean);
         numerator += xDiff*yDiff;
         sqrXDiffSum += xDiff*xDiff;
         sqrYDiffSum += yDiff*yDiff;
         
         if (i>0)
-            meandInputdOutput += (sys->inputValues[i] - sys->inputValues[i-1])/(sys->outputValues[i]-sys->outputValues[i-1]);
+            meandInputdOutput += (sys->inputRotationAngle[i] - sys->inputRotationAngle[i-1])/(sys->outputRotationAngle[i]-sys->outputRotationAngle[i-1]);
     }
     correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
     //
@@ -138,26 +138,4 @@ char* NEATSpatialRotation::outputDescription()
     
     return buffer;
 }
-MachineSystem * NEATSpatialRotation::createInitialSystem()
-{
-    MachineSystem *s = new MachineSystem(300, 300, 5, 5, cpvzero);
-    s->destroyAttachments = true;
-    return s;
-}
 
-void NEATSpatialRotation::prepareInitialPopulation()
-{
-    MachineSystem *initialSystem = createInitialSystem();
-    neatGenerator(initialSystem);
-    // create one of each attachment type, allow destruction of attachments instead of disabling
-    for (int i=0; i< ATTACH_TYPE_MAX; i++) {
-        MachineSystem *newSys = new MachineSystem(*initialSystem);
-        
-        Attachment *newAtt = Attachment::createAttachmentOfType((AttachmentType)i);
-        newSys->updateAttachmentBetween(newSys->inputMachinePosition, newSys->outputMachinePosition, newAtt);
-        SystemInfo *s = new SystemInfo(simSteps);
-        s->system = newSys;
-        population.push_back(s);
-    }
-    delete initialSystem;
-}

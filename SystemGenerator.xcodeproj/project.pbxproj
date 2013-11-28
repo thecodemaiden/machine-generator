@@ -31,6 +31,7 @@
 		E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */; };
 		E2B07F2B1836B4E7008110E7 /* NEATSpatialAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */; };
 		E2B07F2E1836B553008110E7 /* NEATSpatialRotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */; };
+		E2B837F818440D68004B79B7 /* NEATSpatialSinRotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B837F618440D68004B79B7 /* NEATSpatialSinRotation.cpp */; };
 		E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */; };
 		E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */; };
 		E2C3155F1822E46900774A13 /* simple_fft.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C3155D1822E46900774A13 /* simple_fft.cpp */; };
@@ -101,12 +102,12 @@
 		E2A1D85D1800EBFC003FA4AE /* MachineSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineSystem.h; sourceTree = "<group>"; };
 		E2A1D85F1800EC84003FA4AE /* MachinePart.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachinePart.cpp; sourceTree = "<group>"; };
 		E2A1D8601800EC84003FA4AE /* MachinePart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachinePart.h; sourceTree = "<group>"; };
-		E2ACE3EA183E74CA00C30FA2 /* NEATMOS.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATMOS.cpp; sourceTree = "<group>"; };
-		E2ACE3EB183E74CA00C30FA2 /* NEATMOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATMOS.h; sourceTree = "<group>"; };
 		E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialAlgorithm.cpp; sourceTree = "<group>"; };
 		E2B07F2A1836B4E7008110E7 /* NEATSpatialAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialAlgorithm.h; sourceTree = "<group>"; };
 		E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialRotation.cpp; sourceTree = "<group>"; };
 		E2B07F2D1836B553008110E7 /* NEATSpatialRotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialRotation.h; sourceTree = "<group>"; };
+		E2B837F618440D68004B79B7 /* NEATSpatialSinRotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialSinRotation.cpp; sourceTree = "<group>"; };
+		E2B837F718440D68004B79B7 /* NEATSpatialSinRotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialSinRotation.h; sourceTree = "<group>"; };
 		E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaRotationAlgorithm.cpp; sourceTree = "<group>"; };
 		E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaRotationAlgorithm.h; sourceTree = "<group>"; };
 		E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaConstantToSinusoidalAlgorithm.cpp; sourceTree = "<group>"; };
@@ -266,11 +267,12 @@
 		E27F54BB183AD25C00195598 /* Spatial Variant */ = {
 			isa = PBXGroup;
 			children = (
-				E2ACE3E9183E748300C30FA2 /* MultiObjective */,
 				E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */,
 				E2B07F2D1836B553008110E7 /* NEATSpatialRotation.h */,
 				E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */,
 				E2B07F2A1836B4E7008110E7 /* NEATSpatialAlgorithm.h */,
+				E2B837F618440D68004B79B7 /* NEATSpatialSinRotation.cpp */,
+				E2B837F718440D68004B79B7 /* NEATSpatialSinRotation.h */,
 			);
 			name = "Spatial Variant";
 			sourceTree = "<group>";
@@ -354,15 +356,6 @@
 				E27E4697181DDCE300D852BD /* Attachment.h */,
 			);
 			name = "Machine System";
-			sourceTree = "<group>";
-		};
-		E2ACE3E9183E748300C30FA2 /* MultiObjective */ = {
-			isa = PBXGroup;
-			children = (
-				E2ACE3EA183E74CA00C30FA2 /* NEATMOS.cpp */,
-				E2ACE3EB183E74CA00C30FA2 /* NEATMOS.h */,
-			);
-			name = MultiObjective;
 			sourceTree = "<group>";
 		};
 		E2C3155B1822E43500774A13 /* Utilities */ = {
@@ -470,6 +463,7 @@
 				E2B07F2E1836B553008110E7 /* NEATSpatialRotation.cpp in Sources */,
 				E25FD8881801D08D00566B8D /* Algorithm.cpp in Sources */,
 				E2DFFC671828700C0025A554 /* NEATAlgorithm.cpp in Sources */,
+				E2B837F818440D68004B79B7 /* NEATSpatialSinRotation.cpp in Sources */,
 				E2A1D85A1800E733003FA4AE /* ChipmunkDemoShaderSupport.c in Sources */,
 				E29764C21811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp in Sources */,
 				E2DFFC6A1828A2D00025A554 /* NEATRotation.cpp in Sources */,

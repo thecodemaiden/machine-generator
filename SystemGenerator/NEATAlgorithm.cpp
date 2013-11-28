@@ -28,7 +28,7 @@ p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach), sys_w(systemWidt
 
 NEATAlgorithm::~NEATAlgorithm()
 {
-    std::vector<SystemInfo *>::iterator it = population.begin();
+    std::vector<ExtendedSystemInfo *>::iterator it = population.begin();
     while (it != population.end()) {
         delete *it;
         it++;
@@ -38,7 +38,7 @@ NEATAlgorithm::~NEATAlgorithm()
 }
 
 // return true if sys1 comes before sys2
-static bool compareIndividuals(const SystemInfo *sys1, const SystemInfo *sys2)
+static bool compareIndividuals(const ExtendedSystemInfo *sys1, const ExtendedSystemInfo *sys2)
 {
     return sys1->fitness > sys2->fitness;
 }
@@ -146,25 +146,25 @@ MachineSystem *NEATAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem 
 void  NEATAlgorithm::spawnNextGeneration()
 {
     cpFloat sharedFitnessSum = 0.0;
-    std::vector<SystemInfo *>::iterator it = population.begin();
+    std::vector<ExtendedSystemInfo *>::iterator it = population.begin();
     while (it != population.end()) {
         sharedFitnessSum += (*it)->fitness;
         it++;
     }
     
     // create population/2 children through recombination
-    std::vector<SystemInfo *>newGeneration;
+    std::vector<ExtendedSystemInfo *>newGeneration;
 
     do {
-        SystemInfo *p1 = NULL;
-        SystemInfo *p2 = NULL;
+        ExtendedSystemInfo *p1 = NULL;
+        ExtendedSystemInfo *p2 = NULL;
         selectParents(&p1, &p2, sharedFitnessSum);
         
         MachineSystem *child = combineSystems(p1->system, p2->system);
         // mutate the new individual (maybe)
         mutateSystem(child);
         
-        SystemInfo *i = new SystemInfo(simSteps);
+        ExtendedSystemInfo *i = new ExtendedSystemInfo(simSteps);
         i->system = child;
         newGeneration.push_back(i);
     } while (newGeneration.size() < populationSize);
@@ -174,31 +174,41 @@ void  NEATAlgorithm::spawnNextGeneration()
 
 }
 
-void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum)
+void NEATAlgorithm::selectParents(ExtendedSystemInfo **parent1, ExtendedSystemInfo **parent2, cpFloat fitnessSum)
 {
     if (!parent1 || !parent2)
         return; // don't waste my time
     
-    // choose a species according to species fitness
-    // then chose parents at random from within that species
     NEATSpecies *breedingSpecies = NULL;
+
+    // now if we're stagnant, we only allow the top 2 species to breed (according to the NEAT paper)
     
-    // Assume sorted population
-    float selector = ((cpFloat)rand()/RAND_MAX);
-    
-    std::vector<NEATSpecies *>::iterator it = speciesList.begin();
-    breedingSpecies = speciesList.back(); // in case something goes wrong with selection below
-    cpFloat cumulativeFitness = 0.0;
-    while (it != speciesList.end()) {
-        cumulativeFitness += (*it)->totalSharedFitness/fitnessSum;
-        if (cumulativeFitness >= selector) {
-            breedingSpecies = *it;
-            break;
+    if (speciesList.size() > 1 && stagnantGenerations >= 2*maxStagnation/3) {
+        int idx = arc4random_uniform(2);
+        breedingSpecies = speciesList[idx];
+    } else {
+        // choose a species according to species fitness
+        // then chose parents at random from within that species
+        
+        // Assume sorted population
+        float selector = ((cpFloat)rand()/RAND_MAX);
+        
+        std::vector<NEATSpecies *>::iterator it = speciesList.begin();
+        breedingSpecies = speciesList.back(); // in case something goes wrong with selection below
+        cpFloat cumulativeFitness = 0.0;
+        while (it != speciesList.end()) {
+            cumulativeFitness += (*it)->totalSharedFitness/fitnessSum;
+            if (cumulativeFitness >= selector) {
+                breedingSpecies = *it;
+                break;
+            }
+            it++;
         }
-        it++;
     }
+    
     // if there is only 1 individual in that species... breed it with itself... (like a plant)
-    std::vector<SystemInfo *>individuals = breedingSpecies->members;
+    // is this right? Should we kill off species with only one member?
+    std::vector<ExtendedSystemInfo *>individuals = breedingSpecies->members;
  
     if (individuals.size() > 1) {
         int parentPosition = arc4random_uniform(individuals.size());
@@ -217,7 +227,7 @@ void NEATAlgorithm::selectParents(SystemInfo **parent1, SystemInfo **parent2, cp
 
 void NEATAlgorithm::speciate()
 {
-    std::vector<SystemInfo *>::iterator populationIter = population.begin();
+    std::vector<ExtendedSystemInfo *>::iterator populationIter = population.begin();
     
     while (populationIter != population.end()) {
         // assign to species
@@ -251,7 +261,7 @@ void NEATAlgorithm::speciate()
     std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
     while (speciesIterator != speciesList.end()) {
         // pick a new rep
-        std::vector<SystemInfo *> members = (*speciesIterator)->members;
+        std::vector<ExtendedSystemInfo *> members = (*speciesIterator)->members;
         if (members.size() == 0) {
             NEATSpecies *extinctSpecies = *speciesIterator;
             speciesIterator = speciesList.erase(speciesIterator);
@@ -267,7 +277,7 @@ void NEATAlgorithm::speciate()
             
             // update the fitnesses
             double totalFitness = 0.0;
-            std::vector<SystemInfo *>::iterator memberIterator = members.begin();
+            std::vector<ExtendedSystemInfo *>::iterator memberIterator = members.begin();
             while (memberIterator != members.end()) {
                 (*memberIterator)->fitness /= members.size();
                 totalFitness += (*memberIterator)->fitness;
@@ -449,7 +459,7 @@ void NEATAlgorithm::prepareInitialPopulation()
     while (population.size() < populationSize) {
         MachineSystem *newSystem = new MachineSystem(*initialSystem);
         mutateSystem(newSystem);
-        SystemInfo *info = new SystemInfo(simSteps);
+        ExtendedSystemInfo *info = new ExtendedSystemInfo(simSteps);
         info->system = newSystem;
         population.push_back(info);
     }
@@ -473,7 +483,7 @@ bool NEATAlgorithm::tick()
     cpFloat bestFitness = -INFINITY; // we want zero fitness
     
     for (size_t popIter = 0; popIter <population.size(); popIter++) {
-        SystemInfo *individual = population[popIter];
+        ExtendedSystemInfo *individual = population[popIter];
         
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
@@ -502,7 +512,7 @@ bool NEATAlgorithm::tick()
         sharedFitnessSum += speciesList[i]->totalSharedFitness;
     }
     
-    std::vector<SystemInfo *> individualsToSave;
+    std::vector<ExtendedSystemInfo *> individualsToSave;
     // sort the species to ensure we keep the best
     std::sort(speciesList.begin(), speciesList.end(), compareSpeciesFitness);
     
@@ -526,7 +536,7 @@ bool NEATAlgorithm::tick()
 
         
         for (int j=0; j<numToSave; j++) {
-            SystemInfo *individual = (*speciesIterator)->members[j];
+            ExtendedSystemInfo *individual = (*speciesIterator)->members[j];
             cpFloat rawFitness = individual->fitness * numMembers;
             if (rawFitness > bestFitness) {
                 bestFitness = rawFitness;
@@ -535,7 +545,7 @@ bool NEATAlgorithm::tick()
             individualsToSave.push_back(individual);
         }
         
-        std::vector<SystemInfo *>::iterator deleteIt =  (*speciesIterator)->members.begin()+numToSave;
+        std::vector<ExtendedSystemInfo *>::iterator deleteIt =  (*speciesIterator)->members.begin()+numToSave;
         while (deleteIt !=  (*speciesIterator)->members.end()) {
             delete *(deleteIt);
             deleteIt =  (*speciesIterator)->members.erase(deleteIt);
@@ -552,8 +562,9 @@ bool NEATAlgorithm::tick()
     if (bestFitness > allTimeBestFitness)
         allTimeBestFitness = bestFitness;
     
+    // stagnation if fitnesses are within .1% of each other
     
-    if (fabs(lastBestFitness - bestFitness) < 1e-5)
+    if (fabs( 1 - (lastBestFitness/bestFitness)) < .1)
         stagnantGenerations++;
     else
         stagnantGenerations = 0;
@@ -730,12 +741,12 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
  
 }
 
- void NEATAlgorithm::stepSystem(SystemInfo *individual)
+ void NEATAlgorithm::stepSystem(ExtendedSystemInfo *individual)
 {
     
 }
 
- cpFloat NEATAlgorithm::evaluateSystem(SystemInfo *sys)
+ cpFloat NEATAlgorithm::evaluateSystem(ExtendedSystemInfo *sys)
 {
     return 1.0;
 }
@@ -747,7 +758,7 @@ void NEATAlgorithm::assignInnovationNumberToAttachment(Attachment *att, Attachme
 
 
 
-static double subtractFromFitness(SystemInfo *individual, double fitness)
+static double subtractFromFitness(ExtendedSystemInfo *individual, double fitness)
 {
     return individual->fitness - fitness;
 }
@@ -771,19 +782,19 @@ void NEATAlgorithm::logPopulationStatistics()
     std::vector<NEATSpecies *>::iterator speciesIter = speciesList.begin();
     
     while (speciesIter != speciesList.end()) {
-        std::vector<SystemInfo *>members = (*speciesIter)->members;
+        std::vector<ExtendedSystemInfo *>members = (*speciesIter)->members;
         size_t n = members.size();
         currentLogFile << n << " ";
-        SystemInfo *best = members.front();
+        ExtendedSystemInfo *best = members.front();
         currentLogFile << best->fitness << " ";
-        SystemInfo *worst = members.back();
+        ExtendedSystemInfo *worst = members.back();
         currentLogFile << worst->fitness << " ";
         double meanFitness =(*speciesIter)->totalSharedFitness/n;
         currentLogFile << meanFitness << " ";
         // standard dev - from http://stackoverflow.com/questions/7616511/calculate-mean-and-standard-deviation-from-a-vector-of-samples-in-c-using-boos
   
         double sq_sum = 0;
-        std::vector<SystemInfo *>::iterator it = members.begin();
+        std::vector<ExtendedSystemInfo *>::iterator it = members.begin();
         while (it != members.end()) {
             sq_sum += ((*it)->fitness - meanFitness)*((*it)->fitness - meanFitness);
             it++;
@@ -799,4 +810,9 @@ void NEATAlgorithm::logPopulationStatistics()
     }
     currentLogFile << "\n";
     currentLogFile.flush();
+}
+
+void NEATAlgorithm::debug()
+{
+    evaluateSystem(bestIndividual);
 }

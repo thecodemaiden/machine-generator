@@ -15,5 +15,5 @@
 #include "AdeolaConstantToSinusoidalAlgorithm.h"
 #include "NEATRotation.h"
 #include "NEATSpatialRotation.h"
-
+#include "NEATSpatialSinRotation.h"
 #endif

@@ -12,12 +12,9 @@
 #include "NEATSpatialAlgorithm.h"
 
 class NEATSpatialRotation : public NEATSpatialAlgorithm {
+    void stepSystem(ExtendedSystemInfo *individual);
     
-    MachineSystem *createInitialSystem();
-    void prepareInitialPopulation();
-    void stepSystem(SystemInfo *individual);
-    
-    cpFloat evaluateSystem(SystemInfo *sys);
+    cpFloat evaluateSystem(ExtendedSystemInfo *sys);
     bool goodEnoughFitness(cpFloat bestFitness);
 public:
     NEATSpatialRotation(int populationSize, int maxGenerations, int maxStagnation, float p_c=0.3, float p_m_attach=0.2, float p_m_node=0.1, float p_m_conn=0.1);

@@ -16,7 +16,7 @@
 // each generation the members are cleared out, repopulated, and the representative is updated
 struct NEATSpecies {
     MachineSystem *representative;
-    std::vector<SystemInfo *>members;
+    std::vector<ExtendedSystemInfo *>members;
     double totalSharedFitness;
     
     ~NEATSpecies() {
@@ -27,7 +27,7 @@ struct NEATSpecies {
 class NEATAlgorithm {
 protected:
     std::vector<AttachmentInnovation> newConnections;
-    std::vector<SystemInfo *> population;
+    std::vector<ExtendedSystemInfo *> population;
     std::vector<NEATSpecies *>speciesList;
 
     // recombination probability
@@ -61,7 +61,7 @@ protected:
     int sys_h;
     
     long generations;
-    SystemInfo *bestIndividual;
+    ExtendedSystemInfo *bestIndividual;
     cpFloat allTimeBestFitness;
     cpFloat lastBestFitness; // before sharing
  
@@ -76,15 +76,15 @@ protected:
     virtual void assignInnovationNumberToAttachment(Attachment *att, AttachmentInnovation info);
     virtual MachineSystem *combineSystems(MachineSystem *sys1, MachineSystem *sys2); // assumes the fitter individual is first
     virtual cpFloat genomeDistance(MachineSystem *sys1, MachineSystem *sys2);
-    virtual void selectParents(SystemInfo **parent1, SystemInfo **parent2, cpFloat fitnessSum);
+    virtual void selectParents(ExtendedSystemInfo **parent1, ExtendedSystemInfo **parent2, cpFloat fitnessSum);
 
 #pragma mark - Override these functions any time you need
     // you can override this to do attachment mutation differently
     virtual void mutateAttachmentWeight(MachineSystem *sys, const AttachmentInnovation &attachmentInfo);
     
-    virtual void stepSystem(SystemInfo *individual);
+    virtual void stepSystem(ExtendedSystemInfo *individual);
     
-    virtual cpFloat evaluateSystem(SystemInfo *sys);
+    virtual cpFloat evaluateSystem(ExtendedSystemInfo *sys);
     virtual bool goodEnoughFitness(cpFloat bestFitness);
     
     // overriden functions cannot be called in constructors, so this is called on the first tick();
@@ -104,6 +104,9 @@ public:
     MachineSystem *bestSystem();
     long getNumberOfIterations();
     
+    
+    //for debugging purposes
+    void debug();
 #pragma mark - Please override for your algorithm
 
     virtual  char* inputDescription();
