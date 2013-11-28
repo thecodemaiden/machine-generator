@@ -22,8 +22,7 @@ NEATSpatialSinRotation::NEATSpatialSinRotation(int populationSize, int maxGenera
 
 void NEATSpatialSinRotation::stepSystem(ExtendedSystemInfo *individual)
 {
-    
-    
+
     MachineSystem *oldSystem = individual->system;
     individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
     delete oldSystem;
