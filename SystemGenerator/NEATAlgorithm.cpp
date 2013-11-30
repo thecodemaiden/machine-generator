@@ -487,19 +487,6 @@ bool NEATAlgorithm::tick()
         
         stepSystem(individual);
         individual->fitness = evaluateSystem(individual);
-//        MachineSystem *oldSystem = individual->system;
-//        individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
-//        delete oldSystem;
-//        if (individual->fitness > bestFitness) {
-//            bestFitness = individual->fitness;
-//            bestIndividual = individual;
-//            bestPos = popIter;
-//        }
-//        
-//        if (individual -> fitness <= worstFitness) {
-//            worstFitness = individual->fitness;
-//            worstPos = popIter;
-//        }
     }
     
  

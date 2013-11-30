@@ -272,27 +272,38 @@ void updateWorld(cpSpace *space, MachineSystem *sys, cpVect translation, cpFloat
     
 }
 
-int main(int argc, char **argv)
+template <class AlgorithmType>
+void displayBest(AlgorithmType *a)
 {
+    MachineSystem *s = a->bestSystem();
+    while(!restartAlgorithm) {
+        double now = glfwGetTime();
+        //sinusoidal motor!
+        updateWorld(s->getSpace(), s, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
+        LastTime = now;
+    }
+}
+
+template <class AlgorithmType>
+void runAlgorithm(int nRuns, int popSize, int generations, int stagnant, std::string save_dir)
+{
+ 
     time_t now = time(NULL);
     int run_number = 1;
     wordexp_t directory;
-    wordexp("~/temp/machines/", &directory, 0);
+    wordexp(save_dir.c_str(), &directory, 0); // expands the tilde
     
-    setupGLFW();
+    std::string full_directory = std::string(directory.we_wordv[0]);
+    
     while (1) {
         restartAlgorithm = false;
-       AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(50, 100, 150);
-     // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
-
-       // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
-     //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
-        
-    //    NEATSpatialSinRotation *a = new NEATSpatialSinRotation(100, 300, 50);
-        MachineSystem *best = NULL;//s;
+        MachineSystem *best = NULL;
         
         paused = false;
         terminateAlgorithm = false;
+        
+        AlgorithmType *a = new AlgorithmType(popSize, generations, stagnant);
+
         
         while(!restartAlgorithm && !terminateAlgorithm) {
             double now = glfwGetTime();
@@ -313,12 +324,11 @@ int main(int argc, char **argv)
             fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
             
             std::stringstream s;
-          
-            s << directory.we_wordv[0];
-            s << "best" << now << "-" << run_number++ << ".machine";
+            
+            s << full_directory << "best" << now << "-" << run_number++ << ".machine";
             std::string filename = s.str();
             
-            best->saveToDisk(filename.c_str()); // expands the tilde
+            best->saveToDisk(filename.c_str());
             
             cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
             cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
@@ -329,12 +339,10 @@ int main(int argc, char **argv)
             cpConstraintSetMaxForce(drivingMotor, 80000);
         }
         
-        while(!restartAlgorithm) {
-            double now = glfwGetTime();
-            //sinusoidal motor!
-            updateWorld(best->getSpace(), best, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
-            LastTime = now;
-        }
+        if (!restartAlgorithm && --nRuns > 0)
+            restartAlgorithm = true; // just go on to the next right away
+        
+        displayBest<AlgorithmType>(a);
         
         if (drivingMotor) {
             cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
@@ -343,5 +351,107 @@ int main(int argc, char **argv)
         delete a;
         a = NULL;
     }
-    return 0;
 }
+
+void loadSystemFromFile(std::string filename) {
+    
+    wordexp_t path;
+    wordexp(filename.c_str(), &path, 0);
+    
+    std::string full_path = std::string(path.we_wordv[0]);
+    
+    MachineSystem *sys = MachineSystem::loadFromDisk(filename.c_str());
+    while(1) {
+            double now = glfwGetTime();
+            //sinusoidal motor!
+            updateWorld(sys->getSpace(), sys, cpvzero, now-LastTime, "", "");
+            LastTime = now;
+    }
+}
+
+int main(int argc, char **argv)
+{
+        setupGLFW();
+    runAlgorithm<NEATSpatialSinRotation>(15, 100, 500, 50, "~/temp/machines/");
+       return 0;
+}
+
+
+// old main below
+/*
+ int main(int argc, char **argv)
+ {
+ time_t now = time(NULL);
+ int run_number = 1;
+ wordexp_t directory;
+ wordexp("~/temp/machines/", &directory, 0);
+ 
+ setupGLFW();
+ while (1) {
+ restartAlgorithm = false;
+ AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(50, 100, 150);
+ // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
+ 
+ // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
+ //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
+ 
+ //    NEATSpatialSinRotation *a = new NEATSpatialSinRotation(100, 300, 50);
+ MachineSystem *best = NULL;//s;
+ 
+ paused = false;
+ terminateAlgorithm = false;
+ 
+ while(!restartAlgorithm && !terminateAlgorithm) {
+ double now = glfwGetTime();
+ if ((!paused && now - LastTime > 0.1) || (paused && step)) { // slow your roll...
+ step = false;
+ if (a->tick())
+ break;
+ LastTime = now;
+ best = a->bestSystem();
+ }
+ if (best)
+ updateWorld(best->getSpace(), best, cpvzero, 0.0);
+ }
+ LastTime = glfwGetTime();
+ cpConstraint *drivingMotor = NULL;
+ if (!restartAlgorithm) {
+ best = a->bestSystem();
+ fprintf(stderr, "Found best system after %ld generations!\n", a->getNumberOfIterations());
+ 
+ std::stringstream s;
+ 
+ s << directory.we_wordv[0];
+ s << "best" << now << "-" << run_number++ << ".machine";
+ std::string filename = s.str();
+ 
+ best->saveToDisk(filename.c_str()); // expands the tilde
+ 
+ cpBody *inputBody = best->partAtPosition(best->inputMachinePosition)->body;
+ cpBody *staticBody = cpSpaceGetStaticBody(best->getSpace());
+ 
+ // a motor will drive the angVel of a body even when there are other forces acting on it
+ drivingMotor = cpSimpleMotorNew(staticBody, inputBody, M_PI_2);
+ cpSpaceAddConstraint(best->getSpace(), drivingMotor);
+ cpConstraintSetMaxForce(drivingMotor, 80000);
+ }
+ 
+ while(!restartAlgorithm) {
+ double now = glfwGetTime();
+ //sinusoidal motor!
+ updateWorld(best->getSpace(), best, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
+ LastTime = now;
+ }
+ 
+ if (drivingMotor) {
+ cpSpaceRemoveConstraint(best->getSpace(), drivingMotor);
+ drivingMotor = NULL;
+ }
+ delete a;
+ a = NULL;
+ }
+ return 0;
+ }
+ */
+
+

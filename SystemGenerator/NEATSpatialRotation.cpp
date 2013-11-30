@@ -22,7 +22,10 @@ NEATSpatialRotation::NEATSpatialRotation(int populationSize, int maxGenerations,
 
 void NEATSpatialRotation::stepSystem(ExtendedSystemInfo *individual)
 {
-    MachineSystem *sys = individual->system;
+    MachineSystem *oldSystem = individual->system;
+    MachineSystem *sys = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
+    individual->system = sys;
+    delete oldSystem;
     
     cpBody *inputBody = sys->partAtPosition(sys->inputMachinePosition)->body;
     cpBody *outputBody = sys->partAtPosition(sys->outputMachinePosition)->body;
@@ -78,8 +81,8 @@ cpFloat NEATSpatialRotation::evaluateSystem(ExtendedSystemInfo *sys)
     cpFloat inputVariance = sqrXDiffSum/nSteps;
     cpFloat outputVariance = sqrYDiffSum/nSteps;
     //
-    if (correlation != correlation || fabs(correlation) == INFINITY) {
-        // the mean output value, and all output values, were zero -> correlation = NaN
+    if (isUnreasonable(correlation)) {
+        // input and output were zero -> correlation = NaN
         // otherwise the mean input value, and all input values, were zero -> correlation = +/-inf
         correlation = 0;
     }
@@ -90,20 +93,16 @@ cpFloat NEATSpatialRotation::evaluateSystem(ExtendedSystemInfo *sys)
         meandInputdOutput /= nSteps;
     }
     
-    fitness = 1.0+correlation;
+    fitness = fabs(correlation) + 0.5*correlation;
     
-    if (outputVariance > 0) {
+    if (fitness == 0 || inputVariance < 5e-1 || outputVariance < 5e-1) {
+        fitness = 1e-8;
+    } else {
         cpFloat distance = fabs (2.0 -meandInputdOutput);
         fitness /= (distance+0.1)*(distance+0.1);
     }
     
-    if (fitness == 0 || inputVariance < 5e-1 || outputVariance < 5e-1)
-        fitness = 1e-8;
-    
-    
-    
-    assert(fitness == fitness);
-    assert(fabs(fitness) != INFINITY);
+    assert(!isUnreasonable(fitness));
     
     return fitness;
 }

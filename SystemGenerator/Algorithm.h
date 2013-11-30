@@ -77,6 +77,7 @@ void neatGenerator(MachineSystem *sys); // generates a minimal system of two mac
 
 MachineSystem *attachmentMutator1(MachineSystem *sys); // change attachment between 2 machines
 MachineSystem *attachmentMutator2(MachineSystem *sys); // change attachment to wall
+MachineSystem *attachmentMutator3(MachineSystem *sys); // perturb attachment attributes
 
 MachineSystem *attachmentAnchorMutator(MachineSystem *sys); // change attachment position of wall attachment
 MachineSystem *attachmentAnchorMutator2(MachineSystem *sys); // change attachment position between parts
@@ -89,5 +90,6 @@ Attachment *changeAttachmentAnchorPoints(Attachment *at);
 
 
 cpFloat normalize_angle(cpFloat angle); // convert to range (-2pi, +2pi)
+bool isUnreasonable(cpFloat n); // is a number infinite or NaN
 
 #endif /* defined(__SystemGenerator__Type1Algorithm__) */

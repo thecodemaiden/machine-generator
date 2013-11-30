@@ -14,6 +14,10 @@ cpFloat normalize_angle(cpFloat angle)
     return fmodf(angle, 2*M_PI);
 }
 
+bool isUnreasonable(cpFloat n) {
+    return fabs(n) == INFINITY || n != n;
+}
+
  MachinePart *randomPart(cpSpace *space, cpVect size)
 {
     MachinePart *m = new MachinePart(space);
@@ -251,6 +255,25 @@ MachineSystem  *attachmentMutator2(MachineSystem *sys)
     return newSystem;
 }
 
+MachineSystem *attachmentMutator3(MachineSystem *sys)
+{
+    MachineSystem *newSystem = new MachineSystem(*sys);
+    
+    Attachment *chosenAttachment = NULL;
+    cpVect part1 = cpvzero;
+    cpVect part2 = cpvzero;
+    
+    newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
+    
+    if (chosenAttachment) {
+        Attachment *newAttachment = perturbAttachmentAttributes(chosenAttachment);
+        newSystem->updateAttachmentBetween(part1, part2, newAttachment);
+    }
+    
+    return newSystem;
+
+}
+
 MachineSystem  *attachmentAnchorMutator(MachineSystem *sys)
 {
     MachineSystem *newSystem = new MachineSystem(*sys);
@@ -371,30 +394,6 @@ MachineSystem *addAttachmentMutator(MachineSystem *sys)
     return newSystem;
 }
 
-MachineSystem *removeAttachmentMutator(MachineSystem *sys)
-{
-    MachineSystem *newSystem = new MachineSystem(*sys);
-
-    // only remove if there are 
-    
-    return newSystem;
-}
-
-MachineSystem *addPartMutator(MachineSystem *sys)
-{
-    MachineSystem *newSystem = new MachineSystem(*sys);
-
-    return newSystem;
-
-}
-
-MachineSystem *removePartMutator(MachineSystem *sys)
-{
-    MachineSystem *newSystem = new MachineSystem(*sys);
-
-    return newSystem;
-
-}
 
 // ADDED FOR NEAT
 // Minimalism of starting solutions is valued - systems only ever grow

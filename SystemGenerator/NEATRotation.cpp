@@ -43,10 +43,6 @@ void NEATRotation::stepSystem(ExtendedSystemInfo *individual)
     cpSpaceRemoveConstraint(systemSpace, motor);
 }
 
-static bool isUnreasonable(double n) {
-    return fabs(n) == INFINITY || n != n;
-}
-
 cpFloat NEATRotation::evaluateSystem(ExtendedSystemInfo *sys)
 {
     cpFloat fitness = 0.0;
@@ -82,30 +78,27 @@ cpFloat NEATRotation::evaluateSystem(ExtendedSystemInfo *sys)
     cpFloat outputVariance = sqrYDiffSum/nSteps;
     //
     if (isUnreasonable(correlation)) {
-        // the mean output value, and all output values, were zero -> correlation = NaN
+        // input and output were zero -> correlation = NaN
         // otherwise the mean input value, and all input values, were zero -> correlation = +/-inf
         correlation = 0;
     }
     
-    if (isUnreasonable(meandInputdOutput)) {
+    if (meandInputdOutput != meandInputdOutput || fabs(meandInputdOutput) == INFINITY) {
         meandInputdOutput = 0;
     } else {
         meandInputdOutput /= nSteps;
     }
     
-    fitness = 1.0+correlation;
+    fitness = fabs(correlation) + 0.5*correlation;
     
-    if (outputVariance > 0) {
+    if (fitness == 0 || inputVariance < 5e-1 || outputVariance < 5e-1) {
+        fitness = 1e-8;
+    } else {
         cpFloat distance = fabs (2.0 -meandInputdOutput);
         fitness /= (distance+0.1)*(distance+0.1);
     }
-
-    if (fitness == 0 || inputVariance < 0.05 || outputVariance < 0.05 || isUnreasonable(inputVariance) || isUnreasonable(outputVariance))
-        fitness = 1e-8;
-
     
-    assert(fitness == fitness);
-    assert(fabs(fitness) != INFINITY);
+    assert(!isUnreasonable(fitness));
     
     return fitness;
 }

@@ -12,7 +12,7 @@
 AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
 :AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
-    simSteps = 40;
+    simSteps = 100;
     population.resize(populationSize);
     
     bestIndividual = NULL;
@@ -63,6 +63,11 @@ static MachineSystem  *gearMutator(MachineSystem *sys)
 
 void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 {
+    
+    MachineSystem *oldSystem = individual->system;
+    individual->system = new MachineSystem(*oldSystem); // copy it to stop all the damn bouncing about
+    delete oldSystem;
+    
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
     cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
     cpSpace *systemSpace = individual->system->getSpace();
@@ -96,11 +101,25 @@ MachineSystem * AdeolaRotationAlgorithm::createInitialSystem()
 // operators
 MachineSystem *AdeolaRotationAlgorithm::mutateSystem(MachineSystem *original)
 {
-    // one or the other - twice the chance of gearMutator
-    if (arc4random_uniform(3) == 0)
-        return attachmentMutator2(original);
-    else
-        return gearMutator(original);
+    int selector = arc4random_uniform(5);
+    switch (selector) {
+        case 0:
+            return attachmentAnchorMutator2(original);
+            break;
+        case 1:
+            return attachmentAnchorMutator(original);
+            break;
+        case 2:
+            return attachmentMutator1(original);
+            break;
+        case 3:
+            return attachmentMutator2(original);
+            break;
+        case 4:
+        default:
+            return attachmentMutator3(original);
+            break;
+    }
 }
 
 bool AdeolaRotationAlgorithm::tick()
@@ -196,28 +215,9 @@ bool AdeolaRotationAlgorithm::tick()
     return  stop;
 }
 
-//
-// fitness evaluator
-// --- SIMPLE AND DOESN'T WORK WELL ---
-// find error in system
-//cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
-//{
-//    cpFloat fitness = 0.0;
-//    size_t nSteps = sys->inputValues.size();
-//    
-//    for (size_t i=0; i<nSteps; i++) {
-//        float error = fabs(sys->inputValues[i] - sys->outputValues[i]);
-//        if (error == 0) error = 1e-20; // we don't want an infinite fitness because one error was 0
-//        fitness += 2*log(error); // these errors are very small at times
-//    }
-//    
-//    return -fitness; // ideal log error -> -inf
-//}
-
-// ----- FANCY (RIDICULOUS) FITNESS FUNCTION BELOW -----
 // find correlation between input and ouput values
 // if |correlation| -> 1, that's good (input is linearly related to output)
-// I am looking for inputAngle = outputAngle, so I really want 1 (same sign)
+// I am looking for inputAngle = c*outputAngle, so I really want 1 (same sign)
 // I also want the inputAngle to change a lot...
 
 // let's try inputAngle:outputAngle = 2
@@ -252,38 +252,40 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
             meandInputdOutput += (sys->inputValues[i] - sys->inputValues[i-1])/(sys->outputValues[i]-sys->outputValues[i-1]);
     }
     correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
-//    
+    
    cpFloat inputVariance = sqrXDiffSum/nSteps;
     cpFloat outputVariance = sqrYDiffSum/nSteps;
-//    
-    if (correlation != correlation || fabs(correlation) == INFINITY) {
-        // the mean output value, and all output values, were zero -> correlation = NaN
+    
+    if (isUnreasonable(correlation)) {
+        // input and output were zero -> correlation = NaN
         // otherwise the mean input value, and all input values, were zero -> correlation = +/-inf
         correlation = 0;
     }
     
-    if (meandInputdOutput != meandInputdOutput || fabs(meandInputdOutput) == INFINITY) {
+    if (isUnreasonable(meandInputdOutput)) {
         meandInputdOutput = 0;
     } else {
         meandInputdOutput /= nSteps;
     }
     
-        fitness = correlation;
+    fitness = fabs(correlation) + 0.5*correlation;
     
-    if (outputVariance > 0) {
+    if (fitness == 0 || inputVariance < 5e-1 || outputVariance < 5e-1) {
+        fitness = 1e-8;
+    } else {
         cpFloat distance = fabs (2.0 -meandInputdOutput);
         fitness /= (distance+0.1)*(distance+0.1);
     }
-
     
-    return fitness*inputVariance*outputVariance; // 'ideal' fitness -> inf
+    assert(!isUnreasonable(fitness));
+    
+    return fitness;
 }
-
 
 
 bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {
-    return bestFitness > 300;
+    return false;
 }
 
 MachineSystem *AdeolaRotationAlgorithm::bestSystem()
