@@ -19,6 +19,7 @@ p_m_node(p_m_node), p_m_conn(p_m_conn), p_m_attach(p_m_attach), sys_w(systemWidt
 {
     bestIndividual = NULL;
     nextInnovationNumber = 1;
+    nextSpeciesNumber = 1;
     allTimeBestFitness = -FLT_MAX;
     generations = 0;
     stagnantGenerations = 0;
@@ -34,6 +35,19 @@ NEATAlgorithm::~NEATAlgorithm()
         it++;
     }
     delete ancestor;
+    
+    //empty the species lists
+    std::vector<NEATSpecies *>::iterator speciesIterator = speciesList.begin();
+    while (speciesIterator != speciesList.end()) {
+        std::vector<ExtendedSystemInfo *> members = (*speciesIterator)->members;
+        std::vector<ExtendedSystemInfo *>::iterator it = members.begin();
+        while (it != members.end()) {
+            delete *it; // delete the species member
+            it = members.erase(it);
+        }
+        delete *speciesIterator; // delete the species
+        speciesIterator = speciesList.erase(speciesIterator);
+    }
     currentLogFile.close();
 }
 
@@ -250,6 +264,7 @@ void NEATAlgorithm::speciate()
             s->representative = new MachineSystem(*(*populationIter)->system);
             s->members.push_back(*populationIter);
             speciesList.push_back(s);
+            s->speciesNumber = nextSpeciesNumber++;
         }
         
         populationIter++;
@@ -267,7 +282,6 @@ void NEATAlgorithm::speciate()
             speciesIterator = speciesList.erase(speciesIterator);
             delete extinctSpecies;
         } else {
-            
             int index = arc4random_uniform(members.size());
             MachineSystem *rep = new MachineSystem(*(members[index]->system));
             delete (*speciesIterator)->representative;
@@ -309,7 +323,7 @@ static double smallerToLarger(double x1, double x2)
 // else start with sum of ratios between attributes
 // and also include distance between attachment points
 // forget attachment length
-static double attachmentDifference(Attachment *a1, Attachment *a2)
+double NEATAlgorithm::attachmentDifference(Attachment *a1, Attachment *a2)
 {
 
     double diff = cpvdistsq(a1->firstAttachPoint, a2->firstAttachPoint);
@@ -439,15 +453,18 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
     }
 
     
+    
+    
 
     double d = w_disjoint*nDisjoint/longerSize + w_excess*nExcess/longerSize + w_matching*matchingDiff/nMatching;
 
+    assert(!isUnreasonable(d));
     return d;
 }
 
 MachineSystem *NEATAlgorithm::createInitialSystem()
 {
-    return new MachineSystem(300, 300, 5, 5, cpvzero);
+    return new MachineSystem(300, 300, sys_w, sys_h, cpvzero);
 }
 
 void NEATAlgorithm::prepareInitialPopulation()

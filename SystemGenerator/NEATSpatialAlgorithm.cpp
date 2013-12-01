@@ -16,7 +16,7 @@ NEATSpatialAlgorithm::NEATSpatialAlgorithm(int populationSize, int maxGeneration
 
 MachineSystem * NEATSpatialAlgorithm::createInitialSystem()
 {
-    MachineSystem *s = new MachineSystem(300, 300, 5, 5, cpvzero);
+    MachineSystem *s = new MachineSystem(300, 300, sys_w, sys_h, cpvzero);
     s->destroyAttachments = true;
     return s;
 }
@@ -25,12 +25,18 @@ void NEATSpatialAlgorithm::prepareInitialPopulation()
 {
     MachineSystem *initialSystem = createInitialSystem();
     neatGenerator(initialSystem);
+    
+    AttachmentInnovation info;
+    info.pos1 = initialSystem->inputMachinePosition;
+    info.pos2 = initialSystem->outputMachinePosition;
     // create one of each attachment type, allow destruction of attachments instead of disabling
     for (int i=0; i< ATTACH_TYPE_MAX; i++) {
         MachineSystem *newSys = new MachineSystem(*initialSystem);
+       
         
         Attachment *newAtt = Attachment::createAttachmentOfType((AttachmentType)i);
         newSys->updateAttachmentBetween(newSys->inputMachinePosition, newSys->outputMachinePosition, newAtt);
+        assignInnovationNumberToAttachment(newAtt, info);
         ExtendedSystemInfo *s = new ExtendedSystemInfo(simSteps);
         s->system = newSys;
         population.push_back(s);
@@ -114,4 +120,62 @@ MachineSystem * NEATSpatialAlgorithm::combineSystems(MachineSystem *sys1, Machin
     assert(newChild->partAtPosition(newChild->outputMachinePosition) != NULL);
     
     return newChild;
+}
+
+static bool compareInnovationNumbers(const AttachmentInnovation a1, const AttachmentInnovation a2)
+{
+    return a1.innovationNumber < a2.innovationNumber;
+}
+cpFloat NEATSpatialAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
+{
+    std::vector<AttachmentInnovation> genome1 = sys1->attachmentGenome();
+    std::vector<AttachmentInnovation> genome2 = sys2->attachmentGenome();
+    
+    // find the longer one
+    size_t longerSize = (genome1.size() > genome2.size() ? genome1.size()  : genome2.size());
+    
+    size_t nDisjoint = 0;
+    size_t nMatching = 0;
+    size_t matchingDiff = 0;
+    
+    // yay stdlib!
+    std::vector<AttachmentInnovation> matchingGenes1;
+    std::vector<AttachmentInnovation> matchingGenes2;
+    std::vector<AttachmentInnovation> disjointGenes;
+    
+    
+    // set intersection takes from the first range given - I do it twice so I have the matches from parent 1 and from parent 2.
+    std::set_intersection(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(matchingGenes1), compareInnovationNumbers);
+    std::set_intersection(genome2.begin(), genome2.end(), genome1.begin(), genome1.end(),std::back_inserter(matchingGenes2), compareInnovationNumbers);
+    
+    // difference takes things in the first range that are not in the second - we will have to check for excess ourself
+    std::set_symmetric_difference(genome1.begin(), genome1.end(), genome2.begin(), genome2.end(), std::back_inserter(disjointGenes), compareInnovationNumbers);
+  
+    
+    
+    nMatching = matchingGenes2.size();
+    // first find the distance between matching genes
+    for (int i=0; i<nMatching; i++) {
+        AttachmentInnovation a1 = matchingGenes1[i];
+        AttachmentInnovation a2 = matchingGenes2[i];
+        
+        Attachment *attachment1 = sys1->attachmentBetween(a1.pos1, a1.pos2);
+        Attachment *attachment2 = sys2->attachmentBetween(a2.pos1, a2.pos2);
+        
+        matchingDiff += attachmentDifference(attachment1, attachment2);
+    }
+
+        // else chalk everything up to disjoint
+    nDisjoint = disjointGenes.size();
+    
+    
+    double d = w_disjoint*nDisjoint/longerSize;
+    
+    if (nMatching == 0)
+        d += 0; // all difference accounted for with disjoint set
+    else
+        d += w_matching *matchingDiff/nMatching;
+    
+    assert(!isUnreasonable(d));
+    return d;
 }

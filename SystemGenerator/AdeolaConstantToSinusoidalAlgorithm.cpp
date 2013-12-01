@@ -166,10 +166,10 @@ void AdeolaConstantToSinusoidalAlgorithm::stepSystem(SystemInfo *individual)
     cpVect originalPosition = cpBodyGetPos(outputBody);
     
     for (int i=0; i<simSteps; i++) {
-        individual->inputValues[i] = normalize_angle(cpBodyGetAngle(inputBody));
+        individual->inputValues[i] = cpBodyGetAngle(inputBody);
         
         cpSpaceStep(systemSpace, 0.1);
-        individual->outputValues[i] = cpvdist(originalPosition, cpBodyGetPos(outputBody));
+        individual->outputValues[i] = cpBodyGetAngle(outputBody);
     }
     
     cpSpaceRemoveConstraint(systemSpace, motor);
@@ -186,59 +186,49 @@ cpFloat convertFromSin(cpFloat normalizer, cpFloat input) {
     return asin(input/normalizer);
 }
 
+// output rotation proportional to sin(input rotation)
 cpFloat AdeolaConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
     size_t nSteps = sys->inputValues.size();
     
-    cpFloat correlation = 0.0;
+    std::vector<cpFloat>sinOfInput = std::vector<cpFloat>(nSteps);
+    std::vector<cpFloat>normalizedOutput = std::vector<cpFloat>(nSteps);
+    std::transform(sys->inputValues.begin(), sys->inputValues.end(), sinOfInput.begin(), sin);
     
+    std::transform(sys->outputValues.begin(), sys->outputValues.end(), normalizedOutput.begin(), normalize_angle);
     
-    cpFloat outputMax = *std::max_element(sys->outputValues.begin(), sys->outputValues.end());
+    // now we assume sin(input) = c*output, and we try to minimize the error
+    std::vector<cpFloat>sqDiff;
     
-    std::transform(sys->inputValues.begin(), sys->inputValues.end(), sys->inputValues.begin(), normalize_angle);
-    cpFloat inputMean = std::accumulate(sys->inputValues.begin(), sys->inputValues.end(), 0.0)/nSteps;;
-    
-    
-    for (int i=0; i<sys->outputValues.size(); i++)
-        sys->outputValues[i] = convertFromSin(outputMax, sys->outputValues[i]);
-    
-
-   // std::transform(sys->outputValues.begin(), sys->outputValues.end(), sys->outputValues.begin(), sin);
-    
-    cpFloat outputMean = std::accumulate(sys->outputValues.begin(), sys->outputValues.end(), 0.0)/nSteps;;
-    
-  
-    // correlation = sum[(x - mean(x))*(y - mean(y))] / sqrt(sum[(x - mean(x))^2] * sum[(y- mean(y))^2])
-    
-    cpFloat numerator = 0.0;
     cpFloat sqrXDiffSum = 0.0;
     cpFloat sqrYDiffSum = 0.0;
     
+    cpFloat inputMean = std::accumulate(sinOfInput.begin(), sinOfInput.end(), 0.0)/nSteps;
+    
+    cpFloat outputMean = std::accumulate(normalizedOutput.begin(), normalizedOutput.end(), 0.0)/nSteps;
+        
     for (int i=0; i<nSteps; i++) {
-        float xDiff = (sys->inputValues[i]-inputMean);
-        float yDiff = (sys->outputValues[i]-outputMean);
-        numerator += xDiff*yDiff;
+        cpFloat diff = (sinOfInput[i] - normalizedOutput[i]);
+        sqDiff.push_back(diff*diff);
+        
+        float xDiff = (sinOfInput[i]-inputMean);
+        float yDiff = (normalizedOutput[i]-outputMean);
         sqrXDiffSum += xDiff*xDiff;
         sqrYDiffSum += yDiff*yDiff;
-        
-   }
-    correlation = numerator/sqrt(sqrXDiffSum*sqrYDiffSum);
-    //
-    cpFloat inputVariance = sqrXDiffSum/nSteps;
-    cpFloat outputVariance = sqrYDiffSum/nSteps;
-    //
-    if (correlation != correlation || fabs(correlation) == INFINITY) {
-        // the mean output value, and all output values, were zero -> correlation = NaN
-        // otherwise the mean input value, and all input values, were zero -> correlation = +/-inf
-        correlation = 0;
     }
     
-    //fitness = ;
+    cpFloat inputVariance = sqrXDiffSum/nSteps;
+    cpFloat outputVariance = sqrYDiffSum/nSteps;
     
     
-    return fabs(correlation)*inputVariance*outputVariance; // 'ideal' fitness -> inf
+    cpFloat mse = std::accumulate(sqDiff.begin(), sqDiff.end(), 0.0)/nSteps;
+    
+    fitness = inputVariance*outputVariance/mse;
+    
+    return fitness;
+
 }
 
 

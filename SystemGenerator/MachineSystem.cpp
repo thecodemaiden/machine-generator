@@ -592,7 +592,6 @@ std::vector<AttachmentInnovation> MachineSystem::attachmentGenome(bool sorted){
                 info.pos2 = machineNumberToPosition(j);
                 
                 info.innovationNumber = a->innovationNumber;
-                
                 genome.push_back(info);
             }
         }

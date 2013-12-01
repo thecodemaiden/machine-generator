@@ -86,7 +86,6 @@ MachineSystem *attachmentAnchorMutator2(MachineSystem *sys); // change attachmen
 Attachment *changeAttachmentType(Attachment *at);
 Attachment *perturbAttachmentAttributes(Attachment *at);
 Attachment *changeAttachmentAnchorPoints(Attachment *at);
-//void changeMachineShape(MachinePart *part);
 
 
 cpFloat normalize_angle(cpFloat angle); // convert to range (-2pi, +2pi)

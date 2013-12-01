@@ -18,6 +18,7 @@ struct NEATSpecies {
     MachineSystem *representative;
     std::vector<ExtendedSystemInfo *>members;
     double totalSharedFitness;
+    int speciesNumber; // for data collection
     
     ~NEATSpecies() {
         delete representative;
@@ -93,6 +94,7 @@ protected:
     virtual MachineSystem *createInitialSystem();
     
     void logPopulationStatistics();
+    cpFloat attachmentDifference(Attachment *a1, Attachment *a2);
 
 public:
     NEATAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_c, float p_m_attach, float p_m_node, float p_m_conn, int systemWidth=5, int systemHeight=5);
@@ -116,6 +118,7 @@ private:
     std::ofstream currentLogFile;
     MachineSystem *ancestor; // to find distance of species from start
     int nextInnovationNumber;
+    int nextSpeciesNumber;
     void speciate(); // divide everything into species
 };
 

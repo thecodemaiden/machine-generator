@@ -276,14 +276,15 @@ template <class AlgorithmType>
 void displayBest(AlgorithmType *a)
 {
     MachineSystem *s = a->bestSystem();
+    
     while(!restartAlgorithm) {
         double now = glfwGetTime();
-        //sinusoidal motor!
         updateWorld(s->getSpace(), s, cpvzero, now-LastTime, a->inputDescription(), a->outputDescription());
         LastTime = now;
     }
 }
 
+// although this assumes that the input is always a rotation, which is doesn't have to be
 template <class AlgorithmType>
 void runAlgorithm(int nRuns, int popSize, int generations, int stagnant, std::string save_dir)
 {
@@ -336,11 +337,13 @@ void runAlgorithm(int nRuns, int popSize, int generations, int stagnant, std::st
             // a motor will drive the angVel of a body even when there are other forces acting on it
             drivingMotor = cpSimpleMotorNew(staticBody, inputBody, M_PI_2);
             cpSpaceAddConstraint(best->getSpace(), drivingMotor);
-            cpConstraintSetMaxForce(drivingMotor, 80000);
+            cpConstraintSetMaxForce(drivingMotor, 100000);
         }
         
-        if (!restartAlgorithm && --nRuns > 0)
+        if (!restartAlgorithm && --nRuns > 0) {
+            fprintf(stderr, "%d runs remaining\n", nRuns);
             restartAlgorithm = true; // just go on to the next right away
+        }
         
         displayBest<AlgorithmType>(a);
         
@@ -360,18 +363,26 @@ void loadSystemFromFile(std::string filename) {
     
     std::string full_path = std::string(path.we_wordv[0]);
     
-    MachineSystem *sys = MachineSystem::loadFromDisk(filename.c_str());
+    MachineSystem *sys = MachineSystem::loadFromDisk(full_path.c_str(), 300, 300);
+    
+    cpBody *inputBody = sys->partAtPosition(sys->inputMachinePosition)->body;
+    cpBody *staticBody = cpSpaceGetStaticBody(sys->getSpace());
+    cpConstraint *drivingMotor = cpSimpleMotorNew(staticBody, inputBody, M_PI_2);
+    cpSpaceAddConstraint(sys->getSpace(), drivingMotor);
+    cpConstraintSetMaxForce(drivingMotor, 100000);
+    
     while(1) {
             double now = glfwGetTime();
-            //sinusoidal motor!
             updateWorld(sys->getSpace(), sys, cpvzero, now-LastTime, "", "");
             LastTime = now;
     }
+    // release stuff... ?
 }
 
 int main(int argc, char **argv)
 {
         setupGLFW();
+  //  loadSystemFromFile("~/temp/machines/best1385775797-9.machine");
     runAlgorithm<NEATSpatialSinRotation>(15, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
