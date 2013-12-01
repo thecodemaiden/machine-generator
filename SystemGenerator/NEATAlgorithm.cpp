@@ -788,12 +788,13 @@ void NEATAlgorithm::logPopulationStatistics()
     while (speciesIter != speciesList.end()) {
         std::vector<ExtendedSystemInfo *>members = (*speciesIter)->members;
         size_t n = members.size();
+        currentLogFile << (*speciesIter)->speciesNumber << " ";
         currentLogFile << n << " ";
         ExtendedSystemInfo *best = members.front();
-        currentLogFile << best->fitness << " ";
+        currentLogFile << best->fitness*n << " ";
         ExtendedSystemInfo *worst = members.back();
-        currentLogFile << worst->fitness << " ";
-        double meanFitness =(*speciesIter)->totalSharedFitness/n;
+        currentLogFile << worst->fitness*n << " ";
+        double meanFitness =(*speciesIter)->totalSharedFitness;
         currentLogFile << meanFitness << " ";
         // standard dev - from http://stackoverflow.com/questions/7616511/calculate-mean-and-standard-deviation-from-a-vector-of-samples-in-c-using-boos
   
