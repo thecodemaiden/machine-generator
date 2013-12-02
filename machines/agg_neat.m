@@ -17,19 +17,13 @@ for i=1:length(file_list),
     not_empty = ~isnan(run_dist);
     species_count = (sum(not_empty))';
     n_species = vertcat2(n_species, species_count);
-    shape = size(not_empty);
     
     % then, the best of the species present in the last generation
    
     best = vertcat2(best, max(run_best)');
     
     %the mean distance... don't know how to do this except columnwise
-    m_dists = zeros(shape(2),1);
-    for j = 1:shape(2)
-        vals = run_dist(not_empty(:,j), j);
-        m_dists(j) = mean(vals);
-    end
-    mean_dist = vertcat2(mean_dist, m_dists);
+    mean_dist = vertcat2(mean_dist, nanmean(run_dist)');
     
 end
 
