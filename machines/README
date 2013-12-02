@@ -1,0 +1,10 @@
+The data includes the following variables; each column corresponds to one run:
+
+o_final - the final population of the naive algorithm 
+o_paths - the best fitness in each generation (row)
+
+neat_best - the fitness of the best species in each generation for NEAT
+neat_dist - the mean distance from starting genome for each generation for NEAT
+neat_species - the number of existing species for NEAT
+
+spneat_best, spneat_dist, spneat_species - similar to above but for spatial NEAT
