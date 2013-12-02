@@ -383,7 +383,7 @@ int main(int argc, char **argv)
 {
         setupGLFW();
   //  loadSystemFromFile("~/temp/machines/best1385775797-9.machine");
-    runAlgorithm<NEATRotation>(15, 100, 500, 50, "~/temp/machines/");
+    runAlgorithm<NEATSpatialRotation>(15, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
 
