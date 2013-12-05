@@ -371,10 +371,18 @@ void loadSystemFromFile(std::string filename) {
     cpSpaceAddConstraint(sys->getSpace(), drivingMotor);
     cpConstraintSetMaxForce(drivingMotor, 100000);
     
+    
+    double motortime = 0;
     while(1) {
             double now = glfwGetTime();
-            updateWorld(sys->getSpace(), sys, cpvzero, now-LastTime, "", "");
+            double elapsed = now-LastTime;
+            updateWorld(sys->getSpace(), sys, cpvzero, elapsed, "", "");
             LastTime = now;
+        motortime += elapsed;
+        if (motortime > 10) {
+            motortime = 0;
+            cpSimpleMotorSetRate(drivingMotor, -cpSimpleMotorGetRate(drivingMotor));
+        }
     }
     // release stuff... ?
 }
@@ -382,8 +390,8 @@ void loadSystemFromFile(std::string filename) {
 int main(int argc, char **argv)
 {
         setupGLFW();
-  //  loadSystemFromFile("~/temp/machines/best1385775797-9.machine");
-    runAlgorithm<NEATSpatialRotation>(15, 100, 500, 50, "~/temp/machines/");
+  //  loadSystemFromFile("/Users/abannis/temp/machines/spneat_rot/best1385940783-14.machine");
+    runAlgorithm<AdeolaRotationAlgorithm>(15, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
 

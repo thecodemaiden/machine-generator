@@ -23,8 +23,7 @@ MachineSystem::MachineSystem(int width, int height, int hPegs, int vPegs, cpVect
   attachments((hPegs*vPegs), std::vector<Attachment *>(hPegs*vPegs, NULL)),
   space(cpSpaceNew()),
   nMachines(0),
-  nAttachments(0),
-  destroyAttachments(false)
+  nAttachments(0)
 {
     cpSpaceSetIterations(space, 20);
     gridSpacing = cpv((float)width/(hPegs + 1), (float)height/(vPegs + 1));
@@ -264,6 +263,8 @@ bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attac
                 attachments[machine1Num][machine2Num] = attachments[machine2Num][machine1Num] = attachment;
                 added = true;
             }
+        } else {
+            fprintf(stderr, "Attaching nonexistent machine");
         }
     }
     return added;
@@ -271,6 +272,11 @@ bool MachineSystem::attachMachines(cpVect machine1Pos, cpVect machine2Pos, Attac
 }
 
 bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
+{
+    return detachMachinesAndDestroy(machine1Pos, machine2Pos, destroyAttachments);
+}
+
+bool MachineSystem::detachMachinesAndDestroy(cpVect machine1Pos, cpVect machine2Pos, bool destroy)
 {
     bool detached = false;
     if (!cpveql(machine1Pos, machine2Pos)) {
@@ -283,7 +289,7 @@ bool MachineSystem::detachMachines(cpVect machine1Pos, cpVect machine2Pos)
             if (existingAttachment) {
                 machine1->detachFromBody(machine2->body);
                 machine2->detachFromBody(machine1->body);
-                if (!destroyAttachments) {
+                if (!destroy) {
                     attachments[machine1Num][machine2Num]->disabled = true;
                 } else {
                     delete attachments[machine1Num][machine2Num];
@@ -346,6 +352,92 @@ void MachineSystem::updateAttachmentToWall(cpVect gridPosition, Attachment *newA
         
         partToUpdate->attachToBody(newAttachment, pegBody);
         attachments[machineNum][machineNum] = newAttachment;
+    }
+}
+
+void MachineSystem::swapPartsAtPositions(MachineSystem *other, cpVect otherMachinePos, cpVect partPos)
+{
+    // for each part, we need to copy all its attachments, break them, and recreate on the other system
+    MachinePart *otherPart = other->partAtPosition(otherMachinePos);
+    MachinePart *myPart = partAtPosition(partPos);
+    
+    if (otherPart && myPart) {
+        
+        //copy them
+        MachinePart *partForMe = new MachinePart(*otherPart, space);
+        MachinePart *partForOther = new MachinePart(*myPart, other->getSpace());
+    
+        
+     // make a copy of all the attachments - conveniently includes the wall attachment
+        int otherMachineNum = other->machinePositionToNumber(otherMachinePos);
+        int myMachineNum = machinePositionToNumber(partPos);
+
+        std::vector<Attachment *> otherAttachments = other->attachments[otherMachineNum];
+        std::vector<Attachment *> copiesForOther;
+        for (int i=0; i<otherAttachments.size(); i++) {
+            if (otherAttachments[i] != NULL) {
+                copiesForOther.push_back(Attachment::copyAttachment(otherAttachments[i]));
+            } else {
+                copiesForOther.push_back(NULL);
+            }
+        }
+        
+        std::vector<Attachment *> myAttachments = attachments[myMachineNum];
+        std::vector<Attachment *> copiesForMe;
+        for (int i=0; i<myAttachments.size(); i++) {
+            if (myAttachments[i] != NULL) {
+                copiesForMe.push_back(Attachment::copyAttachment(myAttachments[i]));
+            } else {
+                copiesForMe.push_back(NULL);
+            }
+        }
+        
+        // now swap the parts
+        other->removePart(otherMachinePos);
+        removePart(partPos);
+        
+        delete myPart;
+        delete otherPart;
+        
+        other->addPart(partForOther, copiesForOther[otherMachineNum], otherMachinePos);
+        addPart(partForMe, copiesForMe[myMachineNum], partPos);
+
+ 
+        
+        // now replace the attachments
+        for (int i=0; i<copiesForOther.size(); i++) {
+            if (i != otherMachineNum) {
+                // attachment to wall already accounted for
+                Attachment *a = copiesForOther[i];
+                if (a) {
+                    other->attachMachines(otherMachinePos, other->machineNumberToPosition(i), a);
+                }
+            }
+        }
+        
+        for (int i=0; i<copiesForMe.size(); i++) {
+            if (i != myMachineNum) {
+                // attachment to wall already accounted for
+                Attachment *a = copiesForMe[i];
+                if (a) {
+                    attachMachines(partPos, machineNumberToPosition(i), a);
+                }
+            }
+        }
+    }
+}
+
+void MachineSystem::swapAttachmentsBetweenParts(MachineSystem *other, cpVect otherMachinePos1, cpVect otherMachinePos2, cpVect partPos1, cpVect partPos2)
+{
+    // much easier than swapping parts
+    Attachment *otherAtt = other->attachmentBetween(otherMachinePos1, otherMachinePos2);
+    Attachment *myAtt = attachmentBetween(partPos1, partPos2);
+    if (otherAtt && myAtt) {
+        otherAtt = Attachment::copyAttachment(otherAtt);
+        myAtt = Attachment::copyAttachment(myAtt);
+        
+        other->updateAttachmentBetween(otherMachinePos1, otherMachinePos2, myAtt);
+        updateAttachmentBetween(partPos1, partPos2, otherAtt);
     }
 }
 

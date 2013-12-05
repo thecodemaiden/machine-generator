@@ -21,12 +21,13 @@ class AdeolaRotationAlgorithm : public AdeolaAlgorithm {
      cpFloat evaluateSystem(SystemInfo *sys);
      bool goodEnoughFitness(cpFloat bestFitness);
     
+    void performRecombinations();
     
     SystemInfo *bestIndividual;
     
 public:
     cpFloat allTimeBestFitness;
-    AdeolaRotationAlgorithm(int populationSize=5, int maxGenerations = 100, int maxStagnation=5, float p_m=0.2, float p_c= 0);
+    AdeolaRotationAlgorithm(int populationSize=5, int maxGenerations = 100, int maxStagnation=5, float p_m=0.2, float p_c= 0.2);
     ~AdeolaRotationAlgorithm();
     
     bool tick();

@@ -46,9 +46,12 @@ public:
     // deep copy!
     MachineSystem(MachineSystem &toCopy, cpVect position=cpvzero);
     
-    // NOTE - don't use a GEAR attachment to attach to the wall - the peg does not rotate, so the body will not rotate
+    // NOTE - don't use a GEAR attachment to attach to the wall, unless you want something really fixed - the peg does not rotate, so the body will not rotate
     void addPart(MachinePart *newMachine, Attachment *attachment, cpVect gridPosition);
     void removePart(cpVect gridPosition);
+    
+    void swapPartsAtPositions(MachineSystem *other, cpVect otherMachinePos, cpVect partPos);
+    void swapAttachmentsBetweenParts(MachineSystem *other, cpVect otherMachinePos1, cpVect otherMachinePos2, cpVect partPos1, cpVect partPos2);
     
     MachinePart *partAtPosition(cpVect gridPosition);
     Attachment *attachmentBetween(cpVect machine1Pos, cpVect machine2Pos);
@@ -81,7 +84,7 @@ public:
     
     // for NEAT
     std::vector<AttachmentInnovation> attachmentGenome(bool sorted=true);
-    bool destroyAttachments; // if true, destroy attachments instead of disabling them
+    bool destroyAttachments = true; // if true, destroy attachments instead of disabling them
     
 private:
     cpBody *body;
@@ -100,6 +103,8 @@ private:
     int machinePositionToNumber(cpVect gridPosition);
     cpVect machineNumberToPosition(int machineNumber);
     cpVect gridPositionToWorld(cpVect gridPosition);
+    bool detachMachinesAndDestroy(cpVect machine1Pos, cpVect machine2Pos, bool destroy);
+
 };
 
 #endif /* defined(__SystemGenerator__MachineSystem__) */

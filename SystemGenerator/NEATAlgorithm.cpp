@@ -464,7 +464,9 @@ cpFloat NEATAlgorithm::genomeDistance(MachineSystem *sys1, MachineSystem *sys2)
 
 MachineSystem *NEATAlgorithm::createInitialSystem()
 {
-    return new MachineSystem(300, 300, sys_w, sys_h, cpvzero);
+    MachineSystem *sys = new MachineSystem(300, 300, sys_w, sys_h, cpvzero);
+    sys->destroyAttachments = false;
+    return sys;
 }
 
 void NEATAlgorithm::prepareInitialPopulation()

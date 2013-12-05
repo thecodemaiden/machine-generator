@@ -30,37 +30,6 @@ AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGene
          delete population[i];
  }
 
-
-static MachineSystem  *gearMutator(MachineSystem *sys)
-{
-    MachineSystem *newSystem = new MachineSystem(*sys);
-    
-    Attachment *chosenAttachment = NULL;
-    cpVect part1 = cpvzero;
-    cpVect part2 = cpvzero;
-    
-    newSystem->getRandomAttachment(&chosenAttachment, &part1, &part2);
-    
-    if (chosenAttachment) {
-        AttachmentType t = chosenAttachment->attachmentType();
-        if (t != ATTACH_GEAR) {
-            // turn it into a gear!
-            // don't change the length - for now
-            GearAttachment *newAttachment = new GearAttachment(chosenAttachment->firstAttachPoint, chosenAttachment->secondAttachPoint, chosenAttachment->attachmentLength);
-            
-            newSystem->attachMachines(part1, part2, newAttachment);
-        } else  {
-            // modify the gear!
-            // we *add* a small factor between -1 and 1 to the gear ratio!
-            // get a number between 0 and 2, then subtract 1
-            cpFloat addition = (float)rand()/(RAND_MAX/2) - 1;
-            cpFloat newRatio = addition + cpGearJointGetRatio(chosenAttachment->constraint);
-            cpGearJointSetRatio(chosenAttachment->constraint, newRatio);
-        }
-    }
-    return newSystem;
-}
-
 void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 {
     
@@ -122,6 +91,44 @@ MachineSystem *AdeolaRotationAlgorithm::mutateSystem(MachineSystem *original)
     }
 }
 
+void AdeolaRotationAlgorithm::performRecombinations()
+{
+    // choose random pairs from the population to swap parts or attachments
+    std::vector<SystemInfo *> toCombine = std::vector<SystemInfo *>(population);
+    while (toCombine.size() > 1) {
+        int parent1Index = arc4random_uniform(toCombine.size());
+        int parent2Index = parent1Index;
+        while (parent2Index == parent1Index) {
+            parent2Index = arc4random_uniform(toCombine.size());
+        }
+        MachineSystem *sys1 = toCombine[parent1Index]->system;
+        MachineSystem *sys2 = toCombine[parent2Index]->system;
+        
+        float selector = (float)rand()/RAND_MAX;
+        if (selector < p_c/2) {
+            // swap attachment
+            cpVect firstPos1, firstPos2, secondPos1, secondPos2;
+            sys1->getRandomAttachment(NULL, &firstPos1, &firstPos2);
+            sys2->getRandomAttachment(NULL, &secondPos1, &secondPos2);
+            sys1->swapAttachmentsBetweenParts(sys2, secondPos1, secondPos2, firstPos1, firstPos2);
+        } else if (selector < p_c) {
+            // swap part
+            cpVect firstPos, secondPos;
+            sys1->getRandomPartPosition(&firstPos);
+            sys2->getRandomPartPosition(&secondPos);
+            sys1->swapPartsAtPositions(sys2, secondPos, firstPos);
+        }
+        
+        
+        // we have to erase in order - later then earlier
+        int first = parent1Index < parent2Index ? parent1Index : parent2Index;
+        int second = parent1Index < parent2Index ? parent2Index : parent1Index;
+        
+        toCombine.erase(toCombine.begin()+second);
+        toCombine.erase(toCombine.begin()+first);
+    }
+}
+
 bool AdeolaRotationAlgorithm::tick()
 {
     size_t populationSize = population.size();
@@ -133,6 +140,8 @@ bool AdeolaRotationAlgorithm::tick()
     
     size_t bestPos = -1;
     size_t worstPos = -1;
+    
+    performRecombinations();
     
     for (size_t popIter = 0; popIter <populationSize; popIter++) {
         // possibly mutate each one

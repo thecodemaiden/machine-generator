@@ -63,15 +63,15 @@ void MachinePart::removeFromSpace()
             cpSpaceRemoveConstraint(space, constraint);
             cpConstraintFree(constraint);
         });
-    
-    cpBodyEachShape_b(body, ^(cpShape *shape) {
-        cpSpaceRemoveShape(space, shape);
-        cpShapeFree(shape);
-    });
-    
-    cpSpaceRemoveBody(space, body);
-    cpBodyFree(body);
-    body = NULL;
+        
+        cpBodyEachShape_b(body, ^(cpShape *shape) {
+            cpSpaceRemoveShape(space, shape);
+            cpShapeFree(shape);
+        });
+        
+        cpSpaceRemoveBody(space, body);
+        cpBodyFree(body);
+        body = NULL;
     }
 }
 
@@ -90,6 +90,9 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     if (!body) {
         constructBody(position);
     }
+    
+    if(!otherBody)
+        return;
     
     cpVect otherAttachPoint = cpv(0,0);
     cpVect localAttachPoint = cpv(0,0);
@@ -144,9 +147,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     otherAttachLocal = cpBodyWorld2Local(body, otherAttachLocal);
     
     cpFloat bodyDistance = cpvdist(otherAttachLocal, localAttachPoint);
-    
-    AttachmentType attachmentType = attachment->attachmentType();
-        
+            
     cpConstraint *mainConstraint = NULL;
     
     if (SpringAttachment *spring = dynamic_cast<SpringAttachment *>(attachment)) {
@@ -209,19 +210,7 @@ void MachinePart::attachToBody(Attachment *attachment, cpBody *otherBody)
     
     attachment->constraint = mainConstraint;
     mainConstraint->data = attachment;
-//    
-//    cpGroup smallestGroup = MIN(cpShapeGetGroup(otherShape), cpShapeGetGroup(bodyShape));
-//    smallestGroup = MIN(smallestGroup, 1);
-//    
-//    if (attachmentType == ATTACH_PIVOT) {
-//        // make them the same group so they don't collide
-//        cpShapeSetGroup(otherShape, smallestGroup);
-//        cpShapeSetGroup(bodyShape, smallestGroup);
-//    } else {
-//        // we increase the availableGroup so that new machines will collide with this one
-//        cpShapeSetGroup(bodyShape, availableGroup++);
-//        
-//    }
+
     
 }
 
