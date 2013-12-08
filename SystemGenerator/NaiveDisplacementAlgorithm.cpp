@@ -1,16 +1,16 @@
 //
-//  AdeolaDisplacementAlgorithm.cpp
+//  NaiveDisplacementAlgorithm.cpp
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 10/14/13.
 //
 //
 
-#include "AdeolaDisplacementAlgorithm.h"
+#include "NaiveDisplacementAlgorithm.h"
 #include <numeric>
 
-AdeolaDisplacementAlgorithm::AdeolaDisplacementAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
-:AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
+NaiveDisplacementAlgorithm::NaiveDisplacementAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
+:NaiveAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
     simSteps = 30;
     population.resize(populationSize);
@@ -24,7 +24,7 @@ AdeolaDisplacementAlgorithm::AdeolaDisplacementAlgorithm(int populationSize, int
 }
 
 
-AdeolaDisplacementAlgorithm::~AdeolaDisplacementAlgorithm(){
+NaiveDisplacementAlgorithm::~NaiveDisplacementAlgorithm(){
     for (int i=0; i<population.size(); i++)
         delete population[i];
 }
@@ -57,7 +57,7 @@ bool getSystemToRest(MachineSystem *sys)
 }
 
 
-bool AdeolaDisplacementAlgorithm::tick()
+bool NaiveDisplacementAlgorithm::tick()
 {
     size_t populationSize = population.size();
     
@@ -149,12 +149,12 @@ bool AdeolaDisplacementAlgorithm::tick()
 }
 
 // I started reading the NEAT paper; changes to the individual structure and tick() function will be needed
-//MachineSystem * AdeolaDisplacementAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
+//MachineSystem * NaiveDisplacementAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
 //{
 //    return NULL;
 //}
 
-void AdeolaDisplacementAlgorithm::stepSystem(SystemInfo *individual)
+void NaiveDisplacementAlgorithm::stepSystem(SystemInfo *individual)
 {
     
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
@@ -185,7 +185,7 @@ void AdeolaDisplacementAlgorithm::stepSystem(SystemInfo *individual)
 
 
 // (random) initializer
-MachineSystem * AdeolaDisplacementAlgorithm::createInitialSystem()
+MachineSystem * NaiveDisplacementAlgorithm::createInitialSystem()
 {
     MachineSystem *sys = new MachineSystem(300, 300, 5, 5, cpvzero);
     randomGenerator3(sys);
@@ -193,7 +193,7 @@ MachineSystem * AdeolaDisplacementAlgorithm::createInitialSystem()
 }
 
 // operators
-MachineSystem *AdeolaDisplacementAlgorithm::mutateSystem(MachineSystem *original)
+MachineSystem *NaiveDisplacementAlgorithm::mutateSystem(MachineSystem *original)
 {
     // one or the other - twice the chance of mutator 1
     if (arc4random_uniform(3) == 0)
@@ -206,7 +206,7 @@ MachineSystem *AdeolaDisplacementAlgorithm::mutateSystem(MachineSystem *original
 // I want input angle to change a lot,
 // and I want the max displacement as big as possible
 
-cpFloat AdeolaDisplacementAlgorithm::evaluateSystem(SystemInfo *sys)
+cpFloat NaiveDisplacementAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
@@ -239,17 +239,17 @@ cpFloat AdeolaDisplacementAlgorithm::evaluateSystem(SystemInfo *sys)
     return fitness; // 'ideal' fitness -> infinity
 }
 
-bool AdeolaDisplacementAlgorithm::goodEnoughFitness(cpFloat bestFitness)
+bool NaiveDisplacementAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {
     return false; // never satisfied
 }
 
-MachineSystem *AdeolaDisplacementAlgorithm::bestSystem()
+MachineSystem *NaiveDisplacementAlgorithm::bestSystem()
 {
     return bestIndividual->system;
 }
 
-char* AdeolaDisplacementAlgorithm::inputDescription()
+char* NaiveDisplacementAlgorithm::inputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -262,7 +262,7 @@ char* AdeolaDisplacementAlgorithm::inputDescription()
     return buffer;
 }
 
-char* AdeolaDisplacementAlgorithm::outputDescription()
+char* NaiveDisplacementAlgorithm::outputDescription()
 {
     if (!bestIndividual)
         return "";

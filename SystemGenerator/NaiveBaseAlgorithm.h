@@ -1,19 +1,19 @@
 //
-//  AdeolaBaseAlgorithm.h
+//  NaiveBaseAlgorithm.h
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 10/14/13.
 //
 //
 
-#ifndef __SystemGenerator__AdeolaBaseAlgorithm__
-#define __SystemGenerator__AdeolaBaseAlgorithm__
+#ifndef __SystemGenerator__NaiveBaseAlgorithm__
+#define __SystemGenerator__NaiveBaseAlgorithm__
 
 #include "Algorithm.h"
 #include <string>
 #include <fstream>
 
-class AdeolaAlgorithm {
+class NaiveAlgorithm {
 protected:
     
     float p_m;
@@ -29,8 +29,8 @@ protected:
     std::vector<SystemInfo *> population;
     
 public:
-    AdeolaAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c);
-    virtual ~AdeolaAlgorithm();
+    NaiveAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c);
+    virtual ~NaiveAlgorithm();
     
     virtual bool tick() = 0; // returns true if we should stop iterating - please override
     
@@ -44,4 +44,4 @@ public:
     void logPopulationStatistics();
 };
 
-#endif /* defined(__SystemGenerator__AdeolaBaseAlgorithm__) */
+#endif /* defined(__SystemGenerator__NaiveBaseAlgorithm__) */

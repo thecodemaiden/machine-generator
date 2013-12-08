@@ -9,10 +9,10 @@
 #ifndef SystemGenerator_AlgorithmList_h
 #define SystemGenerator_AlgorithmList_h
 
-#include "AdeolaRotationAlgorithm.h"
-#include "AdeolaDisplacementAlgorithm.h"
+#include "NaiveRotationAlgorithm.h"
+#include "NaiveDisplacementAlgorithm.h"
 #include "MarkAlgorithm.h"
-#include "AdeolaConstantToSinusoidalAlgorithm.h"
+#include "NaiveConstantToSinusoidalAlgorithm.h"
 #include "NEATRotation.h"
 #include "NEATSpatialRotation.h"
 #include "NEATSpatialSinRotation.h"

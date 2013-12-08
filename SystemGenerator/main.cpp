@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 {
         setupGLFW();
   //  loadSystemFromFile("/Users/abannis/temp/machines/spneat_rot/best1385940783-14.machine");
-    runAlgorithm<AdeolaRotationAlgorithm>(15, 100, 500, 50, "~/temp/machines/");
+    runAlgorithm<NaiveRotationAlgorithm>(15, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
 
@@ -408,11 +408,11 @@ int main(int argc, char **argv)
  setupGLFW();
  while (1) {
  restartAlgorithm = false;
- AdeolaRotationAlgorithm *a = new AdeolaRotationAlgorithm(50, 100, 150);
+ NaiveRotationAlgorithm *a = new NaiveRotationAlgorithm(50, 100, 150);
  // MarkAlgorithm *a = new MarkAlgorithm(5, 1000, 15);
  
- // AdeolaDisplacementAlgorithm *a = new AdeolaDisplacementAlgorithm(5, 1000, 15);
- //   AdeolaConstantToSinusoidalAlgorithm *a = new AdeolaConstantToSinusoidalAlgorithm(5, 1000, 150);
+ // NaiveDisplacementAlgorithm *a = new NaiveDisplacementAlgorithm(5, 1000, 15);
+ //   NaiveConstantToSinusoidalAlgorithm *a = new NaiveConstantToSinusoidalAlgorithm(5, 1000, 150);
  
  //    NEATSpatialSinRotation *a = new NEATSpatialSinRotation(100, 300, 50);
  MachineSystem *best = NULL;//s;

@@ -16,8 +16,8 @@
 		E24EC868180CA11500D15C9E /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = E24EC867180CA11500D15C9E /* README.md */; };
 		E25FD8881801D08D00566B8D /* Algorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E25FD8871801D08D00566B8D /* Algorithm.cpp */; };
 		E27E4698181DDCE300D852BD /* Attachment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E27E4696181DDCE200D852BD /* Attachment.cpp */; };
-		E29764C11811C49B0004B173 /* AdeolaBaseAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */; };
-		E29764C21811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */; };
+		E29764C11811C49B0004B173 /* NaiveBaseAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BD1811C49B0004B173 /* NaiveBaseAlgorithm.cpp */; };
+		E29764C21811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E29764BF1811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp */; };
 		E2A1D81A1800E5A6003FA4AE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A1D8191800E5A6003FA4AE /* Cocoa.framework */; };
 		E2A1D84E1800E5E3003FA4AE /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2A1D7C71800E33F003FA4AE /* main.cpp */; };
 		E2A1D8521800E6C1003FA4AE /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2A1D8051800E3E8003FA4AE /* IOKit.framework */; };
@@ -32,8 +32,8 @@
 		E2B07F2B1836B4E7008110E7 /* NEATSpatialAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B07F291836B4E7008110E7 /* NEATSpatialAlgorithm.cpp */; };
 		E2B07F2E1836B553008110E7 /* NEATSpatialRotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B07F2C1836B553008110E7 /* NEATSpatialRotation.cpp */; };
 		E2B837F818440D68004B79B7 /* NEATSpatialSinRotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B837F618440D68004B79B7 /* NEATSpatialSinRotation.cpp */; };
-		E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */; };
-		E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */; };
+		E2BDBC9918035AE4005128BE /* NaiveRotationAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BDBC9718035AE4005128BE /* NaiveRotationAlgorithm.cpp */; };
+		E2C3155A1822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C315581822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.cpp */; };
 		E2C3155F1822E46900774A13 /* simple_fft.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2C3155D1822E46900774A13 /* simple_fft.cpp */; };
 		E2DFFC671828700C0025A554 /* NEATAlgorithm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2DFFC651828700C0025A554 /* NEATAlgorithm.cpp */; };
 		E2DFFC6A1828A2D00025A554 /* NEATRotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2DFFC681828A2D00025A554 /* NEATRotation.cpp */; };
@@ -79,10 +79,10 @@
 		E25FD8871801D08D00566B8D /* Algorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Algorithm.cpp; sourceTree = "<group>"; };
 		E27E4696181DDCE200D852BD /* Attachment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Attachment.cpp; sourceTree = SOURCE_ROOT; };
 		E27E4697181DDCE300D852BD /* Attachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attachment.h; sourceTree = SOURCE_ROOT; };
-		E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaBaseAlgorithm.cpp; sourceTree = "<group>"; };
-		E29764BE1811C49B0004B173 /* AdeolaBaseAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaBaseAlgorithm.h; sourceTree = "<group>"; };
-		E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaDisplacementAlgorithm.cpp; sourceTree = "<group>"; };
-		E29764C01811C49B0004B173 /* AdeolaDisplacementAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaDisplacementAlgorithm.h; sourceTree = "<group>"; };
+		E29764BD1811C49B0004B173 /* NaiveBaseAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveBaseAlgorithm.cpp; sourceTree = "<group>"; };
+		E29764BE1811C49B0004B173 /* NaiveBaseAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NaiveBaseAlgorithm.h; sourceTree = "<group>"; };
+		E29764BF1811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveDisplacementAlgorithm.cpp; sourceTree = "<group>"; };
+		E29764C01811C49B0004B173 /* NaiveDisplacementAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NaiveDisplacementAlgorithm.h; sourceTree = "<group>"; };
 		E2A1D7C71800E33F003FA4AE /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		E2A1D7FE1800E3B4003FA4AE /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E2A1D8001800E3BA003FA4AE /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -108,10 +108,10 @@
 		E2B07F2D1836B553008110E7 /* NEATSpatialRotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialRotation.h; sourceTree = "<group>"; };
 		E2B837F618440D68004B79B7 /* NEATSpatialSinRotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATSpatialSinRotation.cpp; sourceTree = "<group>"; };
 		E2B837F718440D68004B79B7 /* NEATSpatialSinRotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEATSpatialSinRotation.h; sourceTree = "<group>"; };
-		E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaRotationAlgorithm.cpp; sourceTree = "<group>"; };
-		E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaRotationAlgorithm.h; sourceTree = "<group>"; };
-		E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AdeolaConstantToSinusoidalAlgorithm.cpp; sourceTree = "<group>"; };
-		E2C315591822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdeolaConstantToSinusoidalAlgorithm.h; sourceTree = "<group>"; };
+		E2BDBC9718035AE4005128BE /* NaiveRotationAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveRotationAlgorithm.cpp; sourceTree = "<group>"; };
+		E2BDBC9818035AE4005128BE /* NaiveRotationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NaiveRotationAlgorithm.h; sourceTree = "<group>"; };
+		E2C315581822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveConstantToSinusoidalAlgorithm.cpp; sourceTree = "<group>"; };
+		E2C315591822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NaiveConstantToSinusoidalAlgorithm.h; sourceTree = "<group>"; };
 		E2C3155D1822E46900774A13 /* simple_fft.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = simple_fft.cpp; sourceTree = "<group>"; };
 		E2C3155E1822E46900774A13 /* simple_fft.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simple_fft.h; sourceTree = "<group>"; };
 		E2DFFC651828700C0025A554 /* NEATAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NEATAlgorithm.cpp; sourceTree = "<group>"; };
@@ -259,7 +259,7 @@
 				E25FD8831801C2C800566B8D /* Algorithm.h */,
 				E25FD8871801D08D00566B8D /* Algorithm.cpp */,
 				E2DFFC6418286FFB0025A554 /* NEAT */,
-				E2DFFC6318286FEB0025A554 /* Mutation Only */,
+				E2DFFC6318286FEB0025A554 /* Naive */,
 			);
 			name = Algorithms;
 			sourceTree = "<group>";
@@ -367,21 +367,21 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
-		E2DFFC6318286FEB0025A554 /* Mutation Only */ = {
+		E2DFFC6318286FEB0025A554 /* Naive */ = {
 			isa = PBXGroup;
 			children = (
-				E29764BD1811C49B0004B173 /* AdeolaBaseAlgorithm.cpp */,
-				E29764BE1811C49B0004B173 /* AdeolaBaseAlgorithm.h */,
-				E29764BF1811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp */,
-				E29764C01811C49B0004B173 /* AdeolaDisplacementAlgorithm.h */,
-				E2BDBC9818035AE4005128BE /* AdeolaRotationAlgorithm.h */,
-				E2BDBC9718035AE4005128BE /* AdeolaRotationAlgorithm.cpp */,
+				E29764BD1811C49B0004B173 /* NaiveBaseAlgorithm.cpp */,
+				E29764BE1811C49B0004B173 /* NaiveBaseAlgorithm.h */,
+				E29764BF1811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp */,
+				E29764C01811C49B0004B173 /* NaiveDisplacementAlgorithm.h */,
+				E2BDBC9818035AE4005128BE /* NaiveRotationAlgorithm.h */,
+				E2BDBC9718035AE4005128BE /* NaiveRotationAlgorithm.cpp */,
 				4D3E45DB1811B9DB00B9F69D /* MarkAlgorithm.h */,
 				4D3E45DC1811BA6500B9F69D /* MarkAlgorithm.cpp */,
-				E2C315591822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.h */,
-				E2C315581822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp */,
+				E2C315591822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.h */,
+				E2C315581822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.cpp */,
 			);
-			name = "Mutation Only";
+			name = Naive;
 			sourceTree = "<group>";
 		};
 		E2DFFC6418286FFB0025A554 /* NEAT */ = {
@@ -465,13 +465,13 @@
 				E2DFFC671828700C0025A554 /* NEATAlgorithm.cpp in Sources */,
 				E2B837F818440D68004B79B7 /* NEATSpatialSinRotation.cpp in Sources */,
 				E2A1D85A1800E733003FA4AE /* ChipmunkDemoShaderSupport.c in Sources */,
-				E29764C21811C49B0004B173 /* AdeolaDisplacementAlgorithm.cpp in Sources */,
+				E29764C21811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp in Sources */,
 				E2DFFC6A1828A2D00025A554 /* NEATRotation.cpp in Sources */,
 				E2A1D8581800E72D003FA4AE /* ChipmunkDebugDraw.c in Sources */,
 				E27E4698181DDCE300D852BD /* Attachment.cpp in Sources */,
-				E2BDBC9918035AE4005128BE /* AdeolaRotationAlgorithm.cpp in Sources */,
-				E2C3155A1822CD8F00774A13 /* AdeolaConstantToSinusoidalAlgorithm.cpp in Sources */,
-				E29764C11811C49B0004B173 /* AdeolaBaseAlgorithm.cpp in Sources */,
+				E2BDBC9918035AE4005128BE /* NaiveRotationAlgorithm.cpp in Sources */,
+				E2C3155A1822CD8F00774A13 /* NaiveConstantToSinusoidalAlgorithm.cpp in Sources */,
+				E29764C11811C49B0004B173 /* NaiveBaseAlgorithm.cpp in Sources */,
 				E2A1D8611800EC84003FA4AE /* MachinePart.cpp in Sources */,
 				E2A1D85E1800EBFC003FA4AE /* MachineSystem.cpp in Sources */,
 				4D3E45DD1811BA6500B9F69D /* MarkAlgorithm.cpp in Sources */,

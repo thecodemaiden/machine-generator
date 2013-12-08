@@ -1,18 +1,18 @@
 //
-//  AdeolaBaseAlgorithm.cpp
+//  NaiveBaseAlgorithm.cpp
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 10/14/13.
 //
 //
 
-#include "AdeolaBaseAlgorithm.h"
+#include "NaiveBaseAlgorithm.h"
 #include <numeric>
 #include <sstream>
 #include <wordexp.h>
 
 // basic implementation of constructor and destructor for subclasses to build on
-AdeolaAlgorithm::AdeolaAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c)
+NaiveAlgorithm::NaiveAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c)
 :p_m(p_m),
 p_c(p_c),
 maxStagnation(maxStagnation),
@@ -21,28 +21,28 @@ maxGenerations(maxGenerations)
     generations = 0;
 };
 
-AdeolaAlgorithm::~AdeolaAlgorithm()
+NaiveAlgorithm::~NaiveAlgorithm()
 {
     currentLogFile.close();
 }
 
-long AdeolaAlgorithm::getNumberOfIterations()
+long NaiveAlgorithm::getNumberOfIterations()
 {
     return generations;
 }
 
- char * AdeolaAlgorithm::inputDescription()
+ char * NaiveAlgorithm::inputDescription()
 {
     return "";
 }
 
- char * AdeolaAlgorithm::outputDescription()
+ char * NaiveAlgorithm::outputDescription()
 {
     return "";
 
 }
 
-void AdeolaAlgorithm::logPopulationStatistics()
+void NaiveAlgorithm::logPopulationStatistics()
 {
     if (!currentLogFile.is_open()) {
         time_t now = time(NULL);

@@ -1,17 +1,17 @@
 //
-//  AdeolaConstantToSinusoidalAlgorithm.cpp
+//  NaiveConstantToSinusoidalAlgorithm.cpp
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 10/31/13.
 //
 //
 
-#include "AdeolaConstantToSinusoidalAlgorithm.h"
+#include "NaiveConstantToSinusoidalAlgorithm.h"
 #include <numeric>
 #include <algorithm>
 
-AdeolaConstantToSinusoidalAlgorithm::AdeolaConstantToSinusoidalAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
-:AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
+NaiveConstantToSinusoidalAlgorithm::NaiveConstantToSinusoidalAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
+:NaiveAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
     simSteps = 40;
     population.resize(populationSize);
@@ -26,14 +26,14 @@ AdeolaConstantToSinusoidalAlgorithm::AdeolaConstantToSinusoidalAlgorithm(int pop
     }
 }
 
-AdeolaConstantToSinusoidalAlgorithm::~AdeolaConstantToSinusoidalAlgorithm()
+NaiveConstantToSinusoidalAlgorithm::~NaiveConstantToSinusoidalAlgorithm()
 {
     for (int i=0; i<population.size(); i++)
         delete population[i];
 }
 
 
-MachineSystem *AdeolaConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *original)
+MachineSystem *NaiveConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *original)
 {
     float selector = (float)rand()/RAND_MAX;
     if (selector > 0.5)
@@ -51,14 +51,14 @@ MachineSystem *AdeolaConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *
 //    }
 }
 
-MachineSystem * AdeolaConstantToSinusoidalAlgorithm::createInitialSystem()
+MachineSystem * NaiveConstantToSinusoidalAlgorithm::createInitialSystem()
 {
     MachineSystem *sys = new MachineSystem(300, 300, 6, 6, cpvzero);
     randomGenerator2(sys);
     return sys;
 }
 
-bool AdeolaConstantToSinusoidalAlgorithm::tick()
+bool NaiveConstantToSinusoidalAlgorithm::tick()
 {
     size_t populationSize = population.size();
     
@@ -153,7 +153,7 @@ bool AdeolaConstantToSinusoidalAlgorithm::tick()
 }
 
 
-void AdeolaConstantToSinusoidalAlgorithm::stepSystem(SystemInfo *individual)
+void NaiveConstantToSinusoidalAlgorithm::stepSystem(SystemInfo *individual)
 {
     cpBody *inputBody = individual->system->partAtPosition(individual->system->inputMachinePosition)->body;
     cpBody *outputBody = individual->system->partAtPosition(individual->system->outputMachinePosition)->body;
@@ -187,7 +187,7 @@ cpFloat convertFromSin(cpFloat normalizer, cpFloat input) {
 }
 
 // output rotation proportional to sin(input rotation)
-cpFloat AdeolaConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
+cpFloat NaiveConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
@@ -233,17 +233,17 @@ cpFloat AdeolaConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
 
 
 
-bool AdeolaConstantToSinusoidalAlgorithm::goodEnoughFitness(cpFloat bestFitness)
+bool NaiveConstantToSinusoidalAlgorithm::goodEnoughFitness(cpFloat bestFitness)
 {
     return bestFitness > 300;
 }
 
-MachineSystem * AdeolaConstantToSinusoidalAlgorithm::bestSystem()
+MachineSystem * NaiveConstantToSinusoidalAlgorithm::bestSystem()
 {
     return bestIndividual->system;
 }
 
-char* AdeolaConstantToSinusoidalAlgorithm::inputDescription()
+char* NaiveConstantToSinusoidalAlgorithm::inputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -256,7 +256,7 @@ char* AdeolaConstantToSinusoidalAlgorithm::inputDescription()
     return buffer;
 }
 
-char* AdeolaConstantToSinusoidalAlgorithm::outputDescription()
+char* NaiveConstantToSinusoidalAlgorithm::outputDescription()
 {
     if (!bestIndividual)
         return "";
