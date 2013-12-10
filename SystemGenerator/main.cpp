@@ -384,14 +384,13 @@ void loadSystemFromFile(std::string filename) {
             cpSimpleMotorSetRate(drivingMotor, -cpSimpleMotorGetRate(drivingMotor));
         }
     }
-    // release stuff... ?
 }
 
 int main(int argc, char **argv)
 {
         setupGLFW();
   //  loadSystemFromFile("/Users/abannis/temp/machines/spneat_rot/best1385940783-14.machine");
-    runAlgorithm<NaiveRotationAlgorithm>(15, 100, 500, 50, "~/temp/machines/");
+    runAlgorithm<NaiveRotationAlgorithm>(1, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
 

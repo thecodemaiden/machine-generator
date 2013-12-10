@@ -56,104 +56,6 @@ bool getSystemToRest(MachineSystem *sys)
     return atRest;
 }
 
-
-bool NaiveDisplacementAlgorithm::tick()
-{
-    size_t populationSize = population.size();
-    
-    cpFloat bestFitness = -INFINITY; // we want zero fitness
-    cpFloat worstFitness = INFINITY;
-    
-    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : bestFitness;
-    
-    size_t bestPos = -1;
-    size_t worstPos = -1;
-    
-    for (size_t popIter = 0; popIter <populationSize; popIter++) {
-        // possibly mutate each one
-        cpFloat random = (cpFloat)rand()/RAND_MAX;
-        SystemInfo *individual = population[popIter];
-        
-        if (!getSystemToRest(individual->system)) {
-            individual->fitness = -1000;
-        } else {
-            SystemInfo *mutant = NULL;
-            if ( fabs(random) < p_m) {
-                MachineSystem *system = individual->system;
-                mutant = new SystemInfo(simSteps);
-                mutant->system = mutateSystem(system);
-            }
-            
-            stepSystem(individual);
-            individual->fitness = evaluateSystem(individual);
-            
-            if (mutant) {
-                if (getSystemToRest(mutant->system)) {
-                    stepSystem(mutant);
-                    mutant->fitness = evaluateSystem(mutant);
-                } else {
-                    mutant->fitness = -1000;
-                }
-                
-                if (mutant->fitness > individual->fitness) {
-                    population[popIter] = mutant;
-                    delete individual;
-                    individual = mutant;
-                } else {
-                    delete mutant;
-                }
-                
-            }
-        }
-        if (individual->fitness > bestFitness) {
-            bestFitness = individual->fitness;
-            bestIndividual = individual;
-            bestPos = popIter;
-        }
-        
-        if (individual -> fitness <= worstFitness) {
-            worstFitness = individual->fitness;
-            worstPos = popIter;
-        }
-        
-        
-    }
-    
-    if (bestPos != worstPos) {
-        // replace the worst one with a random machine
-        
-        // fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
-        SystemInfo *worst = population[worstPos];
-        delete worst->system;
-        worst->fitness = 0;
-        worst->system = createInitialSystem();
-    } else {
-        fprintf(stderr, "Worst and best fitness are same - stop now?");
-    }
-    
-    fprintf(stderr, "BEST FITNESS: %f (%lu)\n", bestFitness, bestPos);
-    fprintf(stderr, "WORST FITNESS: %f (%lu)\n", worstFitness, worstPos);
-    
-    if (lastBestFitness == bestIndividual->fitness)
-        stagnantGenerations++;
-    else
-        stagnantGenerations = 0;
-    
-    bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
-    
-    generations++;
-    
-    logPopulationStatistics();
-    
-    return  stop;
-}
-
-// I started reading the NEAT paper; changes to the individual structure and tick() function will be needed
-//MachineSystem * NaiveDisplacementAlgorithm::combineSystems(MachineSystem *sys1, MachineSystem *sys2)
-//{
-//    return NULL;
-//}
-
 void NaiveDisplacementAlgorithm::stepSystem(SystemInfo *individual)
 {
     
@@ -190,16 +92,6 @@ MachineSystem * NaiveDisplacementAlgorithm::createInitialSystem()
     MachineSystem *sys = new MachineSystem(300, 300, 5, 5, cpvzero);
     randomGenerator3(sys);
     return sys;
-}
-
-// operators
-MachineSystem *NaiveDisplacementAlgorithm::mutateSystem(MachineSystem *original)
-{
-    // one or the other - twice the chance of mutator 1
-    if (arc4random_uniform(3) == 0)
-        return attachmentMutator2(original);
-    else
-        return attachmentMutator1(original);
 }
 
 
@@ -239,15 +131,6 @@ cpFloat NaiveDisplacementAlgorithm::evaluateSystem(SystemInfo *sys)
     return fitness; // 'ideal' fitness -> infinity
 }
 
-bool NaiveDisplacementAlgorithm::goodEnoughFitness(cpFloat bestFitness)
-{
-    return false; // never satisfied
-}
-
-MachineSystem *NaiveDisplacementAlgorithm::bestSystem()
-{
-    return bestIndividual->system;
-}
 
 char* NaiveDisplacementAlgorithm::inputDescription()
 {

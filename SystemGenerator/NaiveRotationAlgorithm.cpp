@@ -1,16 +1,16 @@
 //
-//  AdeolaBadAlgorithm.cpp
+//  NaiveBadAlgorithm.cpp
 //  SystemGenerator
 //
 //  Created by Adeola Bannis on 10/7/13.
 //
 //
 
-#include "AdeolaRotationAlgorithm.h"
+#include "NaiveRotationAlgorithm.h"
 #include <numeric>
 
-AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
-:AdeolaAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
+NaiveRotationAlgorithm::NaiveRotationAlgorithm(int populationSize, int maxGenerations, int maxStagnation, float p_m, float p_c)
+:NaiveAlgorithm(maxGenerations, maxStagnation, p_m, p_c)
 {
     simSteps = 100;
     population.resize(populationSize);
@@ -25,12 +25,12 @@ AdeolaRotationAlgorithm::AdeolaRotationAlgorithm(int populationSize, int maxGene
     }
 }
 
- AdeolaRotationAlgorithm::~AdeolaRotationAlgorithm(){
+ NaiveRotationAlgorithm::~NaiveRotationAlgorithm(){
      for (int i=0; i<population.size(); i++)
          delete population[i];
  }
 
-void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
+void NaiveRotationAlgorithm::stepSystem(SystemInfo *individual)
 {
     
     MachineSystem *oldSystem = individual->system;
@@ -60,168 +60,11 @@ void AdeolaRotationAlgorithm::stepSystem(SystemInfo *individual)
 
 
 // (random) initializer
-MachineSystem * AdeolaRotationAlgorithm::createInitialSystem()
+MachineSystem * NaiveRotationAlgorithm::createInitialSystem()
 {
     MachineSystem *sys = new MachineSystem(300, 300, 5, 5, cpvzero);
     randomGenerator2(sys);
     return sys;
-}
-
-// operators
-MachineSystem *AdeolaRotationAlgorithm::mutateSystem(MachineSystem *original)
-{
-    int selector = arc4random_uniform(5);
-    switch (selector) {
-        case 0:
-            return attachmentAnchorMutator2(original);
-            break;
-        case 1:
-            return attachmentAnchorMutator(original);
-            break;
-        case 2:
-            return attachmentMutator1(original);
-            break;
-        case 3:
-            return attachmentMutator2(original);
-            break;
-        case 4:
-        default:
-            return attachmentMutator3(original);
-            break;
-    }
-}
-
-void AdeolaRotationAlgorithm::performRecombinations()
-{
-    // choose random pairs from the population to swap parts or attachments
-    std::vector<SystemInfo *> toCombine = std::vector<SystemInfo *>(population);
-    while (toCombine.size() > 1) {
-        int parent1Index = arc4random_uniform(toCombine.size());
-        int parent2Index = parent1Index;
-        while (parent2Index == parent1Index) {
-            parent2Index = arc4random_uniform(toCombine.size());
-        }
-        MachineSystem *sys1 = toCombine[parent1Index]->system;
-        MachineSystem *sys2 = toCombine[parent2Index]->system;
-        
-        float selector = (float)rand()/RAND_MAX;
-        if (selector < p_c/2) {
-            // swap attachment
-            cpVect firstPos1, firstPos2, secondPos1, secondPos2;
-            sys1->getRandomAttachment(NULL, &firstPos1, &firstPos2);
-            sys2->getRandomAttachment(NULL, &secondPos1, &secondPos2);
-            sys1->swapAttachmentsBetweenParts(sys2, secondPos1, secondPos2, firstPos1, firstPos2);
-        } else if (selector < p_c) {
-            // swap part
-            cpVect firstPos, secondPos;
-            sys1->getRandomPartPosition(&firstPos);
-            sys2->getRandomPartPosition(&secondPos);
-            sys1->swapPartsAtPositions(sys2, secondPos, firstPos);
-        }
-        
-        
-        // we have to erase in order - later then earlier
-        int first = parent1Index < parent2Index ? parent1Index : parent2Index;
-        int second = parent1Index < parent2Index ? parent2Index : parent1Index;
-        
-        toCombine.erase(toCombine.begin()+second);
-        toCombine.erase(toCombine.begin()+first);
-    }
-}
-
-bool AdeolaRotationAlgorithm::tick()
-{
-    size_t populationSize = population.size();
-    
-    cpFloat bestFitness = -INFINITY; // we want zero fitness
-    cpFloat worstFitness = INFINITY;
-    
-    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : bestFitness;
-    
-    size_t bestPos = -1;
-    size_t worstPos = -1;
-    
-    performRecombinations();
-    
-    for (size_t popIter = 0; popIter <populationSize; popIter++) {
-        // possibly mutate each one
-        cpFloat random = (cpFloat)rand()/RAND_MAX;
-        SystemInfo *individual = population[popIter];
-        SystemInfo *mutant = NULL;
-        if ( fabs(random) < p_m) {
-            MachineSystem *system = individual->system;
-            mutant = new SystemInfo(simSteps);
-            mutant->system = mutateSystem(system);
-        }
-        
-        // reset the individual... by copying!
-        MachineSystem *original = individual->system;
-        MachineSystem *copy = new MachineSystem(*original);
-        individual->system = copy;
-        delete original;
-        
-        stepSystem(individual);
-        individual->fitness = evaluateSystem(individual);
-        
-        if (mutant) {
-            stepSystem(mutant);
-            mutant->fitness = evaluateSystem(mutant);
-            
-            if (mutant->fitness > individual->fitness) {
-                population[popIter] = mutant;
-                delete individual;
-                individual = mutant;
-            } else {
-                delete mutant;
-            }
-        }
-        
-        if (individual->fitness > bestFitness) {
-            bestFitness = individual->fitness;
-            bestIndividual = individual;
-            bestPos = popIter;
-        }
-        
-        if (individual -> fitness <= worstFitness) {
-            worstFitness = individual->fitness;
-            worstPos = popIter;
-        }
-    
-        
-    }
-    
-    if (bestFitness > allTimeBestFitness)
-        allTimeBestFitness = bestFitness;
-    
-    if (bestPos != worstPos) {
-        // replace the worst one with a random machine
-        
-        // fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
-        SystemInfo *worst = population[worstPos];
-        delete worst->system;
-        worst->fitness = 0;
-        worst->system = createInitialSystem();
-    } else {
-        fprintf(stderr, "Worst and best fitness are same - stop now?");
-    }
-    
-    fprintf(stderr, "BEST FITNESS: %f (%lu)\n", bestFitness, bestPos);
-    fprintf(stderr, "WORST FITNESS: %f (%lu)\n", worstFitness, worstPos);
-    
-    if (lastBestFitness == bestIndividual->fitness)
-        stagnantGenerations++;
-    else
-        stagnantGenerations = 0;
-    
-    bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
-    
-    generations++;
-    logPopulationStatistics();
-
-    if (stop) {
-        fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
-    }
-    return  stop;
 }
 
 // find correlation between input and ouput values
@@ -231,7 +74,7 @@ bool AdeolaRotationAlgorithm::tick()
 
 // let's try inputAngle:outputAngle = 2
 
-cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
+cpFloat NaiveRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 {
     cpFloat fitness = 0.0;
     
@@ -292,17 +135,7 @@ cpFloat AdeolaRotationAlgorithm::evaluateSystem(SystemInfo *sys)
 }
 
 
-bool AdeolaRotationAlgorithm::goodEnoughFitness(cpFloat bestFitness)
-{
-    return false;
-}
-
-MachineSystem *AdeolaRotationAlgorithm::bestSystem()
-{
-    return bestIndividual->system;
-}
-
- char* AdeolaRotationAlgorithm::inputDescription()
+ char* NaiveRotationAlgorithm::inputDescription()
 {
     if (!bestIndividual)
         return "";
@@ -315,7 +148,7 @@ MachineSystem *AdeolaRotationAlgorithm::bestSystem()
     return buffer;
 }
 
- char* AdeolaRotationAlgorithm::outputDescription()
+ char* NaiveRotationAlgorithm::outputDescription()
 {
     if (!bestIndividual)
         return "";

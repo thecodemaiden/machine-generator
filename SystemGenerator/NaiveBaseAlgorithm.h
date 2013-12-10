@@ -25,16 +25,30 @@ protected:
     
     long generations;
     
+    cpFloat allTimeBestFitness;
+    
     std::ofstream currentLogFile;
     std::vector<SystemInfo *> population;
+    SystemInfo *bestIndividual;
+
+    std::vector<SystemInfo *> spawnChildren();
+    
+    virtual MachineSystem *createInitialSystem() = 0;
+    virtual cpFloat evaluateSystem(SystemInfo *sys) = 0;
+
+    virtual MachineSystem *mutateSystem(MachineSystem *original);
+    virtual void stepSystem(SystemInfo *individual) = 0;
+    
+    bool goodEnoughFitness(cpFloat bestFitness);
+    
     
 public:
     NaiveAlgorithm(int maxGenerations, int maxStagnation, float p_m, float p_c);
     virtual ~NaiveAlgorithm();
     
-    virtual bool tick() = 0; // returns true if we should stop iterating - please override
+    virtual bool tick(); // returns true if we should stop iterating - please override
     
-    virtual MachineSystem *bestSystem() = 0; // please override according to the representation for your algorithm
+    virtual MachineSystem *bestSystem(); // please override according to the representation for your algorithm
     virtual long getNumberOfIterations();
     
     // more functions to override

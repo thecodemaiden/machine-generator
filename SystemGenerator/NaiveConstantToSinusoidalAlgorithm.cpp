@@ -33,123 +33,11 @@ NaiveConstantToSinusoidalAlgorithm::~NaiveConstantToSinusoidalAlgorithm()
 }
 
 
-MachineSystem *NaiveConstantToSinusoidalAlgorithm::mutateSystem(MachineSystem *original)
-{
-    float selector = (float)rand()/RAND_MAX;
-    if (selector > 0.5)
-        return attachmentAnchorMutator(original);
-    else
-        return attachmentAnchorMutator2(original);
-//    if (selector > 0.75) {
-//        return  attachmentAnchorMutator(original);
-//    } else  if (selector > 0.5) {
-//        return  attachmentAnchorMutator2(original);
-//    } else if (selector > 0.25) {
-//        return addAttachmentMutator(original);
-//    } else {
-//        return outputMachineMutator(original);
-//    }
-}
-
 MachineSystem * NaiveConstantToSinusoidalAlgorithm::createInitialSystem()
 {
     MachineSystem *sys = new MachineSystem(300, 300, 6, 6, cpvzero);
     randomGenerator2(sys);
     return sys;
-}
-
-bool NaiveConstantToSinusoidalAlgorithm::tick()
-{
-    size_t populationSize = population.size();
-    
-    cpFloat bestFitness = -INFINITY; // we want zero fitness
-    cpFloat worstFitness = INFINITY;
-    
-    cpFloat lastBestFitness = bestIndividual ? bestIndividual->fitness : bestFitness;
-    
-    size_t bestPos = -1;
-    size_t worstPos = -1;
-    
-    for (size_t popIter = 0; popIter <populationSize; popIter++) {
-        // possibly mutate each one
-        cpFloat random = (cpFloat)rand()/RAND_MAX;
-        SystemInfo *individual = population[popIter];
-        SystemInfo *mutant = NULL;
-        if ( fabs(random) < p_m) {
-            MachineSystem *system = individual->system;
-            mutant = new SystemInfo(simSteps);
-            mutant->system = mutateSystem(system);
-        }
-        
-        // reset the individual... by copying!
-        MachineSystem *original = individual->system;
-        MachineSystem *copy = new MachineSystem(*original);
-        individual->system = copy;
-        delete original;
-        
-        stepSystem(individual);
-        individual->fitness = evaluateSystem(individual);
-        
-        if (mutant) {
-            stepSystem(mutant);
-            mutant->fitness = evaluateSystem(mutant);
-            
-            if (mutant->fitness > individual->fitness) {
-                population[popIter] = mutant;
-                delete individual;
-                individual = mutant;
-            } else {
-                delete mutant;
-            }
-        }
-        
-        if (individual->fitness > bestFitness) {
-            bestFitness = individual->fitness;
-            bestIndividual = individual;
-            bestPos = popIter;
-        }
-        
-        if (individual -> fitness <= worstFitness) {
-            worstFitness = individual->fitness;
-            worstPos = popIter;
-        }
-        
-        
-    }
-    
-    if (bestFitness > allTimeBestFitness)
-        allTimeBestFitness = bestFitness;
-    
-    if (bestPos != worstPos) {
-        // replace the worst one with a random machine
-        
-        // fprintf(stderr, "Replacing system with fitness %f\n", worstFitness);
-        SystemInfo *worst = population[worstPos];
-        delete worst->system;
-        worst->fitness = 0;
-        worst->system = createInitialSystem();
-    } else {
-        fprintf(stderr, "Worst and best fitness are same - stop now?");
-    }
-    
-    fprintf(stderr, "BEST FITNESS: %f (%lu)\n", bestFitness, bestPos);
-    fprintf(stderr, "WORST FITNESS: %f (%lu)\n", worstFitness, worstPos);
-    
-    if (lastBestFitness == bestIndividual->fitness)
-        stagnantGenerations++;
-    else
-        stagnantGenerations = 0;
-    
-    bool stop =  (generations >= maxGenerations) || goodEnoughFitness(bestFitness) || (stagnantGenerations >= maxStagnation);
-    
-    logPopulationStatistics();
-    
-    generations++;
-    if (stop) {
-        fprintf(stderr, "ALL TIME BEST FITNESS: %f\n", allTimeBestFitness);
-        
-    }
-    return  stop;
 }
 
 
@@ -163,7 +51,6 @@ void NaiveConstantToSinusoidalAlgorithm::stepSystem(SystemInfo *individual)
     cpConstraint *motor = cpSimpleMotorNew(cpSpaceGetStaticBody(systemSpace), inputBody, M_PI);
     cpSpaceAddConstraint(systemSpace, motor);
     cpConstraintSetMaxForce(motor, 50000);
-    cpVect originalPosition = cpBodyGetPos(outputBody);
     
     for (int i=0; i<simSteps; i++) {
         individual->inputValues[i] = cpBodyGetAngle(inputBody);
@@ -229,18 +116,6 @@ cpFloat NaiveConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
     
     return fitness;
 
-}
-
-
-
-bool NaiveConstantToSinusoidalAlgorithm::goodEnoughFitness(cpFloat bestFitness)
-{
-    return bestFitness > 300;
-}
-
-MachineSystem * NaiveConstantToSinusoidalAlgorithm::bestSystem()
-{
-    return bestIndividual->system;
 }
 
 char* NaiveConstantToSinusoidalAlgorithm::inputDescription()

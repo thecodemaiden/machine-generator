@@ -102,7 +102,7 @@ void randomGenerator1(MachineSystem *sys)
 
 void randomGenerator2(MachineSystem *sys)
 {
-    int nMachinesToPlace = arc4random_uniform(3)+4; // 4-6 machines to start
+    int nMachinesToPlace = arc4random_uniform(4)+2; // 2-6 machines to start
     
     std::vector<cpVect> placedMachines = std::vector<cpVect>();
     
