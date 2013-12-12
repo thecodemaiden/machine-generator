@@ -184,6 +184,7 @@ bool NaiveAlgorithm::tick()
         allTimeBestFitness = bestFitness;
     
     
+    assert(nextGen.size() == population.size());
     
     population = nextGen;
     
@@ -222,6 +223,7 @@ void NaiveAlgorithm::logPopulationStatistics()
         time_t now = time(NULL);
         std::stringstream s;
         wordexp_t directory;
+        memset(&directory, 0, sizeof(wordexp_t));
         wordexp("~/temp/machines/", &directory, 0);
         s << directory.we_wordv[0];
         s << "log" << now << ".log";

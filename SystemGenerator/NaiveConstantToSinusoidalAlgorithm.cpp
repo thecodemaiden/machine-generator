@@ -63,14 +63,10 @@ void NaiveConstantToSinusoidalAlgorithm::stepSystem(SystemInfo *individual)
    
 }
 
-bool compareMagnitude(const float &a, const float &b) {
-    return fabs(a) < fabs(b);
-}
 
-cpFloat convertFromSin(cpFloat normalizer, cpFloat input) {
-    if (normalizer == 0)
-        normalizer = FLT_MIN;
-    return asin(input/normalizer);
+static double angsin(double a)
+{
+    return 2*M_PI*sin(a);
 }
 
 // output rotation proportional to sin(input rotation)
@@ -82,7 +78,7 @@ cpFloat NaiveConstantToSinusoidalAlgorithm::evaluateSystem(SystemInfo *sys)
     
     std::vector<cpFloat>sinOfInput = std::vector<cpFloat>(nSteps);
     std::vector<cpFloat>normalizedOutput = std::vector<cpFloat>(nSteps);
-    std::transform(sys->inputValues.begin(), sys->inputValues.end(), sinOfInput.begin(), sin);
+    std::transform(sys->inputValues.begin(), sys->inputValues.end(), sinOfInput.begin(), angsin);
     
     std::transform(sys->outputValues.begin(), sys->outputValues.end(), normalizedOutput.begin(), normalize_angle);
     

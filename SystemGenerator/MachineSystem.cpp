@@ -565,9 +565,9 @@ void MachineSystem::getRandomDisjointParts(cpVect *pos1, cpVect *pos2)
     // for machine n-1 we don't have to search
     
     int possibleParts = size.x*size.y;
-    int emptyAttachments = (possibleParts -1)*possibleParts - nAttachments;
+    int possibleAttachments = (nMachines -1)*nMachines - nAttachments;
     
-    if (!pos1 || !pos2 || emptyAttachments == 0) {
+    if (!pos1 || !pos2 || possibleAttachments == 0) {
         // I'm not doing work if there's nowhere to put the result
         return;
     }
@@ -576,7 +576,7 @@ void MachineSystem::getRandomDisjointParts(cpVect *pos1, cpVect *pos2)
     cpVect p2 = cpv(-1,-1);
     
     // We pick an existing attachment with uniform probability
-    int attachmentToPick = arc4random_uniform(emptyAttachments);
+    int attachmentToPick = arc4random_uniform(possibleAttachments);
     
     int foundAttachments = 0;
     
@@ -585,7 +585,7 @@ void MachineSystem::getRandomDisjointParts(cpVect *pos1, cpVect *pos2)
     
     for (int i=0; i<possibleParts; i++) {
         for (int j=i+1; j<possibleParts; j++) {
-            if (!attachments[i][j]) {
+            if (parts[i] && parts[j] && !attachments[i][j]) {
                 if (foundAttachments == attachmentToPick) {
                     p1 = machineNumberToPosition(i);
                     p2 = machineNumberToPosition(j);

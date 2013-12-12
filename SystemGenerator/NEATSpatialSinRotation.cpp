@@ -48,6 +48,10 @@ void NEATSpatialSinRotation::stepSystem(ExtendedSystemInfo *individual)
     
 }
 
+static double angsin(double a)
+{
+    return 2*M_PI*sin(a);
+}
 
 // output must be proportional to sin(input_angle)
 cpFloat NEATSpatialSinRotation::evaluateSystem(ExtendedSystemInfo *sys)
@@ -58,7 +62,7 @@ cpFloat NEATSpatialSinRotation::evaluateSystem(ExtendedSystemInfo *sys)
 
     std::vector<cpFloat>sinOfInput = std::vector<cpFloat>(nSteps);
     std::vector<cpFloat>normalizedOutput = std::vector<cpFloat>(nSteps);
-    std::transform(sys->inputRotationAngle.begin(), sys->inputRotationAngle.end(), sinOfInput.begin(), sin);
+    std::transform(sys->inputRotationAngle.begin(), sys->inputRotationAngle.end(), sinOfInput.begin(), angsin);
     
     std::transform(sys->outputRotationAngle.begin(), sys->outputRotationAngle.end(), normalizedOutput.begin(), normalize_angle);
     

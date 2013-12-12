@@ -389,8 +389,8 @@ void loadSystemFromFile(std::string filename) {
 int main(int argc, char **argv)
 {
         setupGLFW();
-  //  loadSystemFromFile("/Users/abannis/temp/machines/spneat_rot/best1385940783-14.machine");
-    runAlgorithm<NaiveRotationAlgorithm>(1, 100, 500, 50, "~/temp/machines/");
+  // loadSystemFromFile("/Users/abannis/temp/machines/best1386785507-15.machine");
+    runAlgorithm<NaiveConstantToSinusoidalAlgorithm>(15, 100, 500, 50, "~/temp/machines/");
        return 0;
 }
 

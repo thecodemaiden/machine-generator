@@ -43,10 +43,10 @@
 */
 
 const Color LINE_COLOR = {200.0f/255.0f, 210.0f/255.0f, 230.0f/255.0f, 1.0f};
-const Color GEAR_COLOR = {0.75f, 0.75f, 0.00f, 0.5f};
-const Color PIVOT_COLOR = {0.0f, 0.75f, 0.75f, .5f};
-const Color SPRING_COLOR = {0.0f, 0.75f, 0.0f, .5f};
-const Color FIXED_COLOR = {0.75f, 0.0f, 0.75f, .5f};
+const Color GEAR_COLOR = {1.0f, 1.0f, 0.00f, 0.5f};
+const Color PIVOT_COLOR = {0.0f, 1.0f, 1.0f, 1.0f};
+const Color SPRING_COLOR = {0.0f, 1.0f, 0.0f, 1.0f};
+const Color FIXED_COLOR = {1.0f, 0.0f, 1.0f, 1.0f};
 
 const float SHAPE_ALPHA = 1.0f;
 

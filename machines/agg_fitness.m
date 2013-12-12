@@ -1,5 +1,6 @@
 function [final, paths ] = agg_fitness( file_list )
-%AGG_FITNESS Aggregates the data in all the fitness logs in file_list
+%AGG_FITNESS Aggregates the data in all the fitness logs
+% [final, paths] = agg_fitness(file_list)
 
 final = [];
 paths = [];

@@ -77,8 +77,8 @@
 		E24EC867180CA11500D15C9E /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
 		E25FD8831801C2C800566B8D /* Algorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Algorithm.h; sourceTree = "<group>"; };
 		E25FD8871801D08D00566B8D /* Algorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Algorithm.cpp; sourceTree = "<group>"; };
-		E27E4696181DDCE200D852BD /* Attachment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Attachment.cpp; sourceTree = SOURCE_ROOT; };
-		E27E4697181DDCE300D852BD /* Attachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Attachment.h; sourceTree = SOURCE_ROOT; };
+		E27E4696181DDCE200D852BD /* Attachment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Attachment.cpp; path = SystemGenerator/Attachment.cpp; sourceTree = SOURCE_ROOT; };
+		E27E4697181DDCE300D852BD /* Attachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Attachment.h; path = SystemGenerator/Attachment.h; sourceTree = SOURCE_ROOT; };
 		E29764BD1811C49B0004B173 /* NaiveBaseAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveBaseAlgorithm.cpp; sourceTree = "<group>"; };
 		E29764BE1811C49B0004B173 /* NaiveBaseAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NaiveBaseAlgorithm.h; sourceTree = "<group>"; };
 		E29764BF1811C49B0004B173 /* NaiveDisplacementAlgorithm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NaiveDisplacementAlgorithm.cpp; sourceTree = "<group>"; };

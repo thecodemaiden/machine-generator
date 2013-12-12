@@ -1,6 +1,6 @@
 function [ best, mean_dist, n_species ] = agg_neat( file_list )
 %AGG_NEAT Aggregates the data in all the fitness logs in file_list
-%   Detailed explanation goes here
+%   [best, mean_dist, n_species] = agg_neat(file_list)
 best = [];
 mean_dist = [];
 n_species = [];
